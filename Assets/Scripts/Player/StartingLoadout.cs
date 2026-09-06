@@ -4,83 +4,45 @@ using UnityEngine;
 namespace WizardGun
 {
     /// <summary>
-    /// The single definition of what a wizard begins a run with.
+    /// Which loadout the current run is being played with, and the one place it is applied.
     ///
-    /// Values come from a <see cref="StartingLoadoutAsset"/> in a Resources folder if one
-    /// exists, and from the constants here if not. That keeps the kit editable in the
-    /// Inspector without breaking the property that a fresh clone runs with no assets at all.
-    ///
-    /// Both the first spawn and every restart go through here. Restart-specific cleanup
-    /// (clearing boons, reviving, refilling) stays in <see cref="GameDirector"/>; this type
-    /// only decides what the kit *is*.
+    /// The roster lives in <see cref="LoadoutLibrary"/>; this holds the selection and applies
+    /// it. Both the first spawn and every restart go through here. Restart-specific cleanup
+    /// (clearing boons, reviving, refilling) stays in <see cref="GameDirector"/>.
     /// </summary>
     public static class StartingLoadout
     {
-        /// <summary>Where the asset is looked for, relative to any Resources folder.</summary>
-        public const string ResourcePath = "StartingLoadout";
+        private static LoadoutDefinition _selected;
 
-        // ---- used when no asset is present ----
-        public const int DefaultBaseStat = 5;
-        public const string DefaultWeaponId = "arcanum";
-        public static readonly string[] DefaultSpellIdsBySlot = { "blink", "cone_of_cold" };
-
-        private static StartingLoadoutAsset _asset;
-        private static bool _resolved;
-
-        /// <summary>The authored loadout, or null when the game is running on code defaults.</summary>
-        public static StartingLoadoutAsset Asset
+        /// <summary>
+        /// The chosen loadout. Falls back to the first on the roster so anything that reads it
+        /// before the player has picked - a weapon drop roll, say - still gets a sane answer.
+        /// </summary>
+        public static LoadoutDefinition Selected
         {
             get
             {
-                if (!_resolved) Resolve();
-                return _asset;
+                if (_selected == null && LoadoutLibrary.All.Count > 0) _selected = LoadoutLibrary.All[0];
+                return _selected;
             }
         }
 
-        private static void Resolve()
+        public static void Select(LoadoutDefinition loadout)
         {
-            _resolved = true;
-
-            _asset = Resources.Load<StartingLoadoutAsset>(ResourcePath);
-            if (_asset != null) return;
-
-            // Be forgiving about the filename: any loadout anywhere under Resources will do.
-            StartingLoadoutAsset[] found = Resources.LoadAll<StartingLoadoutAsset>("");
-            if (found != null && found.Length > 0) _asset = found[0];
+            if (loadout != null) _selected = loadout;
         }
 
-        /// <summary>Drops the cached asset so the next read picks up a change.</summary>
-        public static void Reload()
-        {
-            _resolved = false;
-            _asset = null;
-        }
-
-        // ---------------------------------------------------------------- values
-
-        public static int StatFor(StatType stat)
-            => Asset != null ? Mathf.Max(0, Asset.StatFor(stat)) : DefaultBaseStat;
+        public static void Select(string id) => Select(LoadoutLibrary.Get(id));
 
         /// <summary>Id from <see cref="WeaponLibrary"/>. Also the gun excluded from world drops.</summary>
         public static string WeaponId
         {
             get
             {
-                StartingLoadoutAsset asset = Asset;
-                if (asset == null || string.IsNullOrEmpty(asset.WeaponId)) return DefaultWeaponId;
-                return asset.WeaponId;
-            }
-        }
-
-        /// <summary>Spell id per slot, indexed to match <see cref="SpellBook.SlotKeys"/> (Q, E).</summary>
-        public static IReadOnlyList<string> SpellIdsBySlot
-        {
-            get
-            {
-                StartingLoadoutAsset asset = Asset;
-                if (asset == null || asset.SpellIdsBySlot == null || asset.SpellIdsBySlot.Length == 0)
-                    return DefaultSpellIdsBySlot;
-                return asset.SpellIdsBySlot;
+                LoadoutDefinition loadout = Selected;
+                return loadout != null && !string.IsNullOrEmpty(loadout.WeaponId)
+                    ? loadout.WeaponId
+                    : "arcanum";
             }
         }
 
@@ -88,12 +50,13 @@ namespace WizardGun
 
         public static void ApplyStats(CharacterSheet sheet)
         {
-            if (sheet == null) return;
+            LoadoutDefinition loadout = Selected;
+            if (sheet == null || loadout == null) return;
 
             for (int i = 0; i < EnumCache.Stats.Length; i++)
             {
                 StatType stat = EnumCache.Stats[i];
-                sheet.SetBaseStat(stat, StatFor(stat));
+                sheet.SetBaseStat(stat, Mathf.Max(0, loadout.StatFor(stat)));
             }
         }
 
@@ -105,12 +68,15 @@ namespace WizardGun
         /// <summary>Empties the book first, so a restart cannot carry spells over from the last run.</summary>
         public static void ApplySpells(SpellBook book)
         {
-            if (book == null) return;
+            LoadoutDefinition loadout = Selected;
+            if (book == null || loadout == null) return;
 
             book.ResetBook();
 
-            IReadOnlyList<string> ids = SpellIdsBySlot;
-            for (int slot = 0; slot < ids.Count && slot < SpellBook.SlotCount; slot++)
+            string[] ids = loadout.SpellIdsBySlot;
+            if (ids == null) return;
+
+            for (int slot = 0; slot < ids.Length && slot < SpellBook.SlotCount; slot++)
             {
                 string id = ids[slot];
                 Spell spell = SpellLibrary.Get(id);
@@ -118,9 +84,9 @@ namespace WizardGun
                 if (spell == null)
                 {
                     // Silently leaving the slot empty is how a typo used to hide, so say so.
-                    Debug.LogWarning("StartingLoadout: no spell with id \"" + id + "\" for slot "
-                                     + SpellBook.SlotLabels[slot] + ". That slot will be empty. "
-                                     + "Known ids: " + KnownSpellIds());
+                    Debug.LogWarning("Loadout \"" + loadout.Id + "\": no spell with id \"" + id
+                                     + "\" for slot " + SpellBook.SlotLabels[slot]
+                                     + ". That slot will be empty. Known ids: " + KnownSpellIds());
                     continue;
                 }
 

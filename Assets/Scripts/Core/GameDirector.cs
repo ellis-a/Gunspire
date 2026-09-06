@@ -48,6 +48,29 @@ namespace WizardGun
 
         private void Start()
         {
+            ShowLoadoutSelect();
+        }
+
+        /// <summary>
+        /// The opening screen. Nothing is built until a loadout is picked, because the choice
+        /// decides the player's stats, gun and spells.
+        /// </summary>
+        public void ShowLoadoutSelect()
+        {
+            ClearRoom();
+            SetState(GameStateKind.ChoosingLoadout);
+        }
+
+        public IReadOnlyList<LoadoutDefinition> LoadoutOffers => LoadoutLibrary.All;
+
+        public void ChooseLoadout(int index)
+        {
+            if (State != GameStateKind.ChoosingLoadout) return;
+
+            IReadOnlyList<LoadoutDefinition> offers = LoadoutLibrary.All;
+            if (index < 0 || index >= offers.Count) return;
+
+            StartingLoadout.Select(offers[index]);
             StartRun(Random.Range(0, int.MaxValue));
         }
 
@@ -122,11 +145,11 @@ namespace WizardGun
             Player.FullRestore();
         }
 
+        /// <summary>Back to the opening screen, so a new run can be a different build.</summary>
         public void Restart()
         {
             Time.timeScale = 1f;
-            ClearRoom();
-            StartRun(Random.Range(0, int.MaxValue));
+            ShowLoadoutSelect();
         }
 
         // ---------------------------------------------------------------- rooms
@@ -327,7 +350,9 @@ namespace WizardGun
             bool playing = next == GameStateKind.Playing;
             Time.timeScale = playing ? 1f : 0f;
 
+            // The cursor still has to be freed on the opening screen, where there is no player yet.
             if (Player != null) Player.SetInputEnabled(playing);
+            else PlayerLook.LockCursor(playing);
         }
 
         public void Notify(string message, float seconds = 2.5f)

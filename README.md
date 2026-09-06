@@ -21,7 +21,7 @@ supports it; if you ever see `InvalidOperationException` from `Input.GetKey`, ch
 
 1. Open this folder in Unity Hub. (If Hub will not open it directly, create a new 3D project
    and copy `Assets/` into it — the project has no other dependencies.)
-2. Press **Play** in any scene, including an empty one. `GameBootstrap` spawns itself via
+2. Press **Play** in any scene, including an empty one, and pick a loadout. `GameBootstrap` spawns itself via
    `[RuntimeInitializeOnLoadMethod]` and builds the game.
 3. Optional: **Wizard with a Gun → Create Play Scene** makes a saved scene for build settings.
 
@@ -40,6 +40,24 @@ supports it; if you ever see `InvalidOperationException` from `Input.GetKey`, ch
 | `Tab` | Character sheet (hold) |
 | `Esc` | Pause |
 | `1`–`3` | Pick a boon / route card |
+
+## Loadouts
+
+A run opens on a selection screen. Three builds, each on **25 stat points** and a gun tuned to
+roughly the same damage, so none of them starts ahead:
+
+| | Stats | Gun | Spells |
+|---|---|---|---|
+| **Pyromancer** | INT 8, AGI 6 | **Emberspit** — full-auto fire SMG | Firebolt (Q), Blink (E) |
+| **Ice Wizard** | INT 7, VIT 7 | **Hailmaker** — 7-pellet frost shotgun | Cone of Cold (Q), Arcane Ward (E) |
+| **Warlock** | STR 6, INT 6 | **Knell** — lobbed shadow launcher, splash | Blightbloom (Q), Kinetic Slam (E) |
+
+Dying returns you here, so the next run can be a different build.
+
+The three live in code (`Player/LoadoutLibrary.cs`) so a fresh clone has something to pick with
+nothing authored. **Wizard with a Gun → Create Starting Loadout Assets** writes them out as
+ScriptableObjects in `Assets/Resources` for Inspector editing; a matching id replaces the
+built-in, a new id adds a fourth card. Delete the assets to go back to the code roster.
 
 ## The run
 
@@ -239,7 +257,7 @@ sits in a few library files, each holding one list.
 
 | To change | Edit |
 |---|---|
-| Starting stats, gun and spells | **Wizard with a Gun → Create Starting Loadout Asset**, then edit it in the Inspector. Falls back to the constants in `Player/StartingLoadout.cs` when no asset exists |
+| Loadouts (stats, gun, spells) | `Player/LoadoutLibrary.cs` for the code roster, or **Create Starting Loadout Assets** to edit them in the Inspector |
 | Guns | `Weapons/WeaponLibrary.cs` → `BuildRoster()`; field meanings in `WeaponDefinition.cs` |
 | Spells | `Spells/SpellLibrary.cs` — add to the `All` list, then write the class |
 | Boons | `Boons/BoonLibrary.cs` → `BuildPool()` |

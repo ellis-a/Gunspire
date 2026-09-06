@@ -19,6 +19,10 @@ namespace WizardGun
             PlayerRig player = _director.Player;
             if (player == null) return;
 
+            // The opening screen owns the whole display, and after a death the player object
+            // still exists, so the HUD has to stand down explicitly rather than rely on that.
+            if (_director.State == GameStateKind.ChoosingLoadout) return;
+
             bool playing = _director.State == GameStateKind.Playing;
 
             if (playing)

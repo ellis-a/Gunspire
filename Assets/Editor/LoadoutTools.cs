@@ -1,54 +1,62 @@
 #if UNITY_EDITOR
+using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
 
 namespace WizardGun.EditorTools
 {
     /// <summary>
-    /// Creates the starting loadout asset in the one place <see cref="StartingLoadout"/> looks
-    /// for it. Doing it through the menu rather than by hand avoids the obvious trap of
-    /// creating the asset outside a Resources folder, where it would never be found.
+    /// Writes the built-in loadouts out as assets so they can be edited in the Inspector.
+    /// Doing it through the menu rather than by hand avoids the obvious trap of creating them
+    /// outside a Resources folder, where they would never be found.
     /// </summary>
     public static class LoadoutTools
     {
         private const string FolderPath = "Assets/Resources";
-        private const string AssetPath = FolderPath + "/StartingLoadout.asset";
 
-        [MenuItem("Wizard with a Gun/Create Starting Loadout Asset")]
-        public static void CreateStartingLoadout()
+        [MenuItem("Wizard with a Gun/Create Starting Loadout Assets")]
+        public static void CreateLoadoutAssets()
         {
-            var existing = AssetDatabase.LoadAssetAtPath<StartingLoadoutAsset>(AssetPath);
-            if (existing != null)
-            {
-                Selection.activeObject = existing;
-                EditorGUIUtility.PingObject(existing);
-                Debug.Log("Starting loadout already exists at " + AssetPath + ". Selected it.");
-                return;
-            }
-
             if (!AssetDatabase.IsValidFolder(FolderPath))
                 AssetDatabase.CreateFolder("Assets", "Resources");
 
-            var asset = ScriptableObject.CreateInstance<StartingLoadoutAsset>();
+            List<LoadoutDefinition> builtIn = LoadoutLibrary.BuiltIn();
+            Object last = null;
+            int created = 0;
 
-            // Seed from the code defaults, so the asset starts as the game already plays.
-            asset.Strength = StartingLoadout.DefaultBaseStat;
-            asset.Intellect = StartingLoadout.DefaultBaseStat;
-            asset.Agility = StartingLoadout.DefaultBaseStat;
-            asset.Vitality = StartingLoadout.DefaultBaseStat;
-            asset.Luck = StartingLoadout.DefaultBaseStat;
-            asset.WeaponId = StartingLoadout.DefaultWeaponId;
-            asset.SpellIdsBySlot = (string[])StartingLoadout.DefaultSpellIdsBySlot.Clone();
+            for (int i = 0; i < builtIn.Count; i++)
+            {
+                LoadoutDefinition def = builtIn[i];
+                string path = FolderPath + "/Loadout_" + def.Id + ".asset";
 
-            AssetDatabase.CreateAsset(asset, AssetPath);
+                var existing = AssetDatabase.LoadAssetAtPath<StartingLoadoutAsset>(path);
+                if (existing != null)
+                {
+                    last = existing;
+                    continue;   // never overwrite something already tuned
+                }
+
+                var asset = ScriptableObject.CreateInstance<StartingLoadoutAsset>();
+                asset.Loadout = def.Clone();
+
+                AssetDatabase.CreateAsset(asset, path);
+                last = asset;
+                created++;
+            }
+
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
+            LoadoutLibrary.Reload();
 
-            StartingLoadout.Reload();
+            if (last != null)
+            {
+                Selection.activeObject = last;
+                EditorGUIUtility.PingObject(last);
+            }
 
-            Selection.activeObject = asset;
-            EditorGUIUtility.PingObject(asset);
-            Debug.Log("Created " + AssetPath + ". Edit it to change the starting kit.");
+            Debug.Log(created > 0
+                ? "Created " + created + " loadout asset(s) in " + FolderPath + "."
+                : "All loadout assets already exist in " + FolderPath + "; nothing was overwritten.");
         }
 
         [MenuItem("Wizard with a Gun/Log Valid Ids")]
@@ -64,7 +72,12 @@ namespace WizardGun.EditorTools
             for (int i = 0; i < all.Count; i++)
                 spells += (i > 0 ? ", " : "") + all[i].Id;
 
-            Debug.Log("Weapon ids: " + guns + "\nSpell ids: " + spells);
+            string loadouts = "";
+            var kits = LoadoutLibrary.All;
+            for (int i = 0; i < kits.Count; i++)
+                loadouts += (i > 0 ? ", " : "") + kits[i].Id;
+
+            Debug.Log("Weapon ids: " + guns + "\nSpell ids: " + spells + "\nLoadout ids: " + loadouts);
         }
     }
 }

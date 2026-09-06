@@ -34,6 +34,19 @@ namespace WizardGun
         }
 
         /// <summary>
+        /// The roster entry itself, for display only. Unlike <see cref="Get"/> this does not
+        /// clone, so never hand the result to a Weapon - UI reading it every frame would
+        /// otherwise allocate a copy each time.
+        /// </summary>
+        public static WeaponDefinition Peek(string id)
+        {
+            if (_all == null) BuildRoster();
+            for (int i = 0; i < _all.Count; i++)
+                if (_all[i].Id == id) return _all[i];
+            return null;
+        }
+
+        /// <summary>
         /// A gun for a plinth or a vault. Rolls a rarity from the player's Luck, then picks a
         /// gun at that tier. The weapon the player already starts holding is excluded, so
         /// changing the starting gun automatically keeps it out of world drops.
@@ -75,6 +88,83 @@ namespace WizardGun
                     RecoilYaw = 0.3f,
                     Range = 140f,
                     Tint = DamageTypes.Tint(DamageType.Normal)
+                },
+
+                // ---- the three signature starting guns, tuned to roughly the Arcanum's 75 dps
+                // so no loadout opens ahead of the others ----
+
+                new WeaponDefinition
+                {
+                    Id = "emberspit",
+                    DisplayName = "Emberspit",
+                    Flavor = "Thirty rounds of lit pitch. Accuracy is not the point.",
+                    Rarity = Rarity.Common,
+                    Delivery = DeliveryKind.Projectile,
+                    Mode = FireMode.Auto,
+                    DamageType = DamageType.Fire,
+                    Damage = 6f,
+                    RoundsPerMinute = 750f,
+                    MagazineSize = 30,
+                    ReloadTime = 1.5f,
+                    SpreadDegrees = 2.2f,
+                    MovingSpreadDegrees = 3.4f,
+                    RecoilPitch = 0.35f,
+                    RecoilYaw = 0.4f,
+                    ProjectileSpeed = 75f,
+                    ProjectileRadius = 0.11f,
+                    Tint = DamageTypes.Tint(DamageType.Fire),
+                    OnHitStatuses = { StatusLibrary.Burn(2.5f, 1, 3f) }
+                },
+
+                new WeaponDefinition
+                {
+                    Id = "hailmaker",
+                    DisplayName = "Hailmaker",
+                    Flavor = "Loads a fistful of frozen gravel. Best answered at close range.",
+                    Rarity = Rarity.Common,
+                    Delivery = DeliveryKind.Hitscan,
+                    Mode = FireMode.Semi,
+                    DamageType = DamageType.Frost,
+                    Damage = 7f,
+                    PelletsPerShot = 7,
+                    RoundsPerMinute = 90f,
+                    MagazineSize = 5,
+                    ReloadTime = 1.9f,
+                    SpreadDegrees = 7f,
+                    MovingSpreadDegrees = 8.5f,
+                    RecoilPitch = 3.8f,
+                    RecoilYaw = 0.55f,
+                    Range = 38f,
+                    Knockback = 2f,
+                    Tint = DamageTypes.Tint(DamageType.Frost),
+                    OnHitStatuses = { StatusLibrary.Chill(3f, 1) }
+                },
+
+                new WeaponDefinition
+                {
+                    Id = "knell",
+                    DisplayName = "Knell",
+                    Flavor = "Fires a bell that rings once, on arrival, for whoever is nearest.",
+                    Rarity = Rarity.Common,
+                    Delivery = DeliveryKind.Projectile,
+                    Mode = FireMode.Semi,
+                    DamageType = DamageType.Shadow,
+                    Damage = 16f,
+                    RoundsPerMinute = 80f,
+                    MagazineSize = 4,
+                    ReloadTime = 2.0f,
+                    SpreadDegrees = 0.6f,
+                    MovingSpreadDegrees = 1.3f,
+                    RecoilPitch = 4.5f,
+                    RecoilYaw = 0.45f,
+                    ProjectileSpeed = 32f,
+                    ProjectileRadius = 0.24f,
+                    ProjectileGravity = 9f,
+                    SplashRadius = 3.6f,
+                    SplashDamage = 30f,
+                    Knockback = 6f,
+                    Tint = DamageTypes.Tint(DamageType.Shadow),
+                    OnHitStatuses = { StatusLibrary.Weaken(4f) }
                 },
 
                 new WeaponDefinition

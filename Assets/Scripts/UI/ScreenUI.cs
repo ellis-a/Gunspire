@@ -19,6 +19,10 @@ namespace WizardGun
 
             switch (_director.State)
             {
+                case GameStateKind.ChoosingLoadout:
+                    DrawLoadoutChoice();
+                    break;
+
                 case GameStateKind.ChoosingBoon:
                     if (_director.PendingSpell != null) DrawSpellBinding();
                     else DrawBoonChoice();
@@ -49,6 +53,98 @@ namespace WizardGun
 
         private static void Dim(float alpha = 0.72f)
             => UIStyles.Fill(new Rect(0f, 0f, Screen.width, Screen.height), new Color(0.02f, 0.02f, 0.04f, alpha));
+
+        // ---------------------------------------------------------------- loadout
+
+        /// <summary>
+        /// The opening screen. Nothing exists yet when this is first drawn, so it must not
+        /// touch the player or the run.
+        /// </summary>
+        private void DrawLoadoutChoice()
+        {
+            Dim(0.94f);
+            IReadOnlyList<LoadoutDefinition> offers = _director.LoadoutOffers;
+
+            UIStyles.Text(new Rect(0f, 60f, Screen.width, 48f), "Wizard with a Gun",
+                UIStyles.Title, UIStyles.Ink);
+            UIStyles.Text(new Rect(0f, 110f, Screen.width, 22f),
+                "Choose how you climb. Click a card, or press its number.",
+                UIStyles.Center, UIStyles.Muted);
+
+            const float cardWidth = 320f;
+            const float cardHeight = 330f;
+            const float gap = 26f;
+
+            float total = offers.Count * cardWidth + (offers.Count - 1) * gap;
+            float startX = Screen.width * 0.5f - total * 0.5f;
+            float y = Screen.height * 0.5f - cardHeight * 0.5f + 20f;
+
+            for (int i = 0; i < offers.Count; i++)
+            {
+                LoadoutDefinition loadout = offers[i];
+                var rect = new Rect(startX + i * (cardWidth + gap), y, cardWidth, cardHeight);
+                bool hover = rect.Contains(Event.current.mousePosition);
+
+                UIStyles.Card(rect, loadout.Tint, hover);
+                DrawLoadoutCard(rect, loadout, i);
+
+                if (GUI.Button(rect, GUIContent.none, GUIStyle.none)) _director.ChooseLoadout(i);
+                if (NumberPressed(i)) _director.ChooseLoadout(i);
+            }
+
+            UIStyles.Text(new Rect(0f, Screen.height - 56f, Screen.width, 20f),
+                "WASD move   SPACE jump   SHIFT dash   LMB fire   RMB bash   R reload   Q/E spells   F interact",
+                UIStyles.Center, UIStyles.Muted);
+        }
+
+        private static void DrawLoadoutCard(Rect rect, LoadoutDefinition loadout, int index)
+        {
+            float x = rect.x + 18f;
+            float width = rect.width - 36f;
+            float y = rect.y + 16f;
+
+            UIStyles.Text(new Rect(x, y, width, 30f), loadout.DisplayName, UIStyles.Heading, UIStyles.Ink);
+            y += 34f;
+
+            GUI.Label(new Rect(x, y, width, 76f), loadout.Description, UIStyles.Wrap);
+            y += 82f;
+
+            UIStyles.Fill(new Rect(x, y, width, 1f), new Color(1f, 1f, 1f, 0.12f));
+            y += 10f;
+
+            UIStyles.Text(new Rect(x, y, width, 20f), loadout.StatLine(), UIStyles.Small, UIStyles.Ink);
+            y += 26f;
+
+            WeaponDefinition gun = WeaponLibrary.Peek(loadout.WeaponId);
+            if (gun != null)
+            {
+                UIStyles.Text(new Rect(x, y, width, 20f), gun.DisplayName,
+                    UIStyles.Small, DamageTypes.Tint(gun.DamageType));
+                y += 18f;
+                UIStyles.Text(new Rect(x, y, width, 18f), gun.StatLine(), UIStyles.Small, UIStyles.Muted);
+                y += 24f;
+            }
+
+            string[] ids = loadout.SpellIdsBySlot;
+            if (ids != null)
+            {
+                for (int slot = 0; slot < ids.Length && slot < SpellBook.SlotCount; slot++)
+                {
+                    Spell spell = SpellLibrary.Get(ids[slot]);
+                    if (spell == null) continue;
+
+                    UIStyles.Text(new Rect(x, y, 24f, 18f), SpellBook.SlotLabels[slot],
+                        UIStyles.Small, spell.Tint);
+                    UIStyles.Text(new Rect(x + 26f, y, width - 26f, 18f),
+                        spell.DisplayName + "   " + spell.Type + " / " + DamageTypes.Name(spell.DamageType),
+                        UIStyles.Small, UIStyles.Muted);
+                    y += 18f;
+                }
+            }
+
+            UIStyles.Text(new Rect(x, rect.yMax - 30f, width, 20f),
+                "[" + (index + 1) + "]", UIStyles.Small, UIStyles.Muted);
+        }
 
         // ---------------------------------------------------------------- boons
 
