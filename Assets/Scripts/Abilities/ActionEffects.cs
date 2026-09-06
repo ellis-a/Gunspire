@@ -211,8 +211,12 @@ namespace WizardGun
         public float SplashDamage;
         public bool ScaleSplashWithLevel = true;
 
-        /// <summary>Run at the impact point when the projectile lands. This is the OnHit hook.</summary>
-        public List<AbilityEffect> OnHit;
+        /// <summary>
+        /// Run at the impact point when the projectile lands. This is the OnHit hook.
+        /// Must start non-null: definitions fill it with a collection initializer, which calls
+        /// Add on whatever is here and throws at construction time if that is null.
+        /// </summary>
+        public List<AbilityEffect> OnHit = new List<AbilityEffect>();
 
         public override bool Execute(AbilityContext ctx)
         {
