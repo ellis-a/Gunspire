@@ -265,15 +265,29 @@ namespace WizardGun
         private static void SpawnShrineContents(Transform parent, float width, float depth, Rng rng,
             List<Occupied> occupied)
         {
-            SpellBook book = PlayerRig.Instance != null ? PlayerRig.Instance.Book : null;
+            PlayerRig rig = PlayerRig.Instance;
+            SpellBook book = rig != null ? rig.Book : null;
+            MovementController movement = rig != null ? rig.Movement : null;
 
-            // Shrines roll their own rarity, so a lucky wizard can find a legendary spell here.
-            Spell offer = SpellLibrary.RollOffer(rng, book, PlayerLuck(), 1.5f);
+            // A shrine offers either a spell or a new way to move, so the Shift slot is
+            // something a run can actually change rather than a fixed opening.
+            bool offerMovement = rng.Chance(0.35f);
 
-            if (offer != null &&
-                TryFindSpot(width, depth, 2f, rng, occupied, out Vector3 spellSpot, clearance: 2.5f))
+            if (TryFindSpot(width, depth, 2f, rng, occupied, out Vector3 runeSpot, clearance: 2.5f))
             {
-                SpellPedestal.Spawn(spellSpot, offer).transform.SetParent(parent, true);
+                // Shrines roll their own rarity, so a lucky wizard can find a legendary here.
+                if (offerMovement)
+                {
+                    MovementAbility ability = MovementAbilityLibrary.RollOffer(rng, movement, PlayerLuck(), 1.5f);
+                    if (ability != null)
+                        MovementPedestal.Spawn(runeSpot, ability).transform.SetParent(parent, true);
+                }
+                else
+                {
+                    Spell offer = SpellLibrary.RollOffer(rng, book, PlayerLuck(), 1.5f);
+                    if (offer != null)
+                        SpellPedestal.Spawn(runeSpot, offer).transform.SetParent(parent, true);
+                }
             }
 
             if (TryFindSpot(width, depth, 2f, rng, occupied, out Vector3 stoneSpot, clearance: 2.5f))

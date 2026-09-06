@@ -26,8 +26,14 @@ namespace WizardGun
         [Tooltip("Id from WeaponLibrary. This gun is also excluded from world drops.")]
         public string WeaponId = "arcanum";
 
-        [Tooltip("Spell id per slot. Index 0 is Q, index 1 is E. Extra entries are ignored.")]
-        public string[] SpellIdsBySlot = { "blink", "cone_of_cold" };
+        [Tooltip("Id from MovementAbilityLibrary. Sits on Shift. Everyone opens with Dash.")]
+        public string MovementAbilityId = MovementAbilityLibrary.DefaultId;
+
+        [Tooltip("The one spell a run opens with, bound to E. Q starts empty and is filled at a shrine.")]
+        public string SpellId = "cone_of_cold";
+
+        [Tooltip("Which slot the starting spell goes in. 0 is Q, 1 is E.")]
+        public int SpellSlot = 1;
 
         /// <summary>Card colour on the selection screen. Leave clear to take the gun's school.</summary>
         public Color TintOverride = Color.clear;
@@ -63,11 +69,6 @@ namespace WizardGun
                 Strength, Intellect, Agility, Vitality, Luck);
         }
 
-        public LoadoutDefinition Clone()
-        {
-            var copy = (LoadoutDefinition)MemberwiseClone();
-            copy.SpellIdsBySlot = (string[])SpellIdsBySlot.Clone();
-            return copy;
-        }
+        public LoadoutDefinition Clone() => (LoadoutDefinition)MemberwiseClone();
     }
 }

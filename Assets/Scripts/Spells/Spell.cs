@@ -73,7 +73,7 @@ namespace WizardGun
             ctx.BeginCast(this, level);
 
             bool cast = AbilityRunner.Run(OnCast, ctx);
-            if (cast) SpellEvents.RaiseCast(this, ctx, ctx.Point);
+            if (cast) AbilityEvents.RaiseCast(Id, ctx, ctx.Point);
 
             ctx.EndCast();
             return cast;

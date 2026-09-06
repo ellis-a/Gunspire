@@ -4,6 +4,17 @@ using UnityEngine;
 
 namespace WizardGun
 {
+    /// <summary>Result of trying to use a spell slot, so the HUD can say why nothing happened.</summary>
+    public enum CastOutcome
+    {
+        Cast,
+        Ready,           // only returned by Evaluate
+        NoSpell,         // the slot is empty
+        OnCooldown,
+        NotEnoughMana,
+        NoRoom           // the spell itself refused, e.g. a wall in the way
+    }
+
     /// <summary>
     /// The player spell slots and the level of every spell learned. Two slots for now
     /// (Q and E); the slot count is data, so adding a third key later means changing
@@ -132,30 +143,40 @@ namespace WizardGun
                 if (_cooldowns[i] > 0f) _cooldowns[i] = Mathf.Max(0f, _cooldowns[i] - step);
         }
 
-        public bool CanCast(int slot)
+        public bool CanCast(int slot) => Evaluate(slot) == CastOutcome.Ready;
+
+        /// <summary>
+        /// Why a slot can or cannot be used. Pressing a key and getting nothing at all is
+        /// indistinguishable from a broken game, so the caller reports the reason.
+        /// </summary>
+        public CastOutcome Evaluate(int slot)
         {
+            if (Context == null) return CastOutcome.NoSpell;
+
             Spell spell = GetSlot(slot);
-            if (spell == null || Context == null) return false;
-            if (_cooldowns[slot] > 0f) return false;
-            if (Context.Mana != null && !Context.Mana.Has(spell.ManaCost)) return false;
-            return true;
+            if (spell == null) return CastOutcome.NoSpell;
+            if (_cooldowns[slot] > 0f) return CastOutcome.OnCooldown;
+            if (Context.Mana != null && !Context.Mana.Has(spell.ManaCost)) return CastOutcome.NotEnoughMana;
+            return CastOutcome.Ready;
         }
 
-        public bool TryCast(int slot)
+        /// <summary>Casts if it can, and reports what happened either way.</summary>
+        public CastOutcome TryCastSlot(int slot)
         {
-            if (!CanCast(slot)) return false;
+            CastOutcome outcome = Evaluate(slot);
+            if (outcome != CastOutcome.Ready) return outcome;
 
             Spell spell = _slots[slot];
             int level = Mathf.Max(1, GetLevel(spell));
 
             // The spell sets up the context, runs its effect chain, and tidies up after itself.
-            if (!spell.Cast(Context, level)) return false;   // an effect aborted, so refund it
+            if (!spell.Cast(Context, level)) return CastOutcome.NoRoom;   // an effect aborted
 
             if (Context.Mana != null) Context.Mana.TrySpend(spell.ManaCost);
             _cooldowns[slot] = spell.CooldownAtLevel(level);
 
             SpellCast?.Invoke(spell, slot);
-            return true;
+            return CastOutcome.Cast;
         }
 
         /// <summary>Used by boons like Quickened Casting.</summary>

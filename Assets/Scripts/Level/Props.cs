@@ -234,6 +234,69 @@ namespace WizardGun
         }
     }
 
+    /// <summary>
+    /// A rune that rebinds the Shift slot. There is only one movement slot, so taking one is
+    /// a straight swap with no screen in between.
+    /// </summary>
+    public class MovementPedestal : MonoBehaviour, IInteractable
+    {
+        public MovementAbility Ability;
+
+        public string Prompt
+        {
+            get
+            {
+                if (Ability == null) return null;
+
+                PlayerRig rig = PlayerRig.Instance;
+                MovementAbility current = rig != null && rig.Movement != null ? rig.Movement.Current : null;
+
+                string replaces = current != null ? "  -  replaces " + current.DisplayName : "";
+                return "Bind " + Ability.DisplayName + " to SHIFT  [" + Rarities.Name(Ability.Rarity)
+                       + "]  " + Ability.CostLine() + replaces;
+            }
+        }
+
+        public bool CanInteract(GameObject interactor) => Ability != null;
+
+        public void Interact(GameObject interactor)
+        {
+            var rig = interactor.GetComponentInParent<PlayerRig>();
+            if (rig == null || rig.Movement == null || Ability == null) return;
+
+            rig.Movement.Equip(Ability);
+            GameDirector.Instance?.Notify(Ability.DisplayName + " bound to SHIFT");
+            Destroy(gameObject);
+        }
+
+        public static MovementPedestal Spawn(Vector3 position, MovementAbility ability)
+        {
+            var root = new GameObject("MovementPedestal");
+            root.transform.position = position;
+            root.layer = Layers.Prop;
+
+            Build.Cylinder(root.transform, "Pedestal", new Vector3(0f, 0.4f, 0f),
+                new Vector3(1f, 0.4f, 1f), MaterialLibrary.Lit(Palette.Trim), collider: true);
+
+            Build.GroundDisc(root.transform, "RarityRing", new Vector3(0f, 0.82f, 0f), 0.68f,
+                MaterialLibrary.Emissive(Rarities.Tint(ability.Rarity), 3f));
+
+            // A pair of boots rather than a rune sphere, so it reads differently at a glance.
+            Build.Cube(root.transform, "Rune", new Vector3(0f, 1.25f, 0f),
+                new Vector3(0.5f, 0.22f, 0.7f), MaterialLibrary.Emissive(ability.Tint, 3.5f), collider: false);
+
+            var trigger = root.AddComponent<SphereCollider>();
+            trigger.isTrigger = true;
+            trigger.radius = 2.2f;
+            trigger.center = Vector3.up;
+
+            var pedestal = root.AddComponent<MovementPedestal>();
+            pedestal.Ability = ability;
+            root.AddComponent<Bobber>();
+            return pedestal;
+        }
+    }
+
     /// <summary>A standing stone that permanently raises one core stat.</summary>
     public class StatShrine : MonoBehaviour, IInteractable
     {

@@ -164,7 +164,23 @@ namespace WizardGun
         public override string Describe() => string.Format("{0:0.00}s invulnerable", Seconds);
     }
 
-    /// <summary>Pushes the caster along the aim direction. Used by dashes and enemy lunges.</summary>
+    /// <summary>
+    /// The player dash: a burst along the movement input with brief invulnerability, spending
+    /// one of the Agility-scaled charges the motor tracks. Aborts with no charges left, which
+    /// refunds the activation.
+    /// </summary>
+    [System.Serializable]
+    public class DashEffect : AbilityEffect
+    {
+        public override bool Execute(AbilityContext ctx)
+        {
+            return ctx.Motor != null && ctx.Motor.TryDash();
+        }
+
+        public override string Describe() => "dash";
+    }
+
+    /// <summary>Pushes the caster along the aim direction. Used by enemy lunges.</summary>
     [System.Serializable]
     public class ImpulseSelfEffect : AbilityEffect
     {

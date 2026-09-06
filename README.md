@@ -31,11 +31,11 @@ supports it; if you ever see `InvalidOperationException` from `Input.GetKey`, ch
 |---|---|
 | `WASD` | Move (Quake-style air control — strafing keeps momentum) |
 | `Space` | Jump (coyote time + input buffering) |
-| `Shift` | Dash (charges scale with Agility, brief invulnerability) |
+| `Shift` | Movement ability — Dash by default; Blink, Sprint, Aegis Stance or Spider Legs once found |
 | `LMB` | Fire |
 | `RMB` / `V` | Melee bash (Strength-scaled, breaks reinforced objects) |
 | `R` | Reload |
-| `Q` / `E` | Spell slots |
+| `Q` / `E` | Spell slots. A run opens with one spell on E and Q empty |
 | `F` | Interact (pickups, shrines, exit portal) |
 | `Tab` | Character sheet (hold) |
 | `Esc` | Pause |
@@ -46,13 +46,36 @@ supports it; if you ever see `InvalidOperationException` from `Input.GetKey`, ch
 A run opens on a selection screen. Three builds, each on **25 stat points** and a gun tuned to
 roughly the same damage, so none of them starts ahead:
 
-| | Stats | Gun | Spells |
+| | Stats | Gun | Spell (E) |
 |---|---|---|---|
-| **Pyromancer** | INT 8, AGI 6 | **Emberspit** — full-auto fire SMG | Firebolt (Q), Blink (E) |
-| **Ice Wizard** | INT 7, VIT 7 | **Hailmaker** — 7-pellet frost shotgun | Cone of Cold (Q), Arcane Ward (E) |
-| **Warlock** | STR 6, INT 6 | **Knell** — lobbed shadow launcher, splash | Blightbloom (Q), Kinetic Slam (E) |
+| **Pyromancer** | INT 8, AGI 6 | **Emberspit** — full-auto fire SMG | **Lava Splash** — grenade that leaves the floor burning |
+| **Ice Wizard** | INT 7, VIT 7 | **Hailmaker** — 7-pellet frost shotgun | **Cone of Cold** |
+| **Warlock** | STR 6, INT 6 | **Knell** — lobbed shadow launcher, splash | **Blightbloom** |
 
-Dying returns you here, so the next run can be a different build.
+Every build opens with **Dash** on Shift and **one spell on E**. Q starts empty and is filled at
+a Rune Shrine. Dying returns you here, so the next run can be a different build.
+
+## Movement (`Player/MovementAbilityLibrary.cs`)
+
+Shift is a slot, not a fixed dash. Movement gets its own system rather than being a third
+spell, because a toggle that drains mana for as long as it is held is a different shape from
+cast-once-and-wait.
+
+| Ability | Shape | What it costs |
+|---|---|---|
+| **Dash** | Instant burst with brief invulnerability | Charges, recovering on their own; Agility grants more |
+| **Blink** | Instant teleport, stops at the first wall | 16 mana, 4s cooldown |
+| **Sprint** | Toggle, +55% speed | 9 mana/s |
+| **Aegis Stance** | Toggle, ignores all damage — **breaks the moment you move** | 14 mana/s, max 2.5s |
+| **Spider Legs** | Toggle, +22% speed and you can cling to and run along walls | 11 mana/s |
+
+Instant abilities run an `AbilityEffect` chain, so Blink is the same chain it was as a spell and
+Dash is a one-effect wrapper over the motor. Sustained ones are four knobs — speed bonus,
+invulnerability, break-on-movement, wall-cling — each mapping to one capability on the motor or
+the character sheet, added on activation and taken back on release.
+
+Rune Shrines offer either a spell or a movement ability, so the Shift slot is something a run
+can genuinely change.
 
 The three live in code (`Player/LoadoutLibrary.cs`) so a fresh clone has something to pick with
 nothing authored. **Wizard with a Gun → Create Starting Loadout Assets** writes them out as

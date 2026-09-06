@@ -29,12 +29,26 @@ namespace WizardGun
         private StatusController _status;
         private Health _health;
 
+        [Header("Wall cling")]
+        [SerializeField] private float wallSlideSpeed = 1.5f;
+        [SerializeField] private float wallContactMemory = 0.15f;
+
         private Vector3 _velocity;
         private float _coyoteTimer;
         private float _jumpBufferTimer;
         private float _dashTimer;
         private Vector3 _dashDirection;
         private float _dashRechargeTimer;
+        private Vector3 _wishDirection;
+        private Vector3 _wallNormal;
+        private float _wallContactTime = -99f;
+
+        /// <summary>Set by Spider Legs. Turns walls into surfaces you can hold on to and run along.</summary>
+        public bool WallClingEnabled { get; set; }
+
+        /// <summary>True while a wall is close enough to cling to, and the ability allows it.</summary>
+        public bool IsWallClinging => WallClingEnabled && !IsGrounded &&
+                                      Time.time - _wallContactTime < wallContactMemory;
 
         public Vector3 Velocity => _velocity;
         public float HorizontalSpeed => new Vector2(_velocity.x, _velocity.z).magnitude;
@@ -63,16 +77,14 @@ namespace WizardGun
 
             bool frozen = _status != null && _status.IsControlImpaired;
             Vector2 input = (InputEnabled && !frozen) ? ReadMoveInput() : Vector2.zero;
-            Vector3 wishDir = WishDirection(input);
+            _wishDirection = WishDirection(input);
 
-            if (InputEnabled && !frozen)
-            {
-                if (Input.GetKeyDown(KeyCode.Space)) _jumpBufferTimer = jumpBuffer;
-                if (Input.GetKeyDown(KeyCode.LeftShift)) TryDash(wishDir);
-            }
+            // Shift belongs to MovementController now, since what it does is a run choice.
+            if (InputEnabled && !frozen && Input.GetKeyDown(KeyCode.Space))
+                _jumpBufferTimer = jumpBuffer;
 
             if (_dashTimer > 0f) UpdateDash(dt);
-            else UpdateNormalMovement(wishDir, dt);
+            else UpdateNormalMovement(_wishDirection, dt);
 
             _controller.Move(_velocity * dt);
             IsGrounded = _controller.isGrounded;
@@ -121,6 +133,17 @@ namespace WizardGun
                 horizontal = ApplyFriction(horizontal, dt);
                 horizontal = Accelerate(horizontal, wishDir, wishSpeed, groundAcceleration, dt);
             }
+            else if (IsWallClinging)
+            {
+                // On a wall the climber keeps near-full control and only slides, rather than
+                // falling. Movement is projected along the surface, so you run across it.
+                Vector3 along = Vector3.ProjectOnPlane(wishDir, _wallNormal);
+                horizontal = Accelerate(horizontal, along.normalized, wishSpeed,
+                    groundAcceleration * 0.6f, dt);
+
+                _velocity.y = Mathf.Max(_velocity.y + gravity * 0.15f * dt, -wallSlideSpeed);
+                _coyoteTimer = coyoteTime;   // so the wall can be kicked off
+            }
             else
             {
                 float airControl = _sheet != null ? _sheet.Get(Attr.AirControl) : 0.4f;
@@ -130,6 +153,18 @@ namespace WizardGun
 
             _velocity.x = horizontal.x;
             _velocity.z = horizontal.z;
+        }
+
+        /// <summary>
+        /// Remembers the last near-vertical surface touched. Cheaper and more reliable than
+        /// probing for walls every frame, since the controller already reports its collisions.
+        /// </summary>
+        private void OnControllerColliderHit(ControllerColliderHit hit)
+        {
+            if (Mathf.Abs(hit.normal.y) > 0.4f) return;   // floor or ceiling, not a wall
+
+            _wallNormal = hit.normal;
+            _wallContactTime = Time.time;
         }
 
         private Vector3 ApplyFriction(Vector3 horizontal, float dt)
@@ -182,11 +217,17 @@ namespace WizardGun
             }
         }
 
-        private void TryDash(Vector3 wishDir)
+        /// <summary>
+        /// Fires a dash in the direction being held, or straight ahead when standing still.
+        /// Returns false with no charges left, which lets the ability refund itself.
+        /// </summary>
+        public bool TryDash()
         {
-            if (DashCharges <= 0) return;
+            if (DashCharges <= 0) return false;
 
-            Vector3 dir = wishDir.sqrMagnitude > 0.01f ? wishDir.normalized : transform.forward;
+            Vector3 dir = _wishDirection.sqrMagnitude > 0.01f
+                ? _wishDirection.normalized
+                : transform.forward;
             dir.y = 0f;
             dir.Normalize();
 
@@ -198,6 +239,8 @@ namespace WizardGun
 
             if (_health != null)
                 _health.InvulnerabilityTimer = Mathf.Max(_health.InvulnerabilityTimer, dashInvulnerability);
+
+            return true;
         }
 
         private void UpdateDash(float dt)

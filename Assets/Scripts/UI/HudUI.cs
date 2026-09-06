@@ -87,22 +87,71 @@ namespace WizardGun
             UIStyles.Text(new Rect(x + 8f, y + 25f, width, 14f),
                 Mathf.CeilToInt(mana.Current) + " mana", UIStyles.Small, Color.white);
 
-            // Dash charges
-            int charges = player.Motor.DashCharges;
-            int max = player.Motor.MaxDashCharges;
-            for (int i = 0; i < max; i++)
-            {
-                var pip = new Rect(x + i * 26f, y + 48f, 20f, 6f);
-                bool filled = i < charges;
-                float partial = (i == charges) ? player.Motor.DashRechargeFraction : 0f;
+            DrawMovementSlot(player, x, y + 44f);
+        }
 
-                UIStyles.Fill(pip, new Color(1f, 1f, 1f, 0.12f));
-                if (filled) UIStyles.Fill(pip, new Color(0.6f, 0.95f, 1f, 0.9f));
-                else if (partial > 0f)
-                    UIStyles.Fill(new Rect(pip.x, pip.y, pip.width * partial, pip.height),
-                        new Color(0.6f, 0.95f, 1f, 0.4f));
+        /// <summary>
+        /// The Shift slot. The three ability shapes need three readouts: charge pips for Dash,
+        /// a cooldown bar for Blink, and a live on/off state for the sustained ones.
+        /// </summary>
+        private static void DrawMovementSlot(PlayerRig player, float x, float y)
+        {
+            MovementController movement = player.Movement;
+            MovementAbility ability = movement != null ? movement.Current : null;
+
+            if (ability == null)
+            {
+                UIStyles.Text(new Rect(x, y, 240f, 16f), "SHIFT  empty", UIStyles.Small, UIStyles.Muted);
+                return;
             }
-            UIStyles.Text(new Rect(x + max * 26f + 8f, y + 44f, 120f, 14f), "SHIFT dash", UIStyles.Small);
+
+            if (ability.UsesDashCharges)
+            {
+                int charges = player.Motor.DashCharges;
+                int max = player.Motor.MaxDashCharges;
+
+                for (int i = 0; i < max; i++)
+                {
+                    var pip = new Rect(x + i * 26f, y + 4f, 20f, 6f);
+                    float partial = i == charges ? player.Motor.DashRechargeFraction : 0f;
+
+                    UIStyles.Fill(pip, new Color(1f, 1f, 1f, 0.12f));
+                    if (i < charges) UIStyles.Fill(pip, ability.Tint);
+                    else if (partial > 0f)
+                        UIStyles.Fill(new Rect(pip.x, pip.y, pip.width * partial, pip.height),
+                            new Color(ability.Tint.r, ability.Tint.g, ability.Tint.b, 0.4f));
+                }
+
+                UIStyles.Text(new Rect(x + max * 26f + 8f, y, 200f, 16f),
+                    "SHIFT " + ability.DisplayName, UIStyles.Small, UIStyles.Muted);
+                return;
+            }
+
+            if (ability.IsSustained)
+            {
+                // Sustained abilities show what they are costing, and whether they are running.
+                bool on = movement.IsActive;
+                var bar = new Rect(x, y + 3f, 120f, 8f);
+
+                float fraction = ability.MaxDuration > 0f && on
+                    ? 1f - Mathf.Clamp01(movement.ActiveTime / ability.MaxDuration)
+                    : (on ? 1f : 0f);
+
+                UIStyles.Bar(bar, fraction, ability.Tint, new Color(1f, 1f, 1f, 0.10f));
+                UIStyles.Text(new Rect(x + 128f, y, 260f, 16f),
+                    "SHIFT " + ability.DisplayName + (on ? "  ON" : "  " + ability.CostLine()),
+                    UIStyles.Small, on ? ability.Tint : UIStyles.Muted);
+                return;
+            }
+
+            float cooldown = movement.CooldownFraction;
+            var cooldownBar = new Rect(x, y + 3f, 120f, 8f);
+            UIStyles.Bar(cooldownBar, 1f - cooldown, ability.Tint, new Color(1f, 1f, 1f, 0.10f));
+
+            UIStyles.Text(new Rect(x + 128f, y, 260f, 16f),
+                "SHIFT " + ability.DisplayName +
+                (cooldown > 0f ? "  " + movement.Cooldown.ToString("0.0") + "s" : ""),
+                UIStyles.Small, cooldown > 0f ? UIStyles.Muted : ability.Tint);
         }
 
         // ---------------------------------------------------------------- bottom right

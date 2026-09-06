@@ -232,7 +232,9 @@ namespace WizardGun
                     // First pick switches it on; later picks make the blast hit harder.
                     if (level > 1) run.BlinkDetonationDamage += 30f;
                 },
-                run => run.Player != null && run.Player.Book.Knows(SpellLibrary.Get("blink")));
+                // Blink sits on the movement slot now, not in the spell book.
+                run => run.Player != null && run.Player.Movement != null &&
+                       run.Player.Movement.Has("blink"));
 
             Add("glass_cannon", "Glass Cannon", "+40% damage dealt, but -25% maximum health.", Rarity.Rare, 3,
                 (run, level) =>

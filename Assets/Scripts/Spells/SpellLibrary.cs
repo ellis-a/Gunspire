@@ -58,7 +58,7 @@ namespace WizardGun
         {
             _all = new List<Spell>
             {
-                Blink(),
+                LavaSplash(),
                 ConeOfCold(),
                 Firebolt(),
                 KineticSlam(),
@@ -70,26 +70,51 @@ namespace WizardGun
             };
         }
 
-        private static Spell Blink() => new Spell
+
+        /// <summary>A lobbed grenade that bursts and leaves the ground burning.</summary>
+        private static Spell LavaSplash() => new Spell
         {
-            Id = "blink",
-            DisplayName = "Blink",
-            ShortName = "BLNK",
-            Description = "Teleport a short distance forward, passing through anything in the way. " +
-                          "Brief invulnerability on arrival.",
-            ManaCost = 16f,
-            Cooldown = 4.0f,
+            Id = "lava_splash",
+            DisplayName = "Lava Splash",
+            ShortName = "LAVA",
+            Description = "Lob a gobbet of molten rock. It bursts on landing and leaves the floor " +
+                          "burning, so it denies a doorway as readily as it kills.",
+            ManaCost = 24f,
+            Cooldown = 6f,
             Rarity = Rarity.Common,
-            Type = SpellType.Mobility,
-            DamageType = DamageType.Astral,
-            LevelUpNote = "and further range",
+            Type = SpellType.Attack,
+            DamageType = DamageType.Fire,
+            LevelUpNote = "and a wider, longer-lasting pool",
             OnCast =
             {
-                // The sweep aborts against a wall, which refunds the whole cast.
-                new SweepForwardEffect { BaseDistance = 9f, PerIntellect = 0.18f, MaxDistance = 22f },
-                new VfxGhostTrailEffect(),
-                new TeleportEffect(),
-                new GrantInvulnerabilityEffect { Seconds = 0.18f }
+                new StatusPayloadEffect
+                {
+                    Status = StatusId.Burn, Duration = 4f,
+                    Stacks = 2, StacksPerLevel = 1f, Magnitude = 5f
+                },
+                new SpawnProjectileEffect
+                {
+                    // Thrown, not fired: gravity is what makes it a grenade.
+                    Damage = 0f,
+                    Speed = 26f,
+                    Gravity = 11f,
+                    Radius = 0.3f,
+                    Lifetime = 5f,
+                    OnHit =
+                    {
+                        new SelectSphereEffect { Radius = 3.8f, AroundPoint = true, ScaleRadiusWithLevel = true },
+                        new DealDamageEffect
+                        {
+                            Amount = 34f, FalloffFromPoint = true, FalloffRadius = 3.8f,
+                            MinFraction = 0.45f, Knockback = 4f
+                        },
+                        new LingeringZoneEffect
+                        {
+                            Radius = 3.4f, Duration = 4.5f, DamagePerTick = 5f, TickInterval = 0.5f
+                        },
+                        new VfxSphereEffect { Diameter = 1.8f, Alpha = 0.55f, Lifetime = 0.3f, GrowPerSecond = 10f }
+                    }
+                }
             }
         };
 

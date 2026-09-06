@@ -72,7 +72,7 @@ namespace WizardGun
 
             Health.AnyDamaged += OnAnyDamaged;
             Health.AnyDied += OnAnyDied;
-            SpellEvents.Cast += OnSpellCast;
+            AbilityEvents.Used += OnAbilityUsed;
         }
 
         public void Unbind()
@@ -82,7 +82,7 @@ namespace WizardGun
 
             Health.AnyDamaged -= OnAnyDamaged;
             Health.AnyDied -= OnAnyDied;
-            SpellEvents.Cast -= OnSpellCast;
+            AbilityEvents.Used -= OnAbilityUsed;
         }
 
         private bool CameFromPlayer(in DamageInfo info)
@@ -110,9 +110,10 @@ namespace WizardGun
                 Player.Status.Apply(StatusLibrary.Haste(3f, 1, 0.10f), Player.gameObject, Team.Player);
         }
 
-        private void OnSpellCast(Spell spell, AbilityContext ctx, Vector3 position)
+        /// <summary>Blink lives on the movement slot now, so this keys off the ability id.</summary>
+        private void OnAbilityUsed(string abilityId, AbilityContext ctx, Vector3 position)
         {
-            if (!BlinkDetonates || spell == null || spell.Id != "blink") return;
+            if (!BlinkDetonates || abilityId != "blink") return;
 
             DamageInfo template = DamageInfo.Create(BlinkDetonationDamage * ctx.Power,
                 DamageType.Astral, Team.Player, ctx.Caster);

@@ -48,13 +48,43 @@ namespace WizardGun
             if (Book != null)
             {
                 for (int i = 0; i < SpellBook.SlotCount; i++)
-                    if (Input.GetKeyDown(SpellBook.SlotKeys[i])) Book.TryCast(i);
+                    if (Input.GetKeyDown(SpellBook.SlotKeys[i])) UseSpellSlot(i);
             }
 
             if (Input.GetMouseButtonDown(1) || Input.GetKeyDown(KeyCode.V)) TryBash();
 
             if (Input.GetKeyDown(KeyCode.F) && _focus != null && _focus.CanInteract(gameObject))
                 _focus.Interact(gameObject);
+        }
+
+        /// <summary>
+        /// Uses a spell slot and says why if it does not fire. Pressing a key and getting
+        /// silence reads as a broken game, especially now that a run opens with Q empty.
+        /// </summary>
+        private void UseSpellSlot(int slot)
+        {
+            CastOutcome outcome = Book.TryCastSlot(slot);
+            if (outcome == CastOutcome.Cast) return;
+
+            string label = SpellBook.SlotLabels[slot];
+            switch (outcome)
+            {
+                case CastOutcome.NoSpell:
+                    Notify("Nothing bound to " + label + " - learn a spell at a Rune Shrine");
+                    break;
+                case CastOutcome.NotEnoughMana:
+                    Notify("Not enough mana");
+                    break;
+                case CastOutcome.NoRoom:
+                    Notify("No room to cast that");
+                    break;
+                // A cooldown already reads clearly on the HUD slot, so it stays quiet.
+            }
+        }
+
+        private static void Notify(string message)
+        {
+            if (GameDirector.Instance != null) GameDirector.Instance.Notify(message, 1.6f);
         }
 
         // ---------------------------------------------------------------- melee bash

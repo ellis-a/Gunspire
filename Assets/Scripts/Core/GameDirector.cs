@@ -105,7 +105,7 @@ namespace WizardGun
         public void StartRun(int seed)
         {
             Run?.Unbind();
-            SpellEvents.ClearSubscribers();
+            AbilityEvents.ClearSubscribers();
 
             Run = new RunState(seed, floorCount);
 

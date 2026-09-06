@@ -125,21 +125,35 @@ namespace WizardGun
                 y += 24f;
             }
 
-            string[] ids = loadout.SpellIdsBySlot;
-            if (ids != null)
+            MovementAbility movement = MovementAbilityLibrary.Get(loadout.MovementAbilityId);
+            if (movement != null)
             {
-                for (int slot = 0; slot < ids.Length && slot < SpellBook.SlotCount; slot++)
-                {
-                    Spell spell = SpellLibrary.Get(ids[slot]);
-                    if (spell == null) continue;
+                UIStyles.Text(new Rect(x, y, 46f, 18f), "SHIFT", UIStyles.Small, movement.Tint);
+                UIStyles.Text(new Rect(x + 48f, y, width - 48f, 18f),
+                    movement.DisplayName + "   " + movement.CostLine(), UIStyles.Small, UIStyles.Muted);
+                y += 20f;
+            }
 
-                    UIStyles.Text(new Rect(x, y, 24f, 18f), SpellBook.SlotLabels[slot],
-                        UIStyles.Small, spell.Tint);
-                    UIStyles.Text(new Rect(x + 26f, y, width - 26f, 18f),
-                        spell.DisplayName + "   " + spell.Type + " / " + DamageTypes.Name(spell.DamageType),
-                        UIStyles.Small, UIStyles.Muted);
-                    y += 18f;
-                }
+            Spell spell = SpellLibrary.Get(loadout.SpellId);
+            int slot = Mathf.Clamp(loadout.SpellSlot, 0, SpellBook.SlotCount - 1);
+            if (spell != null)
+            {
+                UIStyles.Text(new Rect(x, y, 46f, 18f), SpellBook.SlotLabels[slot],
+                    UIStyles.Small, spell.Tint);
+                UIStyles.Text(new Rect(x + 48f, y, width - 48f, 18f),
+                    spell.DisplayName + "   " + spell.Type + " / " + DamageTypes.Name(spell.DamageType),
+                    UIStyles.Small, UIStyles.Muted);
+                y += 20f;
+            }
+
+            // Say plainly that the other slot starts empty, rather than leaving a silent gap.
+            for (int i = 0; i < SpellBook.SlotCount; i++)
+            {
+                if (i == slot) continue;
+                UIStyles.Text(new Rect(x, y, 46f, 18f), SpellBook.SlotLabels[i], UIStyles.Small, UIStyles.Muted);
+                UIStyles.Text(new Rect(x + 48f, y, width - 48f, 18f),
+                    "empty - found at a Rune Shrine", UIStyles.Small, UIStyles.Muted);
+                y += 20f;
             }
 
             UIStyles.Text(new Rect(x, rect.yMax - 30f, width, 20f),
@@ -374,6 +388,17 @@ namespace WizardGun
                 UIStyles.Text(new Rect(rect.x + 130f, y, rect.width - 150f, 20f), damage,
                     UIStyles.Small, UIStyles.Muted);
                 y += 22f;
+            }
+
+            // The Shift slot.
+            MovementAbility movement = player.Movement != null ? player.Movement.Current : null;
+            if (movement != null)
+            {
+                UIStyles.Text(new Rect(rect.x + 20f, y, 110f, 20f), "SHIFT  " + movement.DisplayName,
+                    UIStyles.Small, movement.Tint);
+                UIStyles.Text(new Rect(rect.x + 130f, y, rect.width - 150f, 20f),
+                    movement.CostLine(), UIStyles.Small, UIStyles.Muted);
+                y += 20f;
             }
 
             // Spells, with their levels.

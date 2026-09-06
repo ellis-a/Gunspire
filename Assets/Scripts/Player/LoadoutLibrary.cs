@@ -65,10 +65,11 @@ namespace WizardGun
                     Id = "pyromancer",
                     DisplayName = "Pyromancer",
                     Description = "Set the room alight and keep moving. Burning stacks reward " +
-                                  "spraying widely, and Blink keeps you out of the fire you started.",
+                                  "spraying widely, and Lava Splash turns a doorway into a wall of fire.",
                     Strength = 4, Intellect = 8, Agility = 6, Vitality = 4, Luck = 3,
                     WeaponId = "emberspit",
-                    SpellIdsBySlot = new[] { "firebolt", "blink" }
+                    MovementAbilityId = "dash",
+                    SpellId = "lava_splash"
                 },
 
                 new LoadoutDefinition
@@ -76,10 +77,11 @@ namespace WizardGun
                     Id = "ice_wizard",
                     DisplayName = "Ice Wizard",
                     Description = "Freeze them where they stand and shoot them at your leisure. " +
-                                  "Frozen targets shatter, and the ward buys the seconds to reload.",
+                                  "Frozen targets shatter, and a shotgun answers whatever is left.",
                     Strength = 4, Intellect = 7, Agility = 4, Vitality = 7, Luck = 3,
                     WeaponId = "hailmaker",
-                    SpellIdsBySlot = new[] { "cone_of_cold", "arcane_ward" }
+                    MovementAbilityId = "dash",
+                    SpellId = "cone_of_cold"
                 },
 
                 new LoadoutDefinition
@@ -87,10 +89,11 @@ namespace WizardGun
                     Id = "warlock",
                     DisplayName = "Warlock",
                     Description = "Deny the ground and let rot do the work. Heavy on splash, " +
-                                  "light on precision, and everything you touch stops healing.",
+                                  "light on precision, and everything you touch stops healing itself.",
                     Strength = 6, Intellect = 6, Agility = 4, Vitality = 5, Luck = 4,
                     WeaponId = "knell",
-                    SpellIdsBySlot = new[] { "blightbloom", "kinetic_slam" }
+                    MovementAbilityId = "dash",
+                    SpellId = "blightbloom"
                 }
             };
         }

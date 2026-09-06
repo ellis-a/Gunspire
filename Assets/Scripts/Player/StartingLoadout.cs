@@ -65,7 +65,10 @@ namespace WizardGun
             if (weapon != null) weapon.Equip(WeaponLibrary.Get(WeaponId));
         }
 
-        /// <summary>Empties the book first, so a restart cannot carry spells over from the last run.</summary>
+        /// <summary>
+        /// Binds the one spell a run opens with. The other slot is deliberately left empty and
+        /// gets filled at a shrine. Empties the book first, so a restart carries nothing over.
+        /// </summary>
         public static void ApplySpells(SpellBook book)
         {
             LoadoutDefinition loadout = Selected;
@@ -73,25 +76,38 @@ namespace WizardGun
 
             book.ResetBook();
 
-            string[] ids = loadout.SpellIdsBySlot;
-            if (ids == null) return;
+            string id = loadout.SpellId;
+            if (string.IsNullOrEmpty(id)) return;
 
-            for (int slot = 0; slot < ids.Length && slot < SpellBook.SlotCount; slot++)
+            Spell spell = SpellLibrary.Get(id);
+            if (spell == null)
             {
-                string id = ids[slot];
-                Spell spell = SpellLibrary.Get(id);
-
-                if (spell == null)
-                {
-                    // Silently leaving the slot empty is how a typo used to hide, so say so.
-                    Debug.LogWarning("Loadout \"" + loadout.Id + "\": no spell with id \"" + id
-                                     + "\" for slot " + SpellBook.SlotLabels[slot]
-                                     + ". That slot will be empty. Known ids: " + KnownSpellIds());
-                    continue;
-                }
-
-                book.Bind(spell, slot);
+                // Silently leaving the slot empty is how a typo used to hide, so say so.
+                Debug.LogWarning("Loadout \"" + loadout.Id + "\": no spell with id \"" + id
+                                 + "\". The slot will be empty. Known ids: " + KnownSpellIds());
+                return;
             }
+
+            int slot = Mathf.Clamp(loadout.SpellSlot, 0, SpellBook.SlotCount - 1);
+            book.Bind(spell, slot);
+        }
+
+        /// <summary>Puts the loadout's movement ability on Shift, defaulting to Dash.</summary>
+        public static void ApplyMovement(MovementController controller)
+        {
+            LoadoutDefinition loadout = Selected;
+            if (controller == null || loadout == null) return;
+
+            MovementAbility ability = MovementAbilityLibrary.Get(loadout.MovementAbilityId);
+            if (ability == null)
+            {
+                Debug.LogWarning("Loadout \"" + loadout.Id + "\": no movement ability with id \""
+                                 + loadout.MovementAbilityId + "\". Falling back to Dash.");
+                ability = MovementAbilityLibrary.Default;
+            }
+
+            controller.ResetState();
+            controller.Equip(ability);
         }
 
         public static void ApplyTo(PlayerRig rig)
@@ -100,6 +116,7 @@ namespace WizardGun
             ApplyStats(rig.Sheet);
             ApplyWeapon(rig.Weapon);
             ApplySpells(rig.Book);
+            ApplyMovement(rig.Movement);
         }
 
         private static string KnownSpellIds()

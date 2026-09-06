@@ -19,6 +19,7 @@ namespace WizardGun
         public PlayerLook Look;
         public PlayerCombat CombatInput;
         public SpellBook Book;
+        public MovementController Movement;
         public Weapon Weapon;
         public Camera Camera;
         public Transform CameraPivot;
@@ -41,6 +42,7 @@ namespace WizardGun
             if (Motor != null) Motor.InputEnabled = enabled;
             if (Look != null) Look.InputEnabled = enabled;
             if (CombatInput != null) CombatInput.InputEnabled = enabled;
+            if (Movement != null) Movement.InputEnabled = enabled;
             PlayerLook.LockCursor(enabled);
         }
 
@@ -52,6 +54,7 @@ namespace WizardGun
             if (Weapon != null) Weapon.RefillMagazine();
             if (Book != null) Book.ResetCooldowns();
             if (Status != null) Status.ClearAll();
+            if (Movement != null) Movement.ResetState();
         }
 
         // ---------------------------------------------------------------- construction
@@ -80,6 +83,7 @@ namespace WizardGun
             var motor = root.AddComponent<PlayerMotor>();
             var look = root.AddComponent<PlayerLook>();
             var book = root.AddComponent<SpellBook>();
+            var movement = root.AddComponent<MovementController>();
             var combat = root.AddComponent<PlayerCombat>();
 
             // Camera rig
@@ -126,6 +130,7 @@ namespace WizardGun
             rig.Look = look;
             rig.CombatInput = combat;
             rig.Book = book;
+            rig.Movement = movement;
             rig.Weapon = weapon;
             rig.Camera = camera;
             rig.CameraPivot = pivot.transform;
@@ -143,6 +148,12 @@ namespace WizardGun
                 Controller = controller
             };
             book.Context = rig.SpellContext;
+
+            movement.Context = rig.SpellContext;
+            movement.Motor = motor;
+            movement.Mana = mana;
+            movement.Health = health;
+            movement.Sheet = sheet;
 
             // Stats, gun and spells all come from the one loadout definition, which a restart
             // reapplies to this same object.
