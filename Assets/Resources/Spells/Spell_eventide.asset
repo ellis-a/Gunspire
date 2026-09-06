@@ -1,0 +1,76 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 742cfdfb30a993f448892174ad3ab0e9, type: 3}
+  m_Name: Spell_eventide
+  m_EditorClassIdentifier: Assembly-CSharp::WizardGun.SpellAsset
+  Definition:
+    Id: eventide
+    DisplayName: Eventide
+    ShortName: EVEN
+    Description: Mark a point in the world. A moment later the light there collapses,
+      tearing apart everything inside and withering the survivors.
+    ManaCost: 55
+    Cooldown: 22
+    Rarity: 4
+    Type: 0
+    DamageType: 4
+    MaxLevel: 3
+    GrowthPerLevel: 0.35
+    LevelUpNote: 
+    TintOverride: {r: 0, g: 0, b: 0, a: 0}
+    OnCast:
+    - rid: 5643702077732683810
+    - rid: 5643702077732683811
+    - rid: 5643702077732683812
+    - rid: 5643702077732683813
+    - rid: 5643702077732683814
+  references:
+    version: 2
+    RefIds:
+    - rid: 5643702077732683810
+      type: {class: AimPointEffect, ns: WizardGun, asm: Assembly-CSharp}
+      data:
+        Range: 60
+    - rid: 5643702077732683811
+      type: {class: TelegraphCircleEffect, ns: WizardGun, asm: Assembly-CSharp}
+      data:
+        Radius: 9
+        Duration: 0.9
+        ScaleWithLevel: 1
+        DropToGround: 1
+    - rid: 5643702077732683812
+      type: {class: StatusPayloadEffect, ns: WizardGun, asm: Assembly-CSharp}
+      data:
+        Status: 5
+        Duration: 6
+        Stacks: 2
+        StacksPerLevel: 0
+        Magnitude: 0.15
+        DurationPerLevel: 0
+    - rid: 5643702077732683813
+      type: {class: StatusPayloadEffect, ns: WizardGun, asm: Assembly-CSharp}
+      data:
+        Status: 3
+        Duration: 6
+        Stacks: 3
+        StacksPerLevel: 0
+        Magnitude: 4
+        DurationPerLevel: 0
+    - rid: 5643702077732683814
+      type: {class: DelayedBlastEffect, ns: WizardGun, asm: Assembly-CSharp}
+      data:
+        Delay: 0.9
+        Radius: 9
+        Damage: 95
+        Knockback: 10
+        MinFraction: 0.5
+        ScaleRadiusWithLevel: 1

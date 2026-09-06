@@ -1,0 +1,79 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 742cfdfb30a993f448892174ad3ab0e9, type: 3}
+  m_Name: Spell_glacial_prison
+  m_EditorClassIdentifier: Assembly-CSharp::WizardGun.SpellAsset
+  Definition:
+    Id: glacial_prison
+    DisplayName: Glacial Prison
+    ShortName: PRSN
+    Description: Every enemy around you is frozen solid and takes heavy frost damage.
+      Frozen targets shatter for bonus damage when struck.
+    ManaCost: 42
+    Cooldown: 18
+    Rarity: 3
+    Type: 2
+    DamageType: 2
+    MaxLevel: 4
+    GrowthPerLevel: 0.22
+    LevelUpNote: and a longer freeze
+    TintOverride: {r: 0, g: 0, b: 0, a: 0}
+    OnCast:
+    - rid: 5643702077732683805
+    - rid: 5643702077732683806
+    - rid: 5643702077732683807
+    - rid: 5643702077732683808
+    - rid: 5643702077732683809
+  references:
+    version: 2
+    RefIds:
+    - rid: 5643702077732683805
+      type: {class: SelectSphereEffect, ns: WizardGun, asm: Assembly-CSharp}
+      data:
+        Radius: 14
+        AroundPoint: 0
+        ScaleRadiusWithLevel: 1
+        RequireLineOfSight: 0
+    - rid: 5643702077732683806
+      type: {class: StatusPayloadEffect, ns: WizardGun, asm: Assembly-CSharp}
+      data:
+        Status: 1
+        Duration: 2
+        Stacks: 1
+        StacksPerLevel: 0
+        Magnitude: 1
+        DurationPerLevel: 0.35
+    - rid: 5643702077732683807
+      type: {class: DealDamageEffect, ns: WizardGun, asm: Assembly-CSharp}
+      data:
+        Amount: 40
+        CanCrit: 0
+        Knockback: 0
+        FalloffFromPoint: 0
+        FalloffRadius: 6
+        MinFraction: 0.4
+        UseSmashPower: 0
+        OnlyOncePerCast: 0
+    - rid: 5643702077732683808
+      type: {class: VfxOnTargetsEffect, ns: WizardGun, asm: Assembly-CSharp}
+      data:
+        Size: {x: 1.4, y: 2.2, z: 1.4}
+        Alpha: 0.4
+        Lifetime: 2
+        LifetimePerLevel: 0.35
+    - rid: 5643702077732683809
+      type: {class: VfxGroundRingEffect, ns: WizardGun, asm: Assembly-CSharp}
+      data:
+        Radius: 14
+        Alpha: 0.3
+        Lifetime: 0.5
+        ScaleWithLevel: 1

@@ -71,21 +71,32 @@ namespace WizardGun.EditorTools
         public static void LogBalanceTable()
         {
             var text = new System.Text.StringBuilder();
-            text.AppendLine("id                 rarity      school   dps   dmg  rpm  mag  shape");
+            text.AppendLine("id                 rarity      school   dps   dmg splash  rpm  mag pierce  shape");
 
             IReadOnlyList<WeaponDefinition> all = WeaponLibrary.All;
             for (int i = 0; i < all.Count; i++)
             {
                 WeaponDefinition w = all[i];
-                float dps = w.Damage * w.RoundsPerTrigger * (w.RoundsPerMinute / 60f);
+
+                // A launcher puts most of its damage in the blast, so leaving splash out of
+                // this understates it badly enough to mislead a balance pass.
+                float perTrigger = w.Damage * w.RoundsPerTrigger + w.SplashDamage;
+                float dps = perTrigger * (w.RoundsPerMinute / 60f);
+
                 string shape = w.Mode == FireMode.Burst
                     ? w.BurstCount + "-burst"
                     : (w.Delivery == DeliveryKind.Hitscan ? "hitscan" : "projectile");
 
-                text.AppendLine(string.Format("{0,-18} {1,-11} {2,-8} {3,5:0} {4,5:0.#} {5,4:0} {6,4} {7}",
-                    w.Id, w.Rarity, DamageTypes.Name(w.DamageType), dps,
-                    w.Damage, w.RoundsPerMinute, w.MagazineSize, shape));
+                text.AppendLine(string.Format(
+                    "{0,-18} {1,-11} {2,-8} {3,5:0} {4,5:0.#} {5,6:0} {6,4:0} {7,4} {8,6} {9}",
+                    w.Id, w.Rarity, DamageTypes.Name(w.DamageType), dps, w.Damage, w.SplashDamage,
+                    w.RoundsPerMinute, w.MagazineSize, w.MaxPierce, shape));
             }
+
+            text.AppendLine();
+            text.AppendLine("dps is sustained single-target, ignoring reloads. It counts splash at full "
+                            + "value, so a launcher reads high against one target and higher against a "
+                            + "group; pierce is not folded in at all.");
 
             Debug.Log(text.ToString());
         }

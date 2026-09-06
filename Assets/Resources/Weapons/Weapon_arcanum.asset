@@ -1,0 +1,46 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 48821f08f7c573342a9dd749bc0fa5b3, type: 3}
+  m_Name: Weapon_arcanum
+  m_EditorClassIdentifier: Assembly-CSharp::WizardGun.WeaponAsset
+  Definition:
+    Id: arcanum
+    DisplayName: Arcanum .38
+    Flavor: Enchanted sidearm. Reliable, unglamorous, always loaded.
+    Rarity: 0
+    Delivery: 0
+    Mode: 0
+    DamageType: 0
+    Damage: 14
+    PelletsPerShot: 1
+    Knockback: 0
+    RoundsPerMinute: 320
+    MagazineSize: 12
+    ReloadTime: 1.1
+    BurstCount: 1
+    BurstInterval: 0.06
+    SpreadDegrees: 0.4
+    MovingSpreadDegrees: 1.1
+    RecoilPitch: 1.3
+    RecoilYaw: 0.3
+    Range: 140
+    MaxPierce: 0
+    ProjectileSpeed: 45
+    ProjectileRadius: 0.14
+    ProjectileGravity: 0
+    ProjectileLifetime: 4
+    ProjectileHoming: 0
+    SplashRadius: 0
+    SplashDamage: 0
+    ManaPerShot: 0
+    Tint: {r: 1, g: 0.92, b: 0.7, a: 1}
+    OnHitStatuses: []

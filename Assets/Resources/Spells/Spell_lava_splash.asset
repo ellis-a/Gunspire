@@ -1,0 +1,100 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 742cfdfb30a993f448892174ad3ab0e9, type: 3}
+  m_Name: Spell_lava_splash
+  m_EditorClassIdentifier: Assembly-CSharp::WizardGun.SpellAsset
+  Definition:
+    Id: lava_splash
+    DisplayName: Lava Splash
+    ShortName: LAVA
+    Description: Lob a gobbet of molten rock. It bursts on landing and leaves the
+      floor burning, so it denies a doorway as readily as it kills.
+    ManaCost: 24
+    Cooldown: 6
+    Rarity: 0
+    Type: 0
+    DamageType: 1
+    MaxLevel: 5
+    GrowthPerLevel: 0.22
+    LevelUpNote: and a wider, longer-lasting pool
+    TintOverride: {r: 0, g: 0, b: 0, a: 0}
+    OnCast:
+    - rid: 5643702077732683776
+    - rid: 5643702077732683777
+  references:
+    version: 2
+    RefIds:
+    - rid: 5643702077732683776
+      type: {class: StatusPayloadEffect, ns: WizardGun, asm: Assembly-CSharp}
+      data:
+        Status: 2
+        Duration: 4
+        Stacks: 2
+        StacksPerLevel: 1
+        Magnitude: 5
+        DurationPerLevel: 0
+    - rid: 5643702077732683777
+      type: {class: SpawnProjectileEffect, ns: WizardGun, asm: Assembly-CSharp}
+      data:
+        Damage: 0
+        Speed: 26
+        Radius: 0.3
+        Lifetime: 5
+        Gravity: 11
+        Knockback: 0
+        Pierce: 0
+        Homing: 0
+        Count: 1
+        ArcSpreadDegrees: 0
+        SpreadDegrees: 0
+        SplashRadius: 0
+        SplashDamage: 0
+        ScaleSplashWithLevel: 1
+        OnHit:
+        - rid: 5643702077732683778
+        - rid: 5643702077732683779
+        - rid: 5643702077732683780
+        - rid: 5643702077732683781
+    - rid: 5643702077732683778
+      type: {class: SelectSphereEffect, ns: WizardGun, asm: Assembly-CSharp}
+      data:
+        Radius: 3.8
+        AroundPoint: 1
+        ScaleRadiusWithLevel: 1
+        RequireLineOfSight: 0
+    - rid: 5643702077732683779
+      type: {class: DealDamageEffect, ns: WizardGun, asm: Assembly-CSharp}
+      data:
+        Amount: 34
+        CanCrit: 0
+        Knockback: 4
+        FalloffFromPoint: 1
+        FalloffRadius: 3.8
+        MinFraction: 0.45
+        UseSmashPower: 0
+        OnlyOncePerCast: 0
+    - rid: 5643702077732683780
+      type: {class: LingeringZoneEffect, ns: WizardGun, asm: Assembly-CSharp}
+      data:
+        Radius: 3.4
+        Duration: 4.5
+        DamagePerTick: 5
+        TickInterval: 0.5
+        ScaleWithLevel: 1
+    - rid: 5643702077732683781
+      type: {class: VfxSphereEffect, ns: WizardGun, asm: Assembly-CSharp}
+      data:
+        Diameter: 1.8
+        Alpha: 0.55
+        Lifetime: 0.3
+        AttachToCaster: 0
+        GrowPerSecond: 10

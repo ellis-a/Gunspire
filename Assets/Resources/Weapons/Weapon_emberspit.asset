@@ -1,0 +1,50 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 48821f08f7c573342a9dd749bc0fa5b3, type: 3}
+  m_Name: Weapon_emberspit
+  m_EditorClassIdentifier: Assembly-CSharp::WizardGun.WeaponAsset
+  Definition:
+    Id: emberspit
+    DisplayName: Emberspit
+    Flavor: Thirty rounds of lit pitch. Accuracy is not the point.
+    Rarity: 0
+    Delivery: 1
+    Mode: 1
+    DamageType: 1
+    Damage: 6
+    PelletsPerShot: 1
+    Knockback: 0
+    RoundsPerMinute: 750
+    MagazineSize: 30
+    ReloadTime: 1.5
+    BurstCount: 1
+    BurstInterval: 0.06
+    SpreadDegrees: 2.2
+    MovingSpreadDegrees: 3.4
+    RecoilPitch: 0.35
+    RecoilYaw: 0.4
+    Range: 120
+    MaxPierce: 0
+    ProjectileSpeed: 75
+    ProjectileRadius: 0.11
+    ProjectileGravity: 0
+    ProjectileLifetime: 4
+    ProjectileHoming: 0
+    SplashRadius: 0
+    SplashDamage: 0
+    ManaPerShot: 0
+    Tint: {r: 1, g: 0.48, b: 0.15, a: 1}
+    OnHitStatuses:
+    - Id: 2
+      Duration: 2.5
+      Stacks: 1
+      Magnitude: 3

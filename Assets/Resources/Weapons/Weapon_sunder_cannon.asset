@@ -1,0 +1,46 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 48821f08f7c573342a9dd749bc0fa5b3, type: 3}
+  m_Name: Weapon_sunder_cannon
+  m_EditorClassIdentifier: Assembly-CSharp::WizardGun.WeaponAsset
+  Definition:
+    Id: sunder_cannon
+    DisplayName: Sunder Cannon
+    Flavor: Lobs a rune that disagrees with architecture.
+    Rarity: 2
+    Delivery: 1
+    Mode: 0
+    DamageType: 0
+    Damage: 26
+    PelletsPerShot: 1
+    Knockback: 6
+    RoundsPerMinute: 80
+    MagazineSize: 4
+    ReloadTime: 2
+    BurstCount: 1
+    BurstInterval: 0.06
+    SpreadDegrees: 0.5
+    MovingSpreadDegrees: 1.2
+    RecoilPitch: 5
+    RecoilYaw: 0.5
+    Range: 120
+    MaxPierce: 0
+    ProjectileSpeed: 34
+    ProjectileRadius: 0.25
+    ProjectileGravity: 12
+    ProjectileLifetime: 4
+    ProjectileHoming: 0
+    SplashRadius: 4.2
+    SplashDamage: 34
+    ManaPerShot: 0
+    Tint: {r: 0.9, g: 0.8, b: 0.55, a: 1}
+    OnHitStatuses: []

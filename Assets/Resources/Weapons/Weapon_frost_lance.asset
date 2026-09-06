@@ -1,0 +1,50 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 48821f08f7c573342a9dd749bc0fa5b3, type: 3}
+  m_Name: Weapon_frost_lance
+  m_EditorClassIdentifier: Assembly-CSharp::WizardGun.WeaponAsset
+  Definition:
+    Id: frost_lance
+    DisplayName: Frost Lance
+    Flavor: A shard of the tower moat, fired at unkind speed.
+    Rarity: 1
+    Delivery: 1
+    Mode: 0
+    DamageType: 2
+    Damage: 34
+    PelletsPerShot: 1
+    Knockback: 3
+    RoundsPerMinute: 110
+    MagazineSize: 5
+    ReloadTime: 1.5
+    BurstCount: 1
+    BurstInterval: 0.06
+    SpreadDegrees: 0
+    MovingSpreadDegrees: 0.4
+    RecoilPitch: 2.6
+    RecoilYaw: 0.2
+    Range: 120
+    MaxPierce: 0
+    ProjectileSpeed: 90
+    ProjectileRadius: 0.18
+    ProjectileGravity: 0
+    ProjectileLifetime: 4
+    ProjectileHoming: 0
+    SplashRadius: 0
+    SplashDamage: 0
+    ManaPerShot: 0
+    Tint: {r: 0.55, g: 0.85, b: 1, a: 1}
+    OnHitStatuses:
+    - Id: 0
+      Duration: 4
+      Stacks: 2
+      Magnitude: 0.11

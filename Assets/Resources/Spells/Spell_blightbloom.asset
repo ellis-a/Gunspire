@@ -1,0 +1,80 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 742cfdfb30a993f448892174ad3ab0e9, type: 3}
+  m_Name: Spell_blightbloom
+  m_EditorClassIdentifier: Assembly-CSharp::WizardGun.SpellAsset
+  Definition:
+    Id: blightbloom
+    DisplayName: Blightbloom
+    ShortName: BLOM
+    Description: Lob a seed that bursts into a patch of rot. Anything standing in
+      it takes nature damage and is blighted, so its healing is swallowed too.
+    ManaCost: 32
+    Cooldown: 11
+    Rarity: 2
+    Type: 2
+    DamageType: 3
+    MaxLevel: 4
+    GrowthPerLevel: 0.22
+    LevelUpNote: and a wider, longer-lived patch
+    TintOverride: {r: 0, g: 0, b: 0, a: 0}
+    OnCast:
+    - rid: 5643702077732683799
+    - rid: 5643702077732683800
+  references:
+    version: 2
+    RefIds:
+    - rid: 5643702077732683799
+      type: {class: StatusPayloadEffect, ns: WizardGun, asm: Assembly-CSharp}
+      data:
+        Status: 3
+        Duration: 6
+        Stacks: 2
+        StacksPerLevel: 0.5
+        Magnitude: 3
+        DurationPerLevel: 0
+    - rid: 5643702077732683800
+      type: {class: SpawnProjectileEffect, ns: WizardGun, asm: Assembly-CSharp}
+      data:
+        Damage: 0
+        Speed: 30
+        Radius: 0.3
+        Lifetime: 5
+        Gravity: 10
+        Knockback: 0
+        Pierce: 0
+        Homing: 0
+        Count: 1
+        ArcSpreadDegrees: 0
+        SpreadDegrees: 0
+        SplashRadius: 0
+        SplashDamage: 0
+        ScaleSplashWithLevel: 1
+        OnHit:
+        - rid: 5643702077732683801
+        - rid: 5643702077732683802
+    - rid: 5643702077732683801
+      type: {class: LingeringZoneEffect, ns: WizardGun, asm: Assembly-CSharp}
+      data:
+        Radius: 4.5
+        Duration: 6
+        DamagePerTick: 6
+        TickInterval: 0.5
+        ScaleWithLevel: 1
+    - rid: 5643702077732683802
+      type: {class: VfxSphereEffect, ns: WizardGun, asm: Assembly-CSharp}
+      data:
+        Diameter: 1.2
+        Alpha: 0.45
+        Lifetime: 0.3
+        AttachToCaster: 0
+        GrowPerSecond: 10

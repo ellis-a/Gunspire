@@ -1,0 +1,58 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 742cfdfb30a993f448892174ad3ab0e9, type: 3}
+  m_Name: Spell_arcane_ward
+  m_EditorClassIdentifier: Assembly-CSharp::WizardGun.SpellAsset
+  Definition:
+    Id: arcane_ward
+    DisplayName: Arcane Ward
+    ShortName: WARD
+    Description: 'Sheathe yourself in force: take much less damage for a few seconds
+      and mend a wound.'
+    ManaCost: 28
+    Cooldown: 14
+    Rarity: 1
+    Type: 3
+    DamageType: 5
+    MaxLevel: 5
+    GrowthPerLevel: 0.22
+    LevelUpNote: and a longer ward
+    TintOverride: {r: 0.75, g: 0.8, b: 1, a: 1}
+    OnCast:
+    - rid: 5643702077732683796
+    - rid: 5643702077732683797
+    - rid: 5643702077732683798
+  references:
+    version: 2
+    RefIds:
+    - rid: 5643702077732683796
+      type: {class: SelfStatusEffect, ns: WizardGun, asm: Assembly-CSharp}
+      data:
+        Status: 7
+        Duration: 5
+        DurationPerLevel: 1
+        Stacks: 2
+        Magnitude: 0.18
+    - rid: 5643702077732683797
+      type: {class: HealSelfEffect, ns: WizardGun, asm: Assembly-CSharp}
+      data:
+        FractionOfMax: 0.12
+        Flat: 0
+        ScaleWithPower: 1
+    - rid: 5643702077732683798
+      type: {class: VfxSphereEffect, ns: WizardGun, asm: Assembly-CSharp}
+      data:
+        Diameter: 2.4
+        Alpha: 0.22
+        Lifetime: 0.6
+        AttachToCaster: 1
+        GrowPerSecond: 0

@@ -89,10 +89,16 @@ namespace WizardGun
             for (int i = 0; i < effects.Count; i++)
             {
                 if (effects[i] == null) continue;
+
+                // Cosmetic effects describe themselves as null on purpose; skip them rather
+                // than emitting a separator with nothing after it.
+                string part = effects[i].Describe();
+                if (string.IsNullOrEmpty(part)) continue;
+
                 if (text.Length > 0) text += " > ";
-                text += effects[i].Describe();
+                text += part;
             }
-            return text;
+            return text.Length > 0 ? text : "does nothing";
         }
     }
 }

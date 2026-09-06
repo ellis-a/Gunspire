@@ -1,0 +1,50 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 48821f08f7c573342a9dd749bc0fa5b3, type: 3}
+  m_Name: Weapon_knell
+  m_EditorClassIdentifier: Assembly-CSharp::WizardGun.WeaponAsset
+  Definition:
+    Id: knell
+    DisplayName: Knell
+    Flavor: Fires a bell that rings once, on arrival, for whoever is nearest.
+    Rarity: 0
+    Delivery: 1
+    Mode: 0
+    DamageType: 4
+    Damage: 16
+    PelletsPerShot: 1
+    Knockback: 6
+    RoundsPerMinute: 80
+    MagazineSize: 4
+    ReloadTime: 2
+    BurstCount: 1
+    BurstInterval: 0.06
+    SpreadDegrees: 0.6
+    MovingSpreadDegrees: 1.3
+    RecoilPitch: 4.5
+    RecoilYaw: 0.45
+    Range: 120
+    MaxPierce: 0
+    ProjectileSpeed: 32
+    ProjectileRadius: 0.24
+    ProjectileGravity: 9
+    ProjectileLifetime: 4
+    ProjectileHoming: 0
+    SplashRadius: 3.6
+    SplashDamage: 30
+    ManaPerShot: 0
+    Tint: {r: 0.62, g: 0.35, b: 0.8, a: 1}
+    OnHitStatuses:
+    - Id: 5
+      Duration: 4
+      Stacks: 1
+      Magnitude: 0.15

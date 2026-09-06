@@ -1,0 +1,52 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 742cfdfb30a993f448892174ad3ab0e9, type: 3}
+  m_Name: Spell_chain_lightning
+  m_EditorClassIdentifier: Assembly-CSharp::WizardGun.SpellAsset
+  Definition:
+    Id: chain_lightning
+    DisplayName: Chain Lightning
+    ShortName: ARC
+    Description: An arc that leaps between nearby enemies, shocking each one.
+    ManaCost: 30
+    Cooldown: 7
+    Rarity: 2
+    Type: 0
+    DamageType: 5
+    MaxLevel: 5
+    GrowthPerLevel: 0.22
+    LevelUpNote: and one more target
+    TintOverride: {r: 0, g: 0, b: 0, a: 0}
+    OnCast:
+    - rid: 5643702077732683803
+    - rid: 5643702077732683804
+  references:
+    version: 2
+    RefIds:
+    - rid: 5643702077732683803
+      type: {class: StatusPayloadEffect, ns: WizardGun, asm: Assembly-CSharp}
+      data:
+        Status: 4
+        Duration: 4
+        Stacks: 1
+        StacksPerLevel: 0
+        Magnitude: 0.12
+        DurationPerLevel: 0
+    - rid: 5643702077732683804
+      type: {class: ChainEffect, ns: WizardGun, asm: Assembly-CSharp}
+      data:
+        Damage: 26
+        FirstRange: 45
+        JumpRange: 10
+        BaseJumps: 3
+        JumpsPerLevel: 1
+        DecayPerJump: 0.8

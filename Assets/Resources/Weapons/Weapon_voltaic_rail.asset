@@ -1,0 +1,50 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 48821f08f7c573342a9dd749bc0fa5b3, type: 3}
+  m_Name: Weapon_voltaic_rail
+  m_EditorClassIdentifier: Assembly-CSharp::WizardGun.WeaponAsset
+  Definition:
+    Id: voltaic_rail
+    DisplayName: Voltaic Rail
+    Flavor: Punches through a line of cultists and keeps going.
+    Rarity: 2
+    Delivery: 0
+    Mode: 0
+    DamageType: 5
+    Damage: 55
+    PelletsPerShot: 1
+    Knockback: 0
+    RoundsPerMinute: 70
+    MagazineSize: 4
+    ReloadTime: 1.9
+    BurstCount: 1
+    BurstInterval: 0.06
+    SpreadDegrees: 0
+    MovingSpreadDegrees: 0.2
+    RecoilPitch: 4.5
+    RecoilYaw: 0.4
+    Range: 200
+    MaxPierce: 4
+    ProjectileSpeed: 45
+    ProjectileRadius: 0.14
+    ProjectileGravity: 0
+    ProjectileLifetime: 4
+    ProjectileHoming: 0
+    SplashRadius: 0
+    SplashDamage: 0
+    ManaPerShot: 0
+    Tint: {r: 0.72, g: 0.72, b: 1, a: 1}
+    OnHitStatuses:
+    - Id: 4
+      Duration: 4
+      Stacks: 1
+      Magnitude: 0.12

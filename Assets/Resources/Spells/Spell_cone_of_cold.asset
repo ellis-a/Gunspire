@@ -1,0 +1,80 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 742cfdfb30a993f448892174ad3ab0e9, type: 3}
+  m_Name: Spell_cone_of_cold
+  m_EditorClassIdentifier: Assembly-CSharp::WizardGun.SpellAsset
+  Definition:
+    Id: cone_of_cold
+    DisplayName: Cone of Cold
+    ShortName: COLD
+    Description: A freezing cone that damages and heavily chills everything in front
+      of you. Chilled enemies that saturate freeze solid.
+    ManaCost: 26
+    Cooldown: 6.5
+    Rarity: 0
+    Type: 2
+    DamageType: 2
+    MaxLevel: 5
+    GrowthPerLevel: 0.22
+    LevelUpNote: and more chill per hit
+    TintOverride: {r: 0, g: 0, b: 0, a: 0}
+    OnCast:
+    - rid: 5643702077732683782
+    - rid: 5643702077732683783
+    - rid: 5643702077732683784
+    - rid: 5643702077732683785
+    - rid: 5643702077732683786
+  references:
+    version: 2
+    RefIds:
+    - rid: 5643702077732683782
+      type: {class: SelectConeEffect, ns: WizardGun, asm: Assembly-CSharp}
+      data:
+        Range: 13
+        HalfAngle: 34
+        RequireLineOfSight: 1
+        ScaleRangeWithLevel: 0
+    - rid: 5643702077732683783
+      type: {class: StatusPayloadEffect, ns: WizardGun, asm: Assembly-CSharp}
+      data:
+        Status: 0
+        Duration: 4.5
+        Stacks: 2
+        StacksPerLevel: 0.5
+        Magnitude: 0.11
+        DurationPerLevel: 0
+    - rid: 5643702077732683784
+      type: {class: DealDamageEffect, ns: WizardGun, asm: Assembly-CSharp}
+      data:
+        Amount: 17
+        CanCrit: 0
+        Knockback: 0
+        FalloffFromPoint: 0
+        FalloffRadius: 6
+        MinFraction: 0.4
+        UseSmashPower: 0
+        OnlyOncePerCast: 0
+    - rid: 5643702077732683785
+      type: {class: VfxConeEffect, ns: WizardGun, asm: Assembly-CSharp}
+      data:
+        Range: 13
+        HalfAngle: 34
+        Alpha: 0.35
+        Lifetime: 0.4
+        ScaleWithLevel: 0
+    - rid: 5643702077732683786
+      type: {class: VfxShardsEffect, ns: WizardGun, asm: Assembly-CSharp}
+      data:
+        Count: 10
+        Range: 13
+        SpreadDegrees: 34
+        Lifetime: 0.35
