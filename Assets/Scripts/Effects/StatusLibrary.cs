@@ -133,7 +133,7 @@ namespace WizardGun
         public override void OnTick(StatusController c, ActiveStatus s)
         {
             float dmg = s.Magnitude * s.Stacks * TickInterval;
-            c.DealTickDamage(s, dmg, DamageType.Poison);
+            c.DealTickDamage(s, dmg, DamageType.Nature);
         }
     }
 

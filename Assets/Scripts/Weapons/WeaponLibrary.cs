@@ -3,7 +3,10 @@ using UnityEngine;
 
 namespace WizardGun
 {
-    /// <summary>The gun roster. <see cref="Starter"/> is what the player spawns holding.</summary>
+    /// <summary>
+    /// The gun roster. The starting weapon is named by <see cref="StartingLoadout.WeaponId"/>
+    /// and is excluded from world drops.
+    /// </summary>
     public static class WeaponLibrary
     {
         private static List<WeaponDefinition> _all;
@@ -31,19 +34,22 @@ namespace WizardGun
         }
 
         /// <summary>
-        /// A gun for a plinth or a vault. The weapon the player already starts holding is
-        /// excluded, so changing the starting gun automatically keeps it out of world drops.
+        /// A gun for a plinth or a vault. Rolls a rarity from the player's Luck, then picks a
+        /// gun at that tier. The weapon the player already starts holding is excluded, so
+        /// changing the starting gun automatically keeps it out of world drops.
         /// </summary>
-        public static WeaponDefinition RandomDrop(Rng rng)
+        public static WeaponDefinition RollDrop(Rng rng, float luck, float rarityBonus = 1f)
         {
             if (_all == null) BuildRoster();
 
             var pool = new List<WeaponDefinition>();
             for (int i = 0; i < _all.Count; i++)
                 if (_all[i].Id != StartingLoadout.WeaponId) pool.Add(_all[i]);
-
             if (pool.Count == 0) pool.AddRange(_all);
-            return rng.Pick(pool).Clone();
+
+            Rarity rolled = Rarities.Roll(rng, luck, rarityBonus);
+            WeaponDefinition pick = Rarities.PickOfRarity(rng, pool, w => w.Rarity, rolled);
+            return pick.Clone();
         }
 
         private static void BuildRoster()
@@ -55,9 +61,10 @@ namespace WizardGun
                     Id = "arcanum",
                     DisplayName = "Arcanum .38",
                     Flavor = "Enchanted sidearm. Reliable, unglamorous, always loaded.",
+                    Rarity = Rarity.Common,
                     Delivery = DeliveryKind.Hitscan,
                     Mode = FireMode.Semi,
-                    DamageType = DamageType.Physical,
+                    DamageType = DamageType.Normal,
                     Damage = 14f,
                     RoundsPerMinute = 320f,
                     MagazineSize = 12,
@@ -67,7 +74,7 @@ namespace WizardGun
                     RecoilPitch = 1.3f,
                     RecoilYaw = 0.3f,
                     Range = 140f,
-                    Tint = new Color(1f, 0.92f, 0.7f)
+                    Tint = DamageTypes.Tint(DamageType.Normal)
                 },
 
                 new WeaponDefinition
@@ -75,6 +82,7 @@ namespace WizardGun
                     Id = "ember_repeater",
                     DisplayName = "Ember Repeater",
                     Flavor = "Spits burning slag. Hold the trigger and let it cook.",
+                    Rarity = Rarity.Common,
                     Delivery = DeliveryKind.Projectile,
                     Mode = FireMode.Auto,
                     DamageType = DamageType.Fire,
@@ -88,7 +96,7 @@ namespace WizardGun
                     RecoilYaw = 0.35f,
                     ProjectileSpeed = 70f,
                     ProjectileRadius = 0.12f,
-                    Tint = Palette.Fire,
+                    Tint = DamageTypes.Tint(DamageType.Fire),
                     OnHitStatuses = { StatusLibrary.Burn(3f, 1, 4f) }
                 },
 
@@ -97,9 +105,10 @@ namespace WizardGun
                     Id = "frost_lance",
                     DisplayName = "Frost Lance",
                     Flavor = "A shard of the tower moat, fired at unkind speed.",
+                    Rarity = Rarity.Uncommon,
                     Delivery = DeliveryKind.Projectile,
                     Mode = FireMode.Semi,
-                    DamageType = DamageType.Ice,
+                    DamageType = DamageType.Frost,
                     Damage = 34f,
                     RoundsPerMinute = 110f,
                     MagazineSize = 5,
@@ -111,40 +120,19 @@ namespace WizardGun
                     ProjectileSpeed = 90f,
                     ProjectileRadius = 0.18f,
                     Knockback = 3f,
-                    Tint = Palette.Ice,
+                    Tint = DamageTypes.Tint(DamageType.Frost),
                     OnHitStatuses = { StatusLibrary.Chill(4f, 2) }
-                },
-
-                new WeaponDefinition
-                {
-                    Id = "voltaic_rail",
-                    DisplayName = "Voltaic Rail",
-                    Flavor = "Punches through a line of cultists and keeps going.",
-                    Delivery = DeliveryKind.Hitscan,
-                    Mode = FireMode.Semi,
-                    DamageType = DamageType.Lightning,
-                    Damage = 55f,
-                    RoundsPerMinute = 70f,
-                    MagazineSize = 4,
-                    ReloadTime = 1.9f,
-                    SpreadDegrees = 0f,
-                    MovingSpreadDegrees = 0.2f,
-                    RecoilPitch = 4.5f,
-                    RecoilYaw = 0.4f,
-                    Range = 200f,
-                    MaxPierce = 4,
-                    Tint = Palette.Lightning,
-                    OnHitStatuses = { StatusLibrary.Shock(4f) }
                 },
 
                 new WeaponDefinition
                 {
                     Id = "hexshot",
                     DisplayName = "Hexshot",
-                    Flavor = "Eight barrels of powdered grave dirt.",
+                    Flavor = "Eight barrels of powdered grave dirt and crushed root.",
+                    Rarity = Rarity.Uncommon,
                     Delivery = DeliveryKind.Hitscan,
                     Mode = FireMode.Semi,
-                    DamageType = DamageType.Poison,
+                    DamageType = DamageType.Nature,
                     Damage = 8f,
                     PelletsPerShot = 9,
                     RoundsPerMinute = 95f,
@@ -156,7 +144,7 @@ namespace WizardGun
                     RecoilYaw = 0.6f,
                     Range = 42f,
                     Knockback = 2f,
-                    Tint = Palette.Poison,
+                    Tint = DamageTypes.Tint(DamageType.Nature),
                     OnHitStatuses = { StatusLibrary.Blight(6f, 1, 2.5f) }
                 },
 
@@ -165,9 +153,10 @@ namespace WizardGun
                     Id = "sunder_cannon",
                     DisplayName = "Sunder Cannon",
                     Flavor = "Lobs a rune that disagrees with architecture.",
+                    Rarity = Rarity.Rare,
                     Delivery = DeliveryKind.Projectile,
                     Mode = FireMode.Semi,
-                    DamageType = DamageType.Arcane,
+                    DamageType = DamageType.Normal,
                     Damage = 26f,
                     RoundsPerMinute = 80f,
                     MagazineSize = 4,
@@ -182,7 +171,78 @@ namespace WizardGun
                     SplashRadius = 4.2f,
                     SplashDamage = 34f,
                     Knockback = 6f,
-                    Tint = Palette.Arcane
+                    Tint = new Color(0.9f, 0.8f, 0.55f)
+                },
+
+                new WeaponDefinition
+                {
+                    Id = "voltaic_rail",
+                    DisplayName = "Voltaic Rail",
+                    Flavor = "Punches through a line of cultists and keeps going.",
+                    Rarity = Rarity.Rare,
+                    Delivery = DeliveryKind.Hitscan,
+                    Mode = FireMode.Semi,
+                    DamageType = DamageType.Astral,
+                    Damage = 55f,
+                    RoundsPerMinute = 70f,
+                    MagazineSize = 4,
+                    ReloadTime = 1.9f,
+                    SpreadDegrees = 0f,
+                    MovingSpreadDegrees = 0.2f,
+                    RecoilPitch = 4.5f,
+                    RecoilYaw = 0.4f,
+                    Range = 200f,
+                    MaxPierce = 4,
+                    Tint = DamageTypes.Tint(DamageType.Astral),
+                    OnHitStatuses = { StatusLibrary.Shock(4f) }
+                },
+
+                new WeaponDefinition
+                {
+                    Id = "nightfall",
+                    DisplayName = "Nightfall",
+                    Flavor = "Fires a sliver of the dark between stars. The wounds do not close.",
+                    Rarity = Rarity.Mythic,
+                    Delivery = DeliveryKind.Projectile,
+                    Mode = FireMode.Auto,
+                    DamageType = DamageType.Shadow,
+                    Damage = 17f,
+                    RoundsPerMinute = 300f,
+                    MagazineSize = 20,
+                    ReloadTime = 1.7f,
+                    SpreadDegrees = 0.8f,
+                    MovingSpreadDegrees = 1.5f,
+                    RecoilPitch = 1.1f,
+                    RecoilYaw = 0.3f,
+                    ProjectileSpeed = 68f,
+                    ProjectileRadius = 0.16f,
+                    MaxPierce = 1,
+                    Tint = DamageTypes.Tint(DamageType.Shadow),
+                    OnHitStatuses = { StatusLibrary.Weaken(4f), StatusLibrary.Blight(5f, 1, 3f) }
+                },
+
+                new WeaponDefinition
+                {
+                    Id = "requiem",
+                    DisplayName = "Requiem",
+                    Flavor = "The last thing eight wizards ever heard, in sequence.",
+                    Rarity = Rarity.Legendary,
+                    Delivery = DeliveryKind.Hitscan,
+                    Mode = FireMode.Semi,
+                    DamageType = DamageType.Astral,
+                    Damage = 95f,
+                    RoundsPerMinute = 45f,
+                    MagazineSize = 3,
+                    ReloadTime = 2.2f,
+                    SpreadDegrees = 0f,
+                    MovingSpreadDegrees = 0.1f,
+                    RecoilPitch = 7f,
+                    RecoilYaw = 0.5f,
+                    Range = 250f,
+                    MaxPierce = 8,
+                    Knockback = 4f,
+                    Tint = new Color(1f, 0.85f, 0.45f),
+                    OnHitStatuses = { StatusLibrary.Shock(5f, 2), StatusLibrary.Mark(6f) }
                 }
             };
         }

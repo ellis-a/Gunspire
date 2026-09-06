@@ -5,8 +5,12 @@ using UnityEngine;
 namespace WizardGun
 {
     /// <summary>
-    /// The player spell slots. Two for now (Q and E); the slot count is data, so adding
-    /// a third key later means changing <see cref="SlotCount"/> and the key list.
+    /// The player spell slots and the level of every spell learned. Two slots for now
+    /// (Q and E); the slot count is data, so adding a third key later means changing
+    /// <see cref="SlotCount"/> and the key list.
+    ///
+    /// Levels are keyed by spell id rather than by slot, so a spell keeps its level if it is
+    /// moved to the other slot.
     /// </summary>
     public class SpellBook : MonoBehaviour
     {
@@ -17,6 +21,7 @@ namespace WizardGun
         private readonly Spell[] _slots = new Spell[SlotCount];
         private readonly float[] _cooldowns = new float[SlotCount];
         private readonly List<Spell> _known = new List<Spell>();
+        private readonly Dictionary<string, int> _levels = new Dictionary<string, int>();
 
         public SpellContext Context { get; set; }
 
@@ -29,40 +34,68 @@ namespace WizardGun
 
         public float GetCooldown(int index) => index >= 0 && index < SlotCount ? _cooldowns[index] : 0f;
 
+        // ---------------------------------------------------------------- levels
+
+        public int GetLevel(Spell spell)
+        {
+            if (spell == null) return 0;
+            return _levels.TryGetValue(spell.Id, out int level) ? level : 0;
+        }
+
+        public int GetSlotLevel(int index) => GetLevel(GetSlot(index));
+
+        public bool Knows(Spell spell) => spell != null && _levels.ContainsKey(spell.Id);
+
+        /// <summary>True when the spell is unknown, or known but not yet at its level cap.</summary>
+        public bool CanTake(Spell spell) => spell != null && GetLevel(spell) < spell.MaxLevel;
+
+        /// <summary>Raises the level of an already-known spell. Returns the new level.</summary>
+        public int LevelUp(Spell spell)
+        {
+            if (spell == null) return 0;
+
+            int level = Mathf.Min(GetLevel(spell) + 1, spell.MaxLevel);
+            _levels[spell.Id] = level;
+            Changed?.Invoke();
+            return level;
+        }
+
         public float GetCooldownFraction(int index)
         {
             Spell spell = GetSlot(index);
-            if (spell == null || spell.Cooldown <= 0f) return 0f;
-            return Mathf.Clamp01(_cooldowns[index] / spell.Cooldown);
+            if (spell == null) return 0f;
+
+            float full = spell.CooldownAtLevel(GetLevel(spell));
+            return full <= 0f ? 0f : Mathf.Clamp01(_cooldowns[index] / full);
         }
 
-        public bool Knows(Spell spell)
-        {
-            if (spell == null) return false;
-            for (int i = 0; i < _known.Count; i++)
-                if (_known[i].Id == spell.Id) return true;
-            return false;
-        }
+        // ---------------------------------------------------------------- learning and binding
 
-        /// <summary>Adds a spell to the book and puts it in the given slot (or the first free one).</summary>
+        /// <summary>
+        /// Takes a spell: levels it if already known, otherwise binds it at level one.
+        /// This is what a shrine pedestal calls.
+        /// </summary>
         public void Learn(Spell spell, int slot = -1)
         {
             if (spell == null) return;
-            if (!Knows(spell)) _known.Add(spell);
+
+            if (Knows(spell))
+            {
+                LevelUp(spell);
+                return;
+            }
 
             if (slot < 0)
             {
-                slot = 0;
+                slot = SlotCount - 1;
                 for (int i = 0; i < SlotCount; i++)
-                {
                     if (_slots[i] == null) { slot = i; break; }
-                    if (i == SlotCount - 1) slot = SlotCount - 1;   // no free slot: replace the last
-                }
             }
 
             Bind(spell, slot);
         }
 
+        /// <summary>Places a spell in a slot. Known at level one if it was not known before.</summary>
         public void Bind(Spell spell, int slot)
         {
             if (slot < 0 || slot >= SlotCount) return;
@@ -74,9 +107,21 @@ namespace WizardGun
 
             _slots[slot] = spell;
             _cooldowns[slot] = 0f;
-            if (spell != null && !Knows(spell)) _known.Add(spell);
+
+            if (spell != null && !_levels.ContainsKey(spell.Id)) _levels[spell.Id] = 1;
+            if (spell != null && !KnownContains(spell)) _known.Add(spell);
+
             Changed?.Invoke();
         }
+
+        private bool KnownContains(Spell spell)
+        {
+            for (int i = 0; i < _known.Count; i++)
+                if (_known[i].Id == spell.Id) return true;
+            return false;
+        }
+
+        // ---------------------------------------------------------------- casting
 
         private void Update()
         {
@@ -101,10 +146,21 @@ namespace WizardGun
             if (!CanCast(slot)) return false;
 
             Spell spell = _slots[slot];
-            if (!spell.Cast(Context)) return false;   // spell refunded itself
+            int level = Mathf.Max(1, GetLevel(spell));
+
+            // The spell reads its own level and school off the context.
+            Context.CurrentSpell = spell;
+            Context.SpellLevel = level;
+
+            bool cast = spell.Cast(Context);
+
+            Context.CurrentSpell = null;
+            Context.SpellLevel = 1;
+
+            if (!cast) return false;   // spell refunded itself
 
             if (Context.Mana != null) Context.Mana.TrySpend(spell.ManaCost);
-            _cooldowns[slot] = spell.Cooldown;
+            _cooldowns[slot] = spell.CooldownAtLevel(level);
 
             SpellCast?.Invoke(spell, slot);
             return true;
@@ -126,6 +182,7 @@ namespace WizardGun
         public void ResetBook()
         {
             _known.Clear();
+            _levels.Clear();
             for (int i = 0; i < SlotCount; i++)
             {
                 _slots[i] = null;

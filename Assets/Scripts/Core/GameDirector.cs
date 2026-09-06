@@ -203,10 +203,12 @@ namespace WizardGun
 
         private void OfferBoons()
         {
+            // Elite rooms push the whole rarity ladder up, which is what they are for.
             bool eliteReward = Run.CurrentNode != null && Run.CurrentNode.Kind == RoomKind.Elite;
+            float rarityBonus = eliteReward ? 2.5f : 1f;
 
             _boonOffers.Clear();
-            _boonOffers.AddRange(BoonLibrary.Offer(Run, boonChoices, eliteReward));
+            _boonOffers.AddRange(BoonLibrary.Offer(Run, boonChoices, rarityBonus));
 
             if (_boonOffers.Count == 0)
             {
@@ -263,9 +265,21 @@ namespace WizardGun
 
         // ---------------------------------------------------------------- spell binding
 
+        /// <summary>
+        /// A spell pedestal. A spell you already know levels up on the spot; a new one opens
+        /// the slot picker, because binding it costs you whatever is in that slot.
+        /// </summary>
         public void OfferSpellBinding(Spell spell)
         {
             if (spell == null || State != GameStateKind.Playing) return;
+
+            if (Player.Book.Knows(spell))
+            {
+                int level = Player.Book.LevelUp(spell);
+                Notify(spell.DisplayName + " is now level " + level);
+                return;
+            }
+
             PendingSpell = spell;
             SetState(GameStateKind.ChoosingBoon);   // reuses the choice screen
         }

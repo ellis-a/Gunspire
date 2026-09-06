@@ -14,10 +14,13 @@ namespace WizardGun
         public string DisplayName = "Weapon";
         public string Flavor = string.Empty;
 
+        /// <summary>Drives how often this gun turns up on a plinth. See <see cref="Rarities"/>.</summary>
+        public Rarity Rarity = Rarity.Common;
+
         [Header("Delivery")]
         public DeliveryKind Delivery = DeliveryKind.Hitscan;
         public FireMode Mode = FireMode.Semi;
-        public DamageType DamageType = DamageType.Physical;
+        public DamageType DamageType = DamageType.Normal;
 
         [Header("Damage")]
         public float Damage = 12f;
@@ -72,9 +75,9 @@ namespace WizardGun
         {
             string dps = (Damage * PelletsPerShot * (RoundsPerMinute / 60f)).ToString("0");
             string kind = Delivery == DeliveryKind.Hitscan ? "hitscan" : "projectile";
-            return string.Format("{0} dmg x{1}  {2} rpm  mag {3}  {4}  ~{5} dps",
-                Damage.ToString("0.#"), PelletsPerShot, RoundsPerMinute.ToString("0"),
-                MagazineSize, kind, dps);
+            return string.Format("{0} {1} dmg x{2}  {3} rpm  mag {4}  {5}  ~{6} dps",
+                DamageTypes.Name(DamageType), Damage.ToString("0.#"), PelletsPerShot,
+                RoundsPerMinute.ToString("0"), MagazineSize, kind, dps);
         }
     }
 }

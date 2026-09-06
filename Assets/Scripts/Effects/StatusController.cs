@@ -94,6 +94,8 @@ namespace WizardGun
             StatusDefinition def = StatusLibrary.Get(app.Id);
             if (def == null) return;
 
+            CharacterSheet sourceSheet = source != null ? source.GetComponent<CharacterSheet>() : null;
+
             // Chill saturating into a hard freeze is the ice payoff, so check before stacking.
             if (app.Id == StatusId.Chill)
             {
@@ -119,6 +121,7 @@ namespace WizardGun
                 existing.Remaining = Mathf.Max(existing.Remaining, app.Duration);
                 existing.Magnitude = Mathf.Max(existing.Magnitude, app.Magnitude);
                 existing.Source = source;
+                existing.SourceSheet = sourceSheet;
                 existing.SourceTeam = sourceTeam;
                 RebuildModifiers(existing);
                 Changed?.Invoke();
@@ -133,6 +136,7 @@ namespace WizardGun
                 Remaining = app.Duration,
                 Magnitude = app.Magnitude,
                 Source = source,
+                SourceSheet = sourceSheet,
                 SourceTeam = sourceTeam
             };
 
@@ -188,10 +192,16 @@ namespace WizardGun
             s.Mods.Add(mod);
         }
 
-        /// <summary>Damage dealt by a periodic effect, credited back to whoever applied it.</summary>
+        /// <summary>
+        /// Damage dealt by a periodic effect, credited back to whoever applied it. Scales on
+        /// the applier's bonuses for that school, so Fire Mastery makes your burns burn.
+        /// </summary>
         public void DealTickDamage(ActiveStatus s, float amount, DamageType type)
         {
             if (Health == null || !Health.IsAlive || amount <= 0f) return;
+
+            if (s.SourceSheet != null)
+                amount *= s.SourceSheet.Get(Attr.DamageDealt) * s.SourceSheet.DamageTypeMultiplier(type);
 
             DamageInfo info = DamageInfo.Create(amount, type, s.SourceTeam, s.Source);
             info.CanCrit = false;

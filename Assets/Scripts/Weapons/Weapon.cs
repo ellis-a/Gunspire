@@ -231,7 +231,7 @@ namespace WizardGun
 
         private DamageInfo BuildHitscanDamage(Vector3 point, Vector3 normal, Vector3 direction)
         {
-            float amount = Definition.Damage * Combat.OutgoingMultiplier(OwnerSheet, false);
+            float amount = Definition.Damage * Combat.OutgoingMultiplier(OwnerSheet, false, Definition.DamageType);
             bool crit = false;
             if (Combat.RollCrit(OwnerSheet, out float critMultiplier))
             {
@@ -265,14 +265,14 @@ namespace WizardGun
             p.OwnerTeam = OwnerTeam;
             p.Owner = Owner;
             p.OwnerSheet = OwnerSheet;
-            p.Damage = Definition.Damage * Combat.OutgoingMultiplier(OwnerSheet, false);
+            p.Damage = Definition.Damage * Combat.OutgoingMultiplier(OwnerSheet, false, Definition.DamageType);
             p.DamageType = Definition.DamageType;
             p.Speed = Definition.ProjectileSpeed;
             p.Gravity = Definition.ProjectileGravity;
             p.Lifetime = Definition.ProjectileLifetime;
             p.Knockback = Definition.Knockback;
             p.SplashRadius = Definition.SplashRadius;
-            p.SplashDamage = Definition.SplashDamage * Combat.OutgoingMultiplier(OwnerSheet, false);
+            p.SplashDamage = Definition.SplashDamage * Combat.OutgoingMultiplier(OwnerSheet, false, Definition.DamageType);
             p.Pierce = Definition.MaxPierce;
             p.HomingEnabled = Definition.ProjectileHoming;
 

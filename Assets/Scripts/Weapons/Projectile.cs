@@ -15,7 +15,7 @@ namespace WizardGun
         public CharacterSheet OwnerSheet;
 
         public float Damage = 10f;
-        public DamageType DamageType = DamageType.Physical;
+        public DamageType DamageType = DamageType.Normal;
         public bool IsSpell;
         public bool CanCrit = true;
 

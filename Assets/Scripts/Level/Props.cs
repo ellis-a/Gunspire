@@ -133,7 +133,8 @@ namespace WizardGun
 
         public string Prompt => Definition == null
             ? null
-            : "Take " + Definition.DisplayName + "  -  " + Definition.StatLine();
+            : "Take " + Definition.DisplayName + "  [" + Rarities.Name(Definition.Rarity) + "]  -  "
+              + Definition.StatLine();
 
         public bool CanInteract(GameObject interactor) => Definition != null;
 
@@ -156,6 +157,10 @@ namespace WizardGun
             Build.Cylinder(root.transform, "Pedestal", new Vector3(0f, 0.35f, 0f),
                 new Vector3(0.9f, 0.35f, 0.9f), MaterialLibrary.Lit(Palette.Trim), collider: true);
 
+            // A ring in the rarity colour, so how good the drop is reads from across the room.
+            Build.GroundDisc(root.transform, "RarityRing", new Vector3(0f, 0.72f, 0f), 0.62f,
+                MaterialLibrary.Emissive(Rarities.Tint(definition.Rarity), 3f));
+
             Build.Cube(root.transform, "Gun", new Vector3(0f, 1.1f, 0f),
                 new Vector3(0.14f, 0.14f, 0.7f), MaterialLibrary.Emissive(definition.Tint, 2.5f), collider: false);
 
@@ -176,7 +181,22 @@ namespace WizardGun
     {
         public Spell Spell;
 
-        public string Prompt => Spell == null ? null : "Study " + Spell.DisplayName;
+        public string Prompt
+        {
+            get
+            {
+                if (Spell == null) return null;
+
+                PlayerRig rig = PlayerRig.Instance;
+                int level = rig != null && rig.Book != null ? rig.Book.GetLevel(Spell) : 0;
+
+                if (level <= 0)
+                    return "Learn " + Spell.DisplayName + "  [" + Rarities.Name(Spell.Rarity) + "]  -  "
+                           + Spell.Type + " / " + DamageTypes.Name(Spell.DamageType);
+
+                return "Study " + Spell.DisplayName + "  -  " + Spell.LevelUpSummary(level);
+            }
+        }
 
         public bool CanInteract(GameObject interactor) => Spell != null;
 
@@ -195,6 +215,9 @@ namespace WizardGun
 
             Build.Cylinder(root.transform, "Pedestal", new Vector3(0f, 0.4f, 0f),
                 new Vector3(1f, 0.4f, 1f), MaterialLibrary.Lit(Palette.Trim), collider: true);
+
+            Build.GroundDisc(root.transform, "RarityRing", new Vector3(0f, 0.82f, 0f), 0.68f,
+                MaterialLibrary.Emissive(Rarities.Tint(spell.Rarity), 3f));
 
             Build.Sphere(root.transform, "Rune", new Vector3(0f, 1.35f, 0f), 0.55f,
                 MaterialLibrary.Emissive(spell.Tint, 3.5f), collider: false);

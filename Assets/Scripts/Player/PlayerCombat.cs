@@ -83,7 +83,7 @@ namespace WizardGun
                 IDamageable target = targets[i];
                 if (target.Team == Team.Player) continue;
 
-                DamageInfo info = DamageInfo.Create(damage, DamageType.Physical, Team.Player, gameObject);
+                DamageInfo info = DamageInfo.Create(damage, DamageType.Normal, Team.Player, gameObject);
                 info.SmashPower = smashPower;
                 info.Knockback = forward * (4f + strength * 0.5f);
                 info = info.At(target.Transform.position + Vector3.up, -forward);

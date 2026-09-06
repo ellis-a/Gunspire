@@ -12,12 +12,20 @@ namespace WizardGun
     {
         private static readonly Collider[] OverlapBuffer = new Collider[64];
 
-        /// <summary>Global outgoing multiplier for a source. Spells scale on Intellect, guns on Strength.</summary>
-        public static float OutgoingMultiplier(CharacterSheet sheet, bool isSpell)
+        /// <summary>
+        /// Global outgoing multiplier for a source. Spells scale on Intellect and guns on
+        /// Strength, then both pick up whatever the sheet grants for that damage school, and
+        /// spells additionally for their category.
+        /// </summary>
+        public static float OutgoingMultiplier(CharacterSheet sheet, bool isSpell, DamageType damageType,
+            SpellType spellType = SpellType.Attack)
         {
             if (sheet == null) return 1f;
+
             float m = sheet.Get(Attr.DamageDealt);
             m *= isSpell ? sheet.Get(Attr.SpellPower) : sheet.Get(Attr.GunDamage);
+            m *= sheet.DamageTypeMultiplier(damageType);
+            if (isSpell) m *= sheet.SpellTypeMultiplier(spellType);
             return m;
         }
 

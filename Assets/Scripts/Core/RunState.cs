@@ -24,7 +24,15 @@ namespace WizardGun
         public float ElapsedSeconds;
 
         public PlayerRig Player;
-        public readonly List<Boon> TakenBoons = new List<Boon>();
+
+        /// <summary>A boon the player has taken, and how many times.</summary>
+        public class TakenBoon
+        {
+            public Boon Boon;
+            public int Level;
+        }
+
+        public readonly List<TakenBoon> TakenBoons = new List<TakenBoon>();
 
         /// <summary>On-hit effects added to every bullet. The weapon holds this exact list.</summary>
         public readonly List<StatusApplication> BulletStatuses = new List<StatusApplication>();
@@ -107,7 +115,7 @@ namespace WizardGun
             if (!BlinkDetonates || spell == null || spell.Id != "blink") return;
 
             DamageInfo template = DamageInfo.Create(BlinkDetonationDamage * ctx.SpellPower,
-                DamageType.Arcane, Team.Player, ctx.Caster);
+                DamageType.Astral, Team.Player, ctx.Caster);
             template.CanCrit = false;
             template = template.WithStatuses(SpellStatuses);
 
@@ -123,19 +131,41 @@ namespace WizardGun
 
         public CharacterSheet Sheet => Player != null ? Player.Sheet : null;
 
+        /// <summary>Takes a boon, or levels it up if it has been taken before.</summary>
         public void AddBoon(Boon boon)
         {
             if (boon == null) return;
-            TakenBoons.Add(boon);
-            boon.Apply(this);
+
+            TakenBoon entry = FindBoon(boon.Id);
+            if (entry == null)
+            {
+                entry = new TakenBoon { Boon = boon, Level = 0 };
+                TakenBoons.Add(entry);
+            }
+
+            if (entry.Level >= boon.MaxLevel) return;
+
+            entry.Level++;
+            boon.Apply(this, entry.Level);
         }
 
-        public bool HasBoon(string id)
+        public TakenBoon FindBoon(string id)
         {
             for (int i = 0; i < TakenBoons.Count; i++)
-                if (TakenBoons[i].Id == id) return true;
-            return false;
+                if (TakenBoons[i].Boon.Id == id) return TakenBoons[i];
+            return null;
         }
+
+        public int BoonLevel(string id)
+        {
+            TakenBoon entry = FindBoon(id);
+            return entry == null ? 0 : entry.Level;
+        }
+
+        public bool HasBoon(string id) => BoonLevel(id) > 0;
+
+        /// <summary>The Luck stat, used for every rarity roll in the run.</summary>
+        public float Luck => Sheet != null ? Sheet.GetStat(StatType.Luck) : 0f;
 
         public string Summary()
         {

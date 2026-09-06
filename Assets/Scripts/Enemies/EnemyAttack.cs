@@ -21,7 +21,7 @@ namespace WizardGun
 
         [Header("Damage")]
         public float Damage = 10f;
-        public DamageType DamageType = DamageType.Arcane;
+        public DamageType DamageType = DamageType.Astral;
         public Color Tint = Palette.Arcane;
 
         protected EnemyController Owner;

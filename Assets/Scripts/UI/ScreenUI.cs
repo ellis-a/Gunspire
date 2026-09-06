@@ -42,7 +42,7 @@ namespace WizardGun
 
                 case GameStateKind.Playing:
                     if (Input.GetKey(KeyCode.Tab)) DrawCharacterSheet(new Rect(
-                        Screen.width * 0.5f - 300f, Screen.height * 0.5f - 230f, 600f, 460f));
+                        Screen.width * 0.5f - 330f, Screen.height * 0.5f - 290f, 660f, 580f));
                     break;
             }
         }
@@ -78,10 +78,15 @@ namespace WizardGun
                 UIStyles.Card(rect, boon.RarityColor, hover);
 
                 UIStyles.Text(new Rect(rect.x + 18f, rect.y + 14f, rect.width - 30f, 22f),
-                    boon.Rarity.ToString().ToUpperInvariant(), UIStyles.Small, boon.RarityColor);
+                    Rarities.Name(boon.Rarity), UIStyles.Small, boon.RarityColor);
                 UIStyles.Text(new Rect(rect.x + 18f, rect.y + 40f, rect.width - 30f, 28f),
                     boon.Name, UIStyles.Heading, UIStyles.Ink);
-                GUI.Label(new Rect(rect.x + 18f, rect.y + 76f, rect.width - 36f, 100f),
+
+                // Whether this is a first pick or another level of something you already have.
+                UIStyles.Text(new Rect(rect.x + 18f, rect.y + 68f, rect.width - 36f, 18f),
+                    boon.LevelLabel(_director.Run), UIStyles.Small, UIStyles.Accent);
+
+                GUI.Label(new Rect(rect.x + 18f, rect.y + 90f, rect.width - 36f, 90f),
                     boon.Description, UIStyles.Wrap);
                 UIStyles.Text(new Rect(rect.x + 18f, rect.yMax - 34f, rect.width - 36f, 22f),
                     "[" + (i + 1) + "]", UIStyles.Small, UIStyles.Muted);
@@ -143,7 +148,10 @@ namespace WizardGun
             PlayerRig player = _director.Player;
 
             UIStyles.Text(new Rect(0f, 90f, Screen.width, 44f), spell.DisplayName, UIStyles.Title, spell.Tint);
-            GUI.Label(new Rect(Screen.width * 0.5f - 280f, 142f, 560f, 60f), spell.Description, UIStyles.Wrap);
+            UIStyles.Text(new Rect(0f, 130f, Screen.width, 20f),
+                Rarities.Name(spell.Rarity) + "   -   " + spell.Type + "   -   "
+                + DamageTypes.Name(spell.DamageType), UIStyles.Center, Rarities.Tint(spell.Rarity));
+            GUI.Label(new Rect(Screen.width * 0.5f - 280f, 152f, 560f, 60f), spell.Description, UIStyles.Wrap);
 
             UIStyles.Text(new Rect(0f, 210f, Screen.width, 22f), "Bind it to a slot", UIStyles.Center, UIStyles.Muted);
 
@@ -161,7 +169,9 @@ namespace WizardGun
                 Spell current = player != null ? player.Book.GetSlot(i) : null;
 
                 string label = SpellBook.SlotLabels[i] + "\n" +
-                               (current != null ? "replaces " + current.DisplayName : "empty");
+                               (current != null
+                                   ? "replaces " + current.DisplayName + " (lv " + player.Book.GetLevel(current) + ")"
+                                   : "empty");
 
                 if (UIStyles.Button(rect, label, spell.Tint)) _director.BindPendingSpell(i);
                 if (Input.GetKeyDown(SpellBook.SlotKeys[i])) _director.BindPendingSpell(i);
@@ -178,7 +188,7 @@ namespace WizardGun
             Dim(0.8f);
             UIStyles.Text(new Rect(0f, 50f, Screen.width, 44f), "Paused", UIStyles.Title, UIStyles.Ink);
 
-            DrawCharacterSheet(new Rect(Screen.width * 0.5f - 320f, 110f, 640f, 400f));
+            DrawCharacterSheet(new Rect(Screen.width * 0.5f - 330f, 100f, 660f, 520f));
 
             var resume = new Rect(Screen.width * 0.5f - 210f, Screen.height - 120f, 200f, 40f);
             var restart = new Rect(Screen.width * 0.5f + 10f, Screen.height - 120f, 200f, 40f);
@@ -205,7 +215,11 @@ namespace WizardGun
 
                 string boons = run.TakenBoons.Count == 0 ? "no boons taken" : "";
                 for (int i = 0; i < run.TakenBoons.Count; i++)
-                    boons += (i > 0 ? ",  " : "") + run.TakenBoons[i].Name;
+                {
+                    RunState.TakenBoon taken = run.TakenBoons[i];
+                    boons += (i > 0 ? ",  " : "") + taken.Boon.Name
+                           + (taken.Level > 1 ? " " + taken.Level : "");
+                }
 
                 GUI.Label(new Rect(Screen.width * 0.5f - 320f, Screen.height * 0.32f + 88f, 640f, 80f),
                     boons, UIStyles.Wrap);
@@ -243,9 +257,51 @@ namespace WizardGun
                 y += 26f;
             }
 
-            y += 12f;
+            y += 8f;
             UIStyles.Fill(new Rect(rect.x + 20f, y, rect.width - 40f, 1f), new Color(1f, 1f, 1f, 0.12f));
-            y += 12f;
+            y += 10f;
+
+            // Resistances and per-school damage, which only exist once something has granted them.
+            string resistances = sheet.DescribeResistances();
+            if (resistances.Length > 0)
+            {
+                UIStyles.Text(new Rect(rect.x + 20f, y, 110f, 20f), "Resist", UIStyles.Small, UIStyles.Accent);
+                UIStyles.Text(new Rect(rect.x + 130f, y, rect.width - 150f, 20f), resistances,
+                    UIStyles.Small, UIStyles.Muted);
+                y += 22f;
+            }
+
+            string damage = sheet.DescribeDamageBonuses();
+            if (damage.Length > 0)
+            {
+                UIStyles.Text(new Rect(rect.x + 20f, y, 110f, 20f), "Damage", UIStyles.Small, UIStyles.Accent);
+                UIStyles.Text(new Rect(rect.x + 130f, y, rect.width - 150f, 20f), damage,
+                    UIStyles.Small, UIStyles.Muted);
+                y += 22f;
+            }
+
+            // Spells, with their levels.
+            SpellBook book = player.Book;
+            if (book != null)
+            {
+                for (int i = 0; i < SpellBook.SlotCount; i++)
+                {
+                    Spell spell = book.GetSlot(i);
+                    if (spell == null) continue;
+
+                    UIStyles.Text(new Rect(rect.x + 20f, y, 110f, 20f),
+                        SpellBook.SlotLabels[i] + "  " + spell.DisplayName, UIStyles.Small, spell.Tint);
+                    UIStyles.Text(new Rect(rect.x + 130f, y, rect.width - 150f, 20f),
+                        string.Format("level {0} / {1}   {2}   {3}", book.GetLevel(spell), spell.MaxLevel,
+                            spell.Type, DamageTypes.Name(spell.DamageType)),
+                        UIStyles.Small, UIStyles.Muted);
+                    y += 20f;
+                }
+            }
+
+            y += 6f;
+            UIStyles.Fill(new Rect(rect.x + 20f, y, rect.width - 40f, 1f), new Color(1f, 1f, 1f, 0.12f));
+            y += 10f;
 
             RunState run = _director.Run;
             if (run != null)
@@ -264,10 +320,13 @@ namespace WizardGun
                 {
                     for (int i = 0; i < run.TakenBoons.Count; i++)
                     {
-                        Boon boon = run.TakenBoons[i];
-                        UIStyles.Text(new Rect(rect.x + 20f, y, 200f, 20f), boon.Name, UIStyles.Small, boon.RarityColor);
+                        RunState.TakenBoon taken = run.TakenBoons[i];
+                        string name = taken.Boon.Name + (taken.Boon.MaxLevel > 1 ? "  " + taken.Level : "");
+
+                        UIStyles.Text(new Rect(rect.x + 20f, y, 200f, 20f), name,
+                            UIStyles.Small, taken.Boon.RarityColor);
                         UIStyles.Text(new Rect(rect.x + 224f, y, rect.width - 244f, 20f),
-                            boon.Description, UIStyles.Small, UIStyles.Muted);
+                            taken.Boon.Description, UIStyles.Small, UIStyles.Muted);
                         y += 20f;
                         if (y > rect.yMax - 30f) break;
                     }

@@ -57,6 +57,56 @@ The route is generated from the run seed, so a seed reproduces the whole tower.
 
 ## Systems
 
+### Rarity (`Core/Rarity.cs`)
+
+Guns, spells and boons all share one five-tier scale. Each tier has a **flat chance per roll**;
+Common takes whatever probability is left over.
+
+| Tier | Flat chance at zero Luck |
+|---|---|
+| Legendary | 0.01% (1 in 10,000) |
+| Mythic | 0.4% |
+| Rare | 5% |
+| Uncommon | 22% |
+| Common | the remainder |
+
+Luck multiplies every tier above Common by `1 + Luck × 0.08`, so a Luck 5 wizard is 1.4× as
+likely to see the good stuff and a Luck 30 one is 3.4×. Elite rooms pass an extra 2.5×
+multiplier on top. If the rolled tier has nothing in it, the pick steps down a tier, then up,
+so a thin pool degrades instead of failing.
+
+Note that a *run* rolls many times — three boons per floor plus shrine and vault drops — so the
+per-run chance of seeing a legendary is far higher than the per-roll chance. Tune
+`Rarities.BaseChance` and `LuckScaling` to taste.
+
+### Damage schools and resistance (`Core/DamageTypes.cs`)
+
+Six schools: **Normal, Fire, Frost, Nature, Shadow, Astral**. (A seventh, `True`, bypasses
+resistance entirely and is bookkeeping rather than an element.)
+
+Adding a school is two edits — a member on the `DamageType` enum and a case in `DamageTypes` —
+because everything else walks the registry. In particular `BoonLibrary` **generates** a mastery
+boon and a resistance boon per school at startup, so a new school arrives with its boons
+already in the pool.
+
+Everything that deals damage carries a school, and every entity can resist it. Negative
+resistance is vulnerability, which is how each enemy archetype gets an affinity: a Frostcaller
+resists Frost and takes 30% extra from Fire, a Warden resists Astral and is soft to Shadow.
+Carrying a second school is how you answer a room that walls off your first.
+
+### Levels
+
+Spells and boons can both be taken repeatedly.
+
+- **Spells** level up on the shrine pedestal. A spell you do not know opens the slot picker; one
+  you already know levels on the spot. Levels raise the spell's own numbers via
+  `LevelMultiplier`, shorten its cooldown to a floor of 60%, and often add something specific —
+  Blink gains range, Chain Lightning gains targets, Cone of Cold gains chill stacks. Levels are
+  keyed by spell id, so moving a spell between slots keeps its level.
+- **Boons** are offered again while below `MaxLevel`. Each pick calls the boon's effect again
+  with the new level, so effects apply their own per-level increment rather than recomputing a
+  total. The card says whether it is a new pick or a level-up.
+
 ### Character sheet (`Assets/Scripts/Stats`)
 
 Five core stats drive every derived number. Boons and status effects never touch the core
@@ -163,7 +213,11 @@ sits in a few library files, each holding one list.
 | Starting stats, gun and spells | `Player/StartingLoadout.cs` — the only place |
 | Guns | `Weapons/WeaponLibrary.cs` → `BuildRoster()`; field meanings in `WeaponDefinition.cs` |
 | Spells | `Spells/SpellLibrary.cs` — add to the `All` list, then write the class |
-| Boons | `Boons/BoonLibrary.cs` → `BuildPool()`; rarity odds in `RollRarity()` |
+| Boons | `Boons/BoonLibrary.cs` → `BuildPool()` |
+| Rarity odds and Luck scaling | `Core/Rarity.cs` → `BaseChance()` and `LuckScaling` |
+| Damage schools | `Core/DamageTypes.cs` — add an enum member and a case |
+| Enemy resistances and weaknesses | `Enemies/EnemyFactory.cs` → the `SetAffinity` calls |
+| How fast spells level | `Spells/Spell.cs` → `GrowthPerLevel`, `MaxLevel`, `CooldownAtLevel` |
 | Status effects | `Effects/StatusLibrary.cs` — defaults at the top, behaviour in the classes |
 | Enemy health and damage | `Enemies/EnemyFactory.cs` — one `Build*` method per archetype |
 | Difficulty per floor | `Enemies/EnemyFactory.cs` → `HealthScale` / `DamageScale` |

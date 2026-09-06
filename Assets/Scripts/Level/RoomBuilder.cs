@@ -50,6 +50,13 @@ namespace WizardGun
             return runtime;
         }
 
+        /// <summary>The Luck every rarity roll in a room is made against.</summary>
+        private static float PlayerLuck()
+        {
+            PlayerRig rig = PlayerRig.Instance;
+            return rig != null && rig.Sheet != null ? rig.Sheet.GetStat(StatType.Luck) : 0f;
+        }
+
         private static Vector2 SizeFor(RoomKind kind)
         {
             switch (kind)
@@ -176,7 +183,8 @@ namespace WizardGun
                 case RoomKind.Treasure:
                     SpawnCrates(parent, width, depth, rng, occupied, 5, floor, forceReinforced: true);
                     if (TryFindSpot(width, depth, 2f, rng, occupied, out Vector3 vaultSpot, clearance: 2f))
-                        WeaponPickup.Spawn(vaultSpot, WeaponLibrary.RandomDrop(rng)).transform.SetParent(parent, true);
+                        WeaponPickup.Spawn(vaultSpot, WeaponLibrary.RollDrop(rng, PlayerLuck(), 1.5f))
+                            .transform.SetParent(parent, true);
                     OrbPickup.SpawnHealth(new Vector3(-2.5f, 1f, 0f), 35f);
                     OrbPickup.SpawnMana(new Vector3(2.5f, 1f, 0f), 60f);
                     break;
@@ -258,12 +266,14 @@ namespace WizardGun
             List<Occupied> occupied)
         {
             SpellBook book = PlayerRig.Instance != null ? PlayerRig.Instance.Book : null;
-            List<Spell> unknown = SpellLibrary.Unknown(book);
 
-            if (unknown.Count > 0 &&
+            // Shrines roll their own rarity, so a lucky wizard can find a legendary spell here.
+            Spell offer = SpellLibrary.RollOffer(rng, book, PlayerLuck(), 1.5f);
+
+            if (offer != null &&
                 TryFindSpot(width, depth, 2f, rng, occupied, out Vector3 spellSpot, clearance: 2.5f))
             {
-                SpellPedestal.Spawn(spellSpot, rng.Pick(unknown)).transform.SetParent(parent, true);
+                SpellPedestal.Spawn(spellSpot, offer).transform.SetParent(parent, true);
             }
 
             if (TryFindSpot(width, depth, 2f, rng, occupied, out Vector3 stoneSpot, clearance: 2.5f))
@@ -278,10 +288,11 @@ namespace WizardGun
         private static void SpawnForgeContents(Transform parent, float width, float depth, Rng rng,
             List<Occupied> occupied)
         {
-            WeaponDefinition first = WeaponLibrary.RandomDrop(rng);
-            WeaponDefinition second = WeaponLibrary.RandomDrop(rng);
+            float luck = PlayerLuck();
+            WeaponDefinition first = WeaponLibrary.RollDrop(rng, luck);
+            WeaponDefinition second = WeaponLibrary.RollDrop(rng, luck);
             int guard = 0;
-            while (second.Id == first.Id && guard++ < 12) second = WeaponLibrary.RandomDrop(rng);
+            while (second.Id == first.Id && guard++ < 12) second = WeaponLibrary.RollDrop(rng, luck);
 
             var left = new Vector3(-4.5f, 0f, 2f);
             var right = new Vector3(4.5f, 0f, 2f);

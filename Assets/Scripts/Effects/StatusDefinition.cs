@@ -15,6 +15,12 @@ namespace WizardGun
         public GameObject Source;
         public Team SourceTeam;
 
+        /// <summary>
+        /// The applier's sheet, cached when the effect lands so periodic damage can pick up
+        /// their per-school bonuses without a component lookup every tick.
+        /// </summary>
+        public CharacterSheet SourceSheet;
+
         /// <summary>Stat modifiers this instance owns. Rebuilt whenever the stack count changes.</summary>
         public readonly List<StatModifier> Mods = new List<StatModifier>();
 

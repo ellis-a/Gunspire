@@ -172,8 +172,12 @@ namespace WizardGun
 
                 UIStyles.Text(new Rect(rect.x + 8f, rect.y + 4f, 24f, 18f), SpellBook.SlotLabels[i],
                     UIStyles.Label, spell.Tint);
-                UIStyles.Text(new Rect(rect.x + 30f, rect.y + 4f, rect.width - 34f, 18f), spell.DisplayName,
+                UIStyles.Text(new Rect(rect.x + 30f, rect.y + 4f, rect.width - 62f, 18f), spell.DisplayName,
                     UIStyles.Small, UIStyles.Ink);
+
+                // Level sits top-right, tinted by rarity so a legendary reads at a glance.
+                UIStyles.Text(new Rect(rect.xMax - 34f, rect.y + 4f, 28f, 18f),
+                    "L" + book.GetLevel(spell), UIStyles.Right, Rarities.Tint(spell.Rarity));
 
                 string bottom = cooldown > 0f
                     ? book.GetCooldown(i).ToString("0.0") + "s"

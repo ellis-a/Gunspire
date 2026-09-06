@@ -26,6 +26,12 @@ namespace WizardGun
         private readonly Dictionary<Attr, float> _cache = new Dictionary<Attr, float>();
         private bool _dirty = true;
 
+        // Per-category channels. These sit alongside the Attr modifiers rather than inside
+        // them, because they are keyed by a damage school or spell type rather than by Attr.
+        private readonly TypedModifierSet<DamageType> _damageByType = new TypedModifierSet<DamageType>();
+        private readonly TypedModifierSet<SpellType> _spellByType = new TypedModifierSet<SpellType>();
+        private readonly TypedModifierSet<DamageType> _resistances = new TypedModifierSet<DamageType>();
+
         /// <summary>Raised whenever any stat or modifier changes. Health listens so it can rescale.</summary>
         public event Action Changed;
 
@@ -96,11 +102,70 @@ namespace WizardGun
             if (removed > 0) MarkDirty();
         }
 
-        /// <summary>Wipes every modifier and stat gain. Used when a new run reuses the player object.</summary>
+        /// <summary>
+        /// Wipes every modifier and stat gain. Used when a new run reuses the player object.
+        /// Intrinsic bases (an enemy resisting its own element) are kept.
+        /// </summary>
         public void ResetToBase()
         {
             _modifiers.Clear();
             _coreBonus.Clear();
+            _damageByType.ClearModifiers();
+            _spellByType.ClearModifiers();
+            _resistances.ClearModifiers();
+            MarkDirty();
+        }
+
+        // ---------------------------------------------------------------- per-type channels
+
+        /// <summary>Outgoing multiplier for one damage school. 1.0 when nothing has buffed it.</summary>
+        public float DamageTypeMultiplier(DamageType type)
+            => Mathf.Max(0.05f, 1f + _damageByType.Sum(type));
+
+        /// <summary>Outgoing multiplier for one spell category.</summary>
+        public float SpellTypeMultiplier(SpellType type)
+            => Mathf.Max(0.05f, 1f + _spellByType.Sum(type));
+
+        /// <summary>
+        /// Fraction of incoming damage of this school that is ignored. Negative means
+        /// vulnerable, which is how an enemy can be weak to the element that counters it.
+        /// </summary>
+        public float Resistance(DamageType type)
+            => DamageTypes.IsResistable(type) ? Mathf.Clamp(_resistances.Sum(type), -0.9f, 0.9f) : 0f;
+
+        public TypedModifier<DamageType> AddDamagePercent(DamageType type, float value, object source = null)
+        {
+            var mod = _damageByType.Add(type, value, source);
+            MarkDirty();
+            return mod;
+        }
+
+        public TypedModifier<SpellType> AddSpellPercent(SpellType type, float value, object source = null)
+        {
+            var mod = _spellByType.Add(type, value, source);
+            MarkDirty();
+            return mod;
+        }
+
+        public TypedModifier<DamageType> AddResistance(DamageType type, float value, object source = null)
+        {
+            var mod = _resistances.Add(type, value, source);
+            MarkDirty();
+            return mod;
+        }
+
+        /// <summary>An entity's innate resistance, set when it is built.</summary>
+        public void SetBaseResistance(DamageType type, float value)
+        {
+            _resistances.SetBase(type, value);
+            MarkDirty();
+        }
+
+        public void RemoveTypedModifiersFrom(object source)
+        {
+            _damageByType.RemoveFrom(source);
+            _spellByType.RemoveFrom(source);
+            _resistances.RemoveFrom(source);
             MarkDirty();
         }
 
@@ -233,9 +298,43 @@ namespace WizardGun
                     return string.Format("Health {0:0}   Regen {1:0.00}/s",
                         Get(Attr.MaxHealth), Get(Attr.HealthRegen));
                 default:
-                    return string.Format("Crit {0:0}% for {1:0}% damage   Better boon rolls",
-                        Get(Attr.CritChance) * 100f, Get(Attr.CritDamage) * 100f);
+                    return string.Format("Crit {0:0}% for {1:0}%   Rare finds x{2:0.00}",
+                        Get(Attr.CritChance) * 100f, Get(Attr.CritDamage) * 100f,
+                        1f + GetStat(StatType.Luck) * Rarities.LuckScaling);
             }
+        }
+
+        /// <summary>Non-zero resistances, formatted for the character sheet. Empty when there are none.</summary>
+        public string DescribeResistances()
+        {
+            string text = "";
+            for (int i = 0; i < DamageTypes.Elemental.Length; i++)
+            {
+                DamageType type = DamageTypes.Elemental[i];
+                float value = Resistance(type);
+                if (Mathf.Approximately(value, 0f)) continue;
+
+                if (text.Length > 0) text += "   ";
+                text += string.Format("{0} {1}{2:0}%", DamageTypes.Name(type),
+                    value > 0f ? "+" : "", value * 100f);
+            }
+            return text;
+        }
+
+        /// <summary>Non-zero outgoing damage bonuses by school, formatted for the character sheet.</summary>
+        public string DescribeDamageBonuses()
+        {
+            string text = "";
+            for (int i = 0; i < DamageTypes.Elemental.Length; i++)
+            {
+                DamageType type = DamageTypes.Elemental[i];
+                float value = DamageTypeMultiplier(type) - 1f;
+                if (Mathf.Approximately(value, 0f)) continue;
+
+                if (text.Length > 0) text += "   ";
+                text += string.Format("{0} +{1:0}%", DamageTypes.Name(type), value * 100f);
+            }
+            return text;
         }
     }
 

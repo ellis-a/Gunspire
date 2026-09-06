@@ -180,17 +180,7 @@ namespace WizardGun
         public static readonly Color Telegraph = new Color(1.00f, 0.25f, 0.25f);
         public static readonly Color Portal = new Color(0.45f, 0.85f, 1.00f);
 
-        public static Color ForDamageType(DamageType type)
-        {
-            switch (type)
-            {
-                case DamageType.Fire: return Fire;
-                case DamageType.Ice: return Ice;
-                case DamageType.Poison: return Poison;
-                case DamageType.Lightning: return Lightning;
-                case DamageType.Arcane: return Arcane;
-                default: return new Color(1f, 0.95f, 0.75f);
-            }
-        }
+        /// <summary>Damage school colours live in the damage registry, so a new school gets one for free.</summary>
+        public static Color ForDamageType(DamageType type) => DamageTypes.Tint(type);
     }
 }

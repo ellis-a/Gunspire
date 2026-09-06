@@ -79,6 +79,20 @@ namespace WizardGun
             return enemy;
         }
 
+        /// <summary>
+        /// Gives an enemy an affinity: strong against its own school, soft against the one that
+        /// counters it. This is what makes carrying a second damage school worth doing.
+        /// </summary>
+        private static void SetAffinity(EnemyController enemy, DamageType resists, DamageType weakTo,
+            float resistance = 0.40f, float vulnerability = 0.30f)
+        {
+            CharacterSheet sheet = enemy.Sheet != null ? enemy.Sheet : enemy.GetComponent<CharacterSheet>();
+            if (sheet == null) return;
+
+            sheet.SetBaseResistance(resists, resistance);
+            sheet.SetBaseResistance(weakTo, -vulnerability);
+        }
+
         /// <summary>A body with an obvious front, so the player can read where it is looking.</summary>
         private static void BuildBody(EnemyController enemy, Color color, float height, float width,
             Color eyeColor, bool elite)
@@ -124,12 +138,13 @@ namespace WizardGun
             volley.MaxRange = 26f;
             volley.Cooldown = 2.6f;
             volley.Damage = 9f * DamageScale(floor);
-            volley.DamageType = DamageType.Arcane;
+            volley.DamageType = DamageType.Astral;
             volley.Tint = Palette.Arcane;
             volley.ProjectileCount = elite ? 5 : 3;
             volley.ProjectileSpeed = 20f;
             volley.ArcSpreadDegrees = 12f;
 
+            SetAffinity(e, DamageType.Astral, DamageType.Nature);
             return e;
         }
 
@@ -147,10 +162,11 @@ namespace WizardGun
             lunge.MaxRange = 4.6f;
             lunge.Cooldown = 1.9f;
             lunge.Damage = 17f * DamageScale(floor);
-            lunge.DamageType = DamageType.Physical;
+            lunge.DamageType = DamageType.Normal;
             lunge.Tint = Palette.EnemyMelee;
             lunge.LungeSpeed = elite ? 20f : 16f;
 
+            SetAffinity(e, DamageType.Normal, DamageType.Frost);
             return e;
         }
 
@@ -167,12 +183,13 @@ namespace WizardGun
             beam.MaxRange = 38f;
             beam.Cooldown = 5.5f;
             beam.DamagePerTick = 5.5f * DamageScale(floor);
-            beam.DamageType = DamageType.Lightning;
+            beam.DamageType = DamageType.Astral;
             beam.Tint = Palette.Lightning;
             beam.BeamDuration = elite ? 2.0f : 1.4f;
             beam.SweepDegreesPerSecond = elite ? 34f : 26f;
             beam.Statuses = new List<StatusApplication> { StatusLibrary.Shock(3f) };
 
+            SetAffinity(e, DamageType.Astral, DamageType.Shadow);
             return e;
         }
 
@@ -196,6 +213,7 @@ namespace WizardGun
             slam.LeadDistance = 3f;
             slam.Statuses = new List<StatusApplication> { StatusLibrary.Burn(4f, 2, 4f) };
 
+            SetAffinity(e, DamageType.Fire, DamageType.Frost);
             return e;
         }
 
@@ -212,7 +230,7 @@ namespace WizardGun
             shards.MaxRange = 28f;
             shards.Cooldown = 3.2f;
             shards.Damage = 8f * DamageScale(floor);
-            shards.DamageType = DamageType.Ice;
+            shards.DamageType = DamageType.Frost;
             shards.Tint = Palette.Ice;
             shards.ProjectileCount = 4;
             shards.ProjectileSpeed = 24f;
@@ -225,10 +243,11 @@ namespace WizardGun
             breath.Cooldown = 6.5f;
             breath.Priority = 1;
             breath.Damage = 16f * DamageScale(floor);
-            breath.DamageType = DamageType.Ice;
+            breath.DamageType = DamageType.Frost;
             breath.Tint = Palette.Ice;
             breath.Statuses = new List<StatusApplication> { StatusLibrary.Chill(4f, 2) };
 
+            SetAffinity(e, DamageType.Frost, DamageType.Fire);
             return e;
         }
 
@@ -245,7 +264,7 @@ namespace WizardGun
             volley.MaxRange = 34f;
             volley.Cooldown = 3.4f;
             volley.Damage = 12f * DamageScale(floor);
-            volley.DamageType = DamageType.Arcane;
+            volley.DamageType = DamageType.Astral;
             volley.Tint = Palette.Arcane;
             volley.ProjectileCount = 7;
             volley.ArcSpreadDegrees = 40f;
@@ -257,7 +276,7 @@ namespace WizardGun
             beam.Cooldown = 7.5f;
             beam.Priority = 1;
             beam.DamagePerTick = 7f * DamageScale(floor);
-            beam.DamageType = DamageType.Lightning;
+            beam.DamageType = DamageType.Astral;
             beam.Tint = Palette.Lightning;
             beam.BeamDuration = 2.4f;
             beam.SweepDegreesPerSecond = 30f;
@@ -279,11 +298,16 @@ namespace WizardGun
             breath.Cooldown = 8f;
             breath.Priority = 2;
             breath.Damage = 30f * DamageScale(floor);
-            breath.DamageType = DamageType.Poison;
+            breath.DamageType = DamageType.Nature;
             breath.Tint = Palette.Poison;
             breath.Range = 14f;
             breath.HalfAngle = 40f;
             breath.Statuses = new List<StatusApplication> { StatusLibrary.Blight(8f, 3, 4f) };
+
+            // The boss shrugs off every school a little, and is soft to none of them.
+            CharacterSheet bossSheet = e.GetComponent<CharacterSheet>();
+            for (int i = 0; i < DamageTypes.Elemental.Length; i++)
+                bossSheet.SetBaseResistance(DamageTypes.Elemental[i], 0.18f);
 
             return e;
         }

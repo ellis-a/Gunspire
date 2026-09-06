@@ -3,8 +3,24 @@ namespace WizardGun
     /// <summary>Who an entity fights for. Damage is only applied across teams.</summary>
     public enum Team { Player, Enemy, Neutral }
 
-    /// <summary>Damage schools. Resistances, status payloads and VFX key off these.</summary>
-    public enum DamageType { Physical, Fire, Ice, Lightning, Poison, Arcane, True }
+    /// <summary>
+    /// Damage schools. Resistances, boons and VFX key off these.
+    /// To add one: add a member here and a case in <see cref="DamageTypes"/>. Nothing else
+    /// needs to change - everything reads the registry rather than switching on the enum.
+    /// </summary>
+    public enum DamageType
+    {
+        Normal,   // plain kinetic rounds
+        Fire,
+        Frost,
+        Nature,
+        Shadow,
+        Astral,
+        True      // special: ignores resistance and invulnerability, never rolled as an element
+    }
+
+    /// <summary>What a spell is for. Boons can buff a whole category at once.</summary>
+    public enum SpellType { Attack, Mobility, Control, Ward }
 
     /// <summary>The character sheet's core attributes. Everything else is derived from these.</summary>
     public enum StatType { Strength, Intellect, Agility, Vitality, Luck }

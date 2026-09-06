@@ -95,8 +95,19 @@ namespace WizardGun
 
         public void SetResistance(DamageType type, float value) => _resistances[type] = value;
 
+        /// <summary>
+        /// Total resistance to a school: this entity's own value plus anything the character
+        /// sheet contributes. Negative is vulnerability, and clamps stop either extreme from
+        /// making a target immune or one-shot.
+        /// </summary>
         public float GetResistance(DamageType type)
-            => _resistances.TryGetValue(type, out float v) ? v : 0f;
+        {
+            if (!DamageTypes.IsResistable(type)) return 0f;
+
+            _resistances.TryGetValue(type, out float own);
+            float fromSheet = _sheet != null ? _sheet.Resistance(type) : 0f;
+            return Mathf.Clamp(own + fromSheet, -0.9f, 0.9f);
+        }
 
         /// <summary>Used when building enemies from code, before Awake stats exist.</summary>
         public void ConfigureMaxHealth(float value, bool refill = true)
