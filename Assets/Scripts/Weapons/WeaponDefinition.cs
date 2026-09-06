@@ -71,13 +71,24 @@ namespace WizardGun
             return copy;
         }
 
+        /// <summary>
+        /// Rounds actually loosed per pull of the trigger: pellets in a shotgun shell, shots
+        /// in a burst, one otherwise.
+        /// </summary>
+        public int RoundsPerTrigger => Mathf.Max(1, PelletsPerShot) *
+                                       (Mode == FireMode.Burst ? Mathf.Max(1, BurstCount) : 1);
+
         public string StatLine()
         {
-            string dps = (Damage * PelletsPerShot * (RoundsPerMinute / 60f)).ToString("0");
+            // RoundsPerMinute paces the trigger, not the individual round, so a burst weapon
+            // delivers BurstCount rounds per cycle.
+            string dps = (Damage * RoundsPerTrigger * (RoundsPerMinute / 60f)).ToString("0");
             string kind = Delivery == DeliveryKind.Hitscan ? "hitscan" : "projectile";
+            string shape = Mode == FireMode.Burst ? BurstCount + "-round burst" : kind;
+
             return string.Format("{0} {1} dmg x{2}  {3} rpm  mag {4}  {5}  ~{6} dps",
-                DamageTypes.Name(DamageType), Damage.ToString("0.#"), PelletsPerShot,
-                RoundsPerMinute.ToString("0"), MagazineSize, kind, dps);
+                DamageTypes.Name(DamageType), Damage.ToString("0.#"), RoundsPerTrigger,
+                RoundsPerMinute.ToString("0"), MagazineSize, shape, dps);
         }
     }
 }

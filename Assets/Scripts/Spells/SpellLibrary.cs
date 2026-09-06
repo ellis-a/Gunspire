@@ -63,6 +63,7 @@ namespace WizardGun
                 Firebolt(),
                 KineticSlam(),
                 ArcaneWard(),
+                Blightbloom(),
                 ChainLightning(),
                 GlacialPrison(),
                 Eventide()
@@ -209,6 +210,51 @@ namespace WizardGun
                 },
                 new HealSelfEffect { FractionOfMax = 0.12f },
                 new VfxSphereEffect { Diameter = 2.4f, Alpha = 0.22f, Lifetime = 0.6f, AttachToCaster = true }
+            }
+        };
+
+        private static Spell Blightbloom() => new Spell
+        {
+            Id = "blightbloom",
+            DisplayName = "Blightbloom",
+            ShortName = "BLOM",
+            Description = "Lob a seed that bursts into a patch of rot. Anything standing in it takes " +
+                          "nature damage and is blighted, so its healing is swallowed too.",
+            ManaCost = 32f,
+            Cooldown = 11f,
+            Rarity = Rarity.Rare,
+            Type = SpellType.Control,
+            DamageType = DamageType.Nature,
+            MaxLevel = 4,
+            LevelUpNote = "and a wider, longer-lived patch",
+            OnCast =
+            {
+                new StatusPayloadEffect
+                {
+                    Status = StatusId.Blight, Duration = 6f,
+                    Stacks = 2, StacksPerLevel = 0.5f, Magnitude = 3f
+                },
+                new SpawnProjectileEffect
+                {
+                    // The seed does nothing on its own; the patch it leaves is the whole spell.
+                    Damage = 0f,
+                    Speed = 30f,
+                    Radius = 0.3f,
+                    Gravity = 10f,          // lobbed, so it can be thrown over cover
+                    Lifetime = 5f,
+                    OnHit =
+                    {
+                        new LingeringZoneEffect
+                        {
+                            Radius = 4.5f, Duration = 6f,
+                            DamagePerTick = 6f, TickInterval = 0.5f
+                        },
+                        new VfxSphereEffect
+                        {
+                            Diameter = 1.2f, Alpha = 0.45f, Lifetime = 0.3f, GrowPerSecond = 10f
+                        }
+                    }
+                }
             }
         };
 

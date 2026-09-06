@@ -199,6 +199,31 @@ namespace WizardGun
 
                 new WeaponDefinition
                 {
+                    Id = "trigram",
+                    DisplayName = "Trigram",
+                    Flavor = "Three marks, drawn in one motion. The third is the one that sticks.",
+                    Rarity = Rarity.Rare,
+                    Delivery = DeliveryKind.Hitscan,
+                    Mode = FireMode.Burst,
+                    BurstCount = 3,
+                    BurstInterval = 0.055f,
+                    DamageType = DamageType.Shadow,
+                    Damage = 16f,
+                    // RoundsPerMinute paces the burst, not the round: 120 is one burst every half second.
+                    RoundsPerMinute = 120f,
+                    MagazineSize = 18,          // six clean bursts
+                    ReloadTime = 1.6f,
+                    SpreadDegrees = 0.5f,
+                    MovingSpreadDegrees = 1.4f,
+                    RecoilPitch = 1.8f,
+                    RecoilYaw = 0.35f,
+                    Range = 120f,
+                    Tint = DamageTypes.Tint(DamageType.Shadow),
+                    OnHitStatuses = { StatusLibrary.Weaken(4f) }
+                },
+
+                new WeaponDefinition
+                {
                     Id = "nightfall",
                     DisplayName = "Nightfall",
                     Flavor = "Fires a sliver of the dark between stars. The wounds do not close.",

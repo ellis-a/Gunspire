@@ -370,6 +370,124 @@ namespace WizardGun
     }
 
     /// <summary>
+    /// Leaves a patch of ground that keeps hurting anything standing in it. Denies space
+    /// rather than dealing burst damage, which is what makes it a control tool.
+    /// </summary>
+    [System.Serializable]
+    public class LingeringZoneEffect : AbilityEffect
+    {
+        public float Radius = 4.5f;
+        public float Duration = 6f;
+        public float DamagePerTick = 6f;
+        public float TickInterval = 0.5f;
+        public bool ScaleWithLevel = true;
+
+        public override bool Execute(AbilityContext ctx)
+        {
+            float scale = ScaleWithLevel ? ctx.LevelScale : 1f;
+
+            LingeringZone.Spawn(ctx.Point, Radius * scale, Duration * scale,
+                DamagePerTick * ctx.Power, TickInterval, ctx.DamageType, ctx.Team, ctx.Caster,
+                new List<StatusApplication>(ctx.Payload), ctx.Tint);
+            return true;
+        }
+
+        public override string Describe()
+            => string.Format("a {0:0}m patch for {1:0}s", Radius, Duration);
+    }
+
+    /// <summary>
+    /// The patch itself. Like <see cref="DelayedBlast"/> it runs off its own object, so it
+    /// outlives the caster and keeps working if they die.
+    /// </summary>
+    public class LingeringZone : MonoBehaviour
+    {
+        private float _life;
+        private float _duration;
+        private float _radius;
+        private float _damage;
+        private float _tickInterval;
+        private float _tickTimer;
+        private DamageType _damageType;
+        private Team _team;
+        private GameObject _source;
+        private List<StatusApplication> _statuses;
+        private Material _material;
+        private Color _color;
+
+        public static LingeringZone Spawn(Vector3 point, float radius, float duration, float damagePerTick,
+            float tickInterval, DamageType damageType, Team team, GameObject source,
+            List<StatusApplication> statuses, Color tint)
+        {
+            var go = new GameObject("LingeringZone");
+            go.transform.position = point;
+
+            var color = new Color(tint.r, tint.g, tint.b, 0.30f);
+            GameObject disc = Build.GroundDisc(go.transform, "Patch", Vector3.up * 0.05f, radius,
+                MaterialLibrary.Transparent(color));
+
+            var zone = go.AddComponent<LingeringZone>();
+            zone._duration = duration;
+            zone._radius = radius;
+            zone._damage = damagePerTick;
+            zone._tickInterval = Mathf.Max(0.05f, tickInterval);
+            zone._damageType = damageType;
+            zone._team = team;
+            zone._source = source;
+            zone._statuses = statuses;
+            zone._color = color;
+
+            var renderer = disc.GetComponent<MeshRenderer>();
+            if (renderer != null) zone._material = renderer.material;
+
+            return zone;
+        }
+
+        private void Update()
+        {
+            float dt = Time.deltaTime;
+            _life += dt;
+
+            // Fade out over the last second so its expiry is readable.
+            if (_material != null)
+            {
+                float remaining = _duration - _life;
+                Color c = _color;
+                c.a = _color.a * Mathf.Clamp01(remaining);
+                MaterialLibrary.SetMaterialColor(_material, c);
+            }
+
+            _tickTimer -= dt;
+            if (_tickTimer <= 0f)
+            {
+                _tickTimer = _tickInterval;
+                Tick();
+            }
+
+            if (_life >= _duration) Destroy(gameObject);
+        }
+
+        private void Tick()
+        {
+            Collider[] found = Physics.OverlapSphere(transform.position, _radius,
+                Layers.TargetMaskFor(_team), QueryTriggerInteraction.Ignore);
+
+            var struck = new HashSet<IDamageable>();
+            for (int i = 0; i < found.Length; i++)
+            {
+                IDamageable target = Combat.FindDamageable(found[i]);
+                if (target == null || !target.IsAlive || !struck.Add(target)) continue;
+
+                DamageInfo info = DamageInfo.Create(_damage, _damageType, _team, _source);
+                info.CanCrit = false;
+                info = info.At(target.Transform.position + Vector3.up, Vector3.up)
+                           .WithStatuses(_statuses);
+                target.TakeDamage(info);
+            }
+        }
+    }
+
+    /// <summary>
     /// Chain Lightning. A loop with per-jump retargeting and decay is control flow, which
     /// does not belong in a data chain, so it stays one bespoke effect.
     /// </summary>
