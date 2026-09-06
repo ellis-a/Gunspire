@@ -9,6 +9,10 @@ namespace WizardGun
     ///
     /// Adding a spell is one entry here. It needs new C# only when it wants behaviour no
     /// existing effect provides.
+    ///
+    /// The built-ins live in code so a fresh clone runs with nothing authored. Any
+    /// <see cref="SpellAsset"/> found under a Resources folder is merged in: a matching id
+    /// replaces the built-in, a new id is added to the roster.
     /// </summary>
     public static class SpellLibrary
     {
@@ -18,8 +22,37 @@ namespace WizardGun
         {
             get
             {
-                if (_all == null) BuildRoster();
+                if (_all == null) Build();
                 return _all;
+            }
+        }
+
+        /// <summary>Drops the cached roster so authored assets are picked up again.</summary>
+        public static void Reload() => _all = null;
+
+        private static void Build()
+        {
+            // Assign before merging: anything that reads the roster while assets are loading
+            // gets the built-ins rather than recursing into a half-built list.
+            _all = BuiltIn();
+
+            SpellAsset[] authored = Resources.LoadAll<SpellAsset>("");
+            if (authored == null) return;
+
+            for (int i = 0; i < authored.Length; i++)
+            {
+                Spell def = authored[i] != null ? authored[i].Definition : null;
+                if (def == null) continue;
+
+                if (string.IsNullOrEmpty(def.Id))
+                {
+                    Debug.LogWarning("Spell asset \"" + authored[i].name + "\" has no Id and was ignored.");
+                    continue;
+                }
+
+                int existing = _all.FindIndex(s => s.Id == def.Id);
+                if (existing >= 0) _all[existing] = def;
+                else _all.Add(def);
             }
         }
 
@@ -54,9 +87,10 @@ namespace WizardGun
 
         // ---------------------------------------------------------------- roster
 
-        private static void BuildRoster()
+        /// <summary>The code roster. Also what the editor tool seeds new assets from.</summary>
+        public static List<Spell> BuiltIn()
         {
-            _all = new List<Spell>
+            return new List<Spell>
             {
                 LavaSplash(),
                 ConeOfCold(),

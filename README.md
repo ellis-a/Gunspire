@@ -79,7 +79,7 @@ can genuinely change.
 
 ## Authoring as assets
 
-Loadouts and guns follow the same hybrid: **built-ins in code, assets merged over the top by
+Loadouts, guns and spells follow the same hybrid: **built-ins in code, assets merged over the top by
 id.** A matching id replaces the built-in, a new id is added to the roster. With no assets at
 all the game runs entirely on code, so a fresh clone needs nothing authored — and deleting the
 assets is the way back to defaults.
@@ -88,13 +88,23 @@ assets is the way back to defaults.
 |---|---|---|
 | Loadouts | **Create Starting Loadout Assets** | `Assets/Resources` |
 | Guns | **Create Weapon Assets** | `Assets/Resources/Weapons` |
+| Spells | **Create Spell Assets** | `Assets/Resources/Spells` |
 
 Use the menu rather than the right-click Create menu: an asset outside a `Resources` folder is
-never found and silently does nothing. **Log Weapon Balance Table** prints the whole roster as
-one table, which is how you compare a gun against the others rather than reading initializers
-one at a time.
+never found and silently does nothing.
 
-Spells, boons, enemies and movement abilities are still code-only.
+A spell's `OnCast` is a **`[SerializeReference]` list**, so the Inspector gives you a type picker
+holding every effect in the game — you can build a whole new spell without writing C#, as long
+as existing effects cover what you want. Nested chains work too, so a `SpawnProjectile`'s
+`OnHit` is editable in place.
+
+Two menu items print rosters as tables, which is how you balance one entry against the others
+rather than reading object initializers one at a time: **Log Weapon Balance Table** (with
+computed dps) and **Log Spell Table** (with each spell's effect chain).
+
+Boons, enemies and movement abilities are still code-only. Enemy attack sequences are
+`[SerializeReference]` as well, so an enemy selected in the Hierarchy during Play shows its
+whole chain — useful, since enemies are built at runtime and have no prefab to inspect.
 
 ## The run
 
@@ -296,7 +306,7 @@ sits in a few library files, each holding one list.
 |---|---|
 | Loadouts (stats, gun, spells) | `Player/LoadoutLibrary.cs` for the code roster, or **Create Starting Loadout Assets** to edit them in the Inspector |
 | Guns | `Weapons/WeaponLibrary.cs` → `BuiltIn()` for the code roster, or **Create Weapon Assets** to edit them in the Inspector |
-| Spells | `Spells/SpellLibrary.cs` — add to the `All` list, then write the class |
+| Spells | `Spells/SpellLibrary.cs` → `BuiltIn()` for the code roster, or **Create Spell Assets** to compose them in the Inspector |
 | Boons | `Boons/BoonLibrary.cs` → `BuildPool()` |
 | Rarity odds and Luck scaling | `Core/Rarity.cs` → `BaseChance()` and `LuckScaling` |
 | Damage schools | `Core/DamageTypes.cs` — add an enum member and a case |

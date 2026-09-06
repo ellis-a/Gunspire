@@ -232,7 +232,7 @@ namespace WizardGun
         /// Must start non-null: definitions fill it with a collection initializer, which calls
         /// Add on whatever is here and throws at construction time if that is null.
         /// </summary>
-        public List<AbilityEffect> OnHit = new List<AbilityEffect>();
+        [SerializeReference] public List<AbilityEffect> OnHit = new List<AbilityEffect>();
 
         public override bool Execute(AbilityContext ctx)
         {

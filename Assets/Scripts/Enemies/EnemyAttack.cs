@@ -30,7 +30,7 @@ namespace WizardGun
         public Color Tint = Palette.Arcane;
 
         /// <summary>What happens, in order. Wind-ups and repeats are effects like any other.</summary>
-        public List<AbilityEffect> Sequence = new List<AbilityEffect>();
+        [SerializeReference] public List<AbilityEffect> Sequence = new List<AbilityEffect>();
 
         private EnemyController _owner;
         private AbilityContext _context;

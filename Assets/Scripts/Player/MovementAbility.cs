@@ -37,7 +37,7 @@ namespace WizardGun
         public bool UsesDashCharges;
 
         /// <summary>What happens when it fires. Aborting refunds the cost, as with spells.</summary>
-        public List<AbilityEffect> OnActivate = new List<AbilityEffect>();
+        [SerializeReference] public List<AbilityEffect> OnActivate = new List<AbilityEffect>();
 
         // ---- sustained ----
         public float ManaPerSecond = 0f;

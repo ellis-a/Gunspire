@@ -11,6 +11,7 @@ namespace WizardGun
     /// One instance is shared by every caster, so nothing per-cast is stored here - the level
     /// lives on the caster's <see cref="SpellBook"/> and the working state on the context.
     /// </summary>
+    [System.Serializable]
     public class Spell
     {
         public string Id = "spell";
@@ -38,7 +39,7 @@ namespace WizardGun
         public Color TintOverride = Color.clear;
 
         /// <summary>What actually happens, in order. Aborting any step refunds the cast.</summary>
-        public List<AbilityEffect> OnCast = new List<AbilityEffect>();
+        [SerializeReference] public List<AbilityEffect> OnCast = new List<AbilityEffect>();
 
         public Color Tint => TintOverride.a > 0f ? TintOverride : DamageTypes.Tint(DamageType);
 

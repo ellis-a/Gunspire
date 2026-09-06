@@ -41,7 +41,7 @@ namespace WizardGun
         public int Times = 3;
         public float Interval = 0.2f;
         public bool AbortIfInterrupted = true;
-        public List<AbilityEffect> Body = new List<AbilityEffect>();
+        [SerializeReference] public List<AbilityEffect> Body = new List<AbilityEffect>();
 
         public override bool Execute(AbilityContext ctx)
         {
