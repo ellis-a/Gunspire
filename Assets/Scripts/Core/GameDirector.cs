@@ -147,7 +147,7 @@ namespace WizardGun
 
         private static void DestroyAllOfType<T>() where T : Component
         {
-            T[] found = FindObjectsOfType<T>();
+            T[] found = FindObjectsByType<T>(FindObjectsSortMode.None);
             for (int i = 0; i < found.Length; i++)
                 if (found[i] != null) Destroy(found[i].gameObject);
         }

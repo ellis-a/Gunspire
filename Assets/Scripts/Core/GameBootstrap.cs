@@ -24,8 +24,8 @@ namespace WizardGun
         private static void AutoBoot()
         {
             if (!AutoBootEnabled) return;
-            if (FindObjectOfType<GameBootstrap>() != null) return;
-            if (FindObjectOfType<GameDirector>() != null) return;
+            if (FindAnyObjectByType<GameBootstrap>() != null) return;
+            if (FindAnyObjectByType<GameDirector>() != null) return;
 
             var go = new GameObject("[Wizard with a Gun]");
             go.AddComponent<GameBootstrap>();
@@ -52,14 +52,14 @@ namespace WizardGun
         /// </summary>
         private static void ClearDefaultSceneObjects()
         {
-            Camera[] cameras = FindObjectsOfType<Camera>();
+            Camera[] cameras = FindObjectsByType<Camera>(FindObjectsSortMode.None);
             for (int i = 0; i < cameras.Length; i++)
             {
                 if (cameras[i].GetComponentInParent<PlayerRig>() != null) continue;
                 Destroy(cameras[i].gameObject);
             }
 
-            AudioListener[] listeners = FindObjectsOfType<AudioListener>();
+            AudioListener[] listeners = FindObjectsByType<AudioListener>(FindObjectsSortMode.None);
             for (int i = 0; i < listeners.Length; i++)
             {
                 if (listeners[i].GetComponentInParent<PlayerRig>() != null) continue;

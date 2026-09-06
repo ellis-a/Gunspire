@@ -10,8 +10,14 @@ prefabs, materials, meshes or scene assets to keep in sync, so the whole game is
 
 ## Running it
 
-Requires **Unity 2022.3 LTS or newer**. Works on the Built-in render pipeline or URP: shaders
-are looked up by name with fallbacks.
+Built and verified on **Unity 6000.5.7f1** — it imports and compiles with no errors or
+warnings. It should also open on 2022.3 LTS and newer (the `FindObjectsByType` APIs it uses
+landed in 2022.2), but only Unity 6 has been tested. Works on the Built-in render pipeline or
+URP: shaders are looked up by name with fallbacks.
+
+The game uses the **legacy Input Manager**. Unity 6 flags that as deprecated but still fully
+supports it; if you ever see `InvalidOperationException` from `Input.GetKey`, check
+*Project Settings → Player → Active Input Handling* is set to "Input Manager (Old)" or "Both".
 
 1. Open this folder in Unity Hub. (If Hub will not open it directly, create a new 3D project
    and copy `Assets/` into it — the project has no other dependencies.)

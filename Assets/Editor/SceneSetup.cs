@@ -33,7 +33,7 @@ namespace WizardGun.EditorTools
         [MenuItem("Wizard with a Gun/Add Bootstrap To Current Scene")]
         public static void AddBootstrap()
         {
-            if (Object.FindObjectOfType<GameBootstrap>() != null)
+            if (Object.FindAnyObjectByType<GameBootstrap>() != null)
             {
                 Debug.Log("This scene already has a bootstrap object.");
                 return;
