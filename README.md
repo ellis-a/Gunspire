@@ -153,6 +153,37 @@ and `Health.AnyDied` events instead of patching every weapon.
 
 Adding a boon is normally one entry in `BoonLibrary.BuildPool()`.
 
+## Where the content lives
+
+There are no ScriptableObjects or prefabs, so nothing is edited in the Inspector. All content
+sits in a few library files, each holding one list.
+
+| To change | Edit |
+|---|---|
+| Starting stats, gun and spells | `Player/StartingLoadout.cs` — the only place |
+| Guns | `Weapons/WeaponLibrary.cs` → `BuildRoster()`; field meanings in `WeaponDefinition.cs` |
+| Spells | `Spells/SpellLibrary.cs` — add to the `All` list, then write the class |
+| Boons | `Boons/BoonLibrary.cs` → `BuildPool()`; rarity odds in `RollRarity()` |
+| Status effects | `Effects/StatusLibrary.cs` — defaults at the top, behaviour in the classes |
+| Enemy health and damage | `Enemies/EnemyFactory.cs` — one `Build*` method per archetype |
+| Difficulty per floor | `Enemies/EnemyFactory.cs` → `HealthScale` / `DamageScale` |
+| Attack wind-ups and timings | `Enemies/EnemyAttack.cs` — the `[Header]` fields on each attack |
+| What spawns in each room | `Level/RoomBuilder.cs` → `PopulateRoom()`; sizes in `SizeFor()` |
+| Crate drops | `Level/Props.cs` → `Smashable.DropReward()` |
+| Room types, names and odds | `Level/TowerMap.cs` → `RollKind()` and `MakeNode()` |
+| Floor count, boons offered | `Core/GameDirector.cs` — the two serialized fields at the top |
+| What each stat buys | `Stats/CharacterSheet.cs` → `BaseValue()` |
+| Movement feel | `Player/PlayerMotor.cs` — gravity, friction, dash fields |
+| Colours | `Util/MaterialLibrary.cs` → `Palette` |
+
+Adding a gun or a boon is a single entry in the relevant list; a new gun joins the world drop
+pool automatically. Adding a spell takes two steps, the class and the registry line.
+
+**Tuning without recompiling:** the `[SerializeField]` values on `PlayerMotor` and the enemy
+attacks belong to objects built at runtime, so they only exist in Play mode. Enter Play, find
+the object in the Hierarchy, adjust it live, then write the value you liked back into the
+code — Play mode changes are discarded on stop.
+
 ## Layout
 
 ```

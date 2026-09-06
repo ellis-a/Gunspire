@@ -40,3 +40,7 @@ Thumbs.db
 /[Aa]ssets/AssetStoreTools*
 crashlytics-build.properties
 sysinfo.txt
+
+# Visual Studio / Rider scratch folders
+.vs/
+.idea/

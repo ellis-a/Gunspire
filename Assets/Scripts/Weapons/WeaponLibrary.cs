@@ -22,18 +22,27 @@ namespace WizardGun
             if (_all == null) BuildRoster();
             for (int i = 0; i < _all.Count; i++)
                 if (_all[i].Id == id) return _all[i].Clone();
-            return Starter();
+
+            // Fall back to the first gun on the roster. Never route this through the starting
+            // weapon: if that id is the one missing, the two would call each other forever.
+            Debug.LogWarning("WeaponLibrary has no weapon with id \"" + id + "\". Falling back to "
+                             + _all[0].DisplayName + ".");
+            return _all[0].Clone();
         }
 
-        /// <summary>Arcanum .38 - the hitscan sidearm every run begins with.</summary>
-        public static WeaponDefinition Starter() => Get("arcanum");
-
+        /// <summary>
+        /// A gun for a plinth or a vault. The weapon the player already starts holding is
+        /// excluded, so changing the starting gun automatically keeps it out of world drops.
+        /// </summary>
         public static WeaponDefinition RandomDrop(Rng rng)
         {
             if (_all == null) BuildRoster();
+
             var pool = new List<WeaponDefinition>();
             for (int i = 0; i < _all.Count; i++)
-                if (_all[i].Id != "arcanum") pool.Add(_all[i]);
+                if (_all[i].Id != StartingLoadout.WeaponId) pool.Add(_all[i]);
+
+            if (pool.Count == 0) pool.AddRange(_all);
             return rng.Pick(pool).Clone();
         }
 

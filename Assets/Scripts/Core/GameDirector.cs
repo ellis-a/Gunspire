@@ -104,20 +104,21 @@ namespace WizardGun
             LoadRoom(first);
         }
 
+        /// <summary>
+        /// A restart reuses the existing player object, so everything the last run left behind
+        /// has to come off before the opening kit goes back on.
+        /// </summary>
         private void ResetPlayerForNewRun()
         {
-            CharacterSheet sheet = Player.Sheet;
-            sheet.ResetToBase();
-            for (int i = 0; i < EnumCache.Stats.Length; i++)
-                sheet.SetBaseStat(EnumCache.Stats[i], 5);
-
+            // Effects first, so each one pulls its own modifiers off cleanly, then wipe the
+            // boon modifiers and stat gains that are left.
             Player.Status.ClearAll();
-            Player.Health.Revive();
+            Player.Sheet.ResetToBase();
 
-            Player.Book.ResetBook();
-            Player.Book.Bind(SpellLibrary.Get("blink"), 0);
-            Player.Book.Bind(SpellLibrary.Get("cone_of_cold"), 1);
-            Player.CombatInput.EquipWeapon(WeaponLibrary.Starter());
+            StartingLoadout.ApplyTo(Player);
+
+            // Revive after the stats are back, so it fills to the correct maximum.
+            Player.Health.Revive();
             Player.FullRestore();
         }
 

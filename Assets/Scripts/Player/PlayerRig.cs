@@ -72,12 +72,6 @@ namespace WizardGun
             controller.minMoveDistance = 0f;
 
             var sheet = root.AddComponent<CharacterSheet>();
-            sheet.SetBaseStat(StatType.Strength, 5);
-            sheet.SetBaseStat(StatType.Intellect, 5);
-            sheet.SetBaseStat(StatType.Agility, 5);
-            sheet.SetBaseStat(StatType.Vitality, 5);
-            sheet.SetBaseStat(StatType.Luck, 5);
-
             var status = root.AddComponent<StatusController>();
             var health = root.AddComponent<Health>();
             health.Team = Team.Player;
@@ -110,7 +104,6 @@ namespace WizardGun
             weapon.OwnerMana = mana;
             weapon.Look = look;
             weapon.AimOrigin = cameraObject.transform;
-            weapon.Equip(WeaponLibrary.Starter());
 
             look.Initialise(pivot.transform, camera, motor);
 
@@ -151,9 +144,9 @@ namespace WizardGun
             };
             book.Context = rig.SpellContext;
 
-            // Starting kit: the hitscan sidearm plus the two founding spells.
-            book.Learn(SpellLibrary.Get("blink"), 0);
-            book.Learn(SpellLibrary.Get("cone_of_cold"), 1);
+            // Stats, gun and spells all come from the one loadout definition, which a restart
+            // reapplies to this same object.
+            StartingLoadout.ApplyTo(rig);
 
             health.Damaged += (info, amount) => OnPlayerDamaged(rig, info, amount);
 
