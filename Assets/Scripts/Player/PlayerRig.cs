@@ -23,7 +23,7 @@ namespace WizardGun
         public Camera Camera;
         public Transform CameraPivot;
 
-        public SpellContext SpellContext { get; private set; }
+        public AbilityContext SpellContext { get; private set; }
 
         private void Awake()
         {
@@ -130,15 +130,15 @@ namespace WizardGun
             rig.Camera = camera;
             rig.CameraPivot = pivot.transform;
 
-            rig.SpellContext = new SpellContext
+            rig.SpellContext = new AbilityContext
             {
                 Caster = root,
                 Team = Team.Player,
                 Sheet = sheet,
                 Mana = mana,
                 Health = health,
+                Status = status,
                 Motor = motor,
-                Look = look,
                 Aim = cameraObject.transform,
                 Controller = controller
             };

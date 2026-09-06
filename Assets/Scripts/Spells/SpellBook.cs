@@ -23,7 +23,7 @@ namespace WizardGun
         private readonly List<Spell> _known = new List<Spell>();
         private readonly Dictionary<string, int> _levels = new Dictionary<string, int>();
 
-        public SpellContext Context { get; set; }
+        public AbilityContext Context { get; set; }
 
         public event Action Changed;
         public event Action<Spell, int> SpellCast;
@@ -148,16 +148,8 @@ namespace WizardGun
             Spell spell = _slots[slot];
             int level = Mathf.Max(1, GetLevel(spell));
 
-            // The spell reads its own level and school off the context.
-            Context.CurrentSpell = spell;
-            Context.SpellLevel = level;
-
-            bool cast = spell.Cast(Context);
-
-            Context.CurrentSpell = null;
-            Context.SpellLevel = 1;
-
-            if (!cast) return false;   // spell refunded itself
+            // The spell sets up the context, runs its effect chain, and tidies up after itself.
+            if (!spell.Cast(Context, level)) return false;   // an effect aborted, so refund it
 
             if (Context.Mana != null) Context.Mana.TrySpend(spell.ManaCost);
             _cooldowns[slot] = spell.CooldownAtLevel(level);

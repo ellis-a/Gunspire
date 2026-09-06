@@ -110,11 +110,11 @@ namespace WizardGun
                 Player.Status.Apply(StatusLibrary.Haste(3f, 1, 0.10f), Player.gameObject, Team.Player);
         }
 
-        private void OnSpellCast(Spell spell, SpellContext ctx, Vector3 position)
+        private void OnSpellCast(Spell spell, AbilityContext ctx, Vector3 position)
         {
             if (!BlinkDetonates || spell == null || spell.Id != "blink") return;
 
-            DamageInfo template = DamageInfo.Create(BlinkDetonationDamage * ctx.SpellPower,
+            DamageInfo template = DamageInfo.Create(BlinkDetonationDamage * ctx.Power,
                 DamageType.Astral, Team.Player, ctx.Caster);
             template.CanCrit = false;
             template = template.WithStatuses(SpellStatuses);

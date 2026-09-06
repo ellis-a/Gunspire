@@ -10,9 +10,9 @@ namespace WizardGun
     /// </summary>
     public static class SpellEvents
     {
-        public static event Action<Spell, SpellContext, Vector3> Cast;
+        public static event Action<Spell, AbilityContext, Vector3> Cast;
 
-        public static void RaiseCast(Spell spell, SpellContext ctx, Vector3 position)
+        public static void RaiseCast(Spell spell, AbilityContext ctx, Vector3 position)
             => Cast?.Invoke(spell, ctx, position);
 
         /// <summary>Cleared between runs so subscriptions from a dead run cannot leak.</summary>

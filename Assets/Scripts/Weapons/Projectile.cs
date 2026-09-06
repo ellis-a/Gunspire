@@ -42,6 +42,53 @@ namespace WizardGun
         private Transform _homingTarget;
         private readonly HashSet<IDamageable> _alreadyHit = new HashSet<IDamageable>();
 
+        private List<AbilityEffect> _onHit;
+        private AbilityContext _onHitContext;
+
+        /// <summary>
+        /// Gives the projectile an effect chain to run where it lands - the OnHit hook.
+        ///
+        /// The caster's context is reused for every cast, so this snapshots the parts that
+        /// matter instead of holding a reference that the next cast would overwrite.
+        /// </summary>
+        public void AttachOnHit(List<AbilityEffect> effects, AbilityContext source)
+        {
+            if (effects == null || effects.Count == 0 || source == null) return;
+
+            _onHit = effects;
+            _onHitContext = new AbilityContext
+            {
+                Caster = source.Caster,
+                Team = source.Team,
+                Sheet = source.Sheet,
+                Mana = source.Mana,
+                Health = source.Health,
+                Status = source.Status,
+                Motor = source.Motor,
+                Controller = source.Controller,
+                Aim = source.Aim,
+                Level = source.Level,
+                Power = source.Power,
+                LevelScale = source.LevelScale,
+                DamageType = source.DamageType,
+                Category = source.Category,
+                Tint = source.Tint
+            };
+            _onHitContext.Payload.AddRange(source.Payload);
+        }
+
+        private void RunOnHit(Vector3 point)
+        {
+            if (_onHit == null || _onHitContext == null) return;
+
+            _onHitContext.Origin = point;
+            _onHitContext.Point = point;
+            _onHitContext.Forward = transform.forward;
+            _onHitContext.Targets.Clear();
+
+            AbilityRunner.Run(_onHit, _onHitContext);
+        }
+
         /// <summary>Creates the visual body. Configure the public fields, then call <see cref="Launch"/>.</summary>
         public static Projectile Create(Vector3 position, Vector3 direction, Color color, float radius)
         {
@@ -136,12 +183,15 @@ namespace WizardGun
                     Pierce--;
                     return false;
                 }
+
+                RunOnHit(hit.point);
                 Destroy(gameObject);
                 return true;
             }
 
             // Hit the world.
             Combat.SpawnImpact(hit.point, hit.normal, Tint, 0.25f);
+            RunOnHit(hit.point);
             Destroy(gameObject);
             return true;
         }
@@ -179,6 +229,7 @@ namespace WizardGun
             FadeAndDie.Attach(blast, 0.25f, new Color(Tint.r, Tint.g, Tint.b, 0.5f),
                 Vector3.one * (SplashRadius * 3f));
 
+            RunOnHit(point);
             Destroy(gameObject);
         }
 
