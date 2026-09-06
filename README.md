@@ -161,6 +161,35 @@ recoil. Both delivery kinds share one code path.
 Projectiles move by spherecast rather than physics, so fast rounds cannot tunnel through walls
 and player and enemy shots behave identically.
 
+### Abilities (`Assets/Scripts/Abilities`)
+
+Player spells and enemy attacks are the same thing: an ordered chain of `AbilityEffect`s run
+against a shared `AbilityContext`. Selectors write `Targets` and `Point`; the effects after
+them act on whatever was selected.
+
+```
+Cone of Cold   = SelectCone -> StatusPayload(Chill) -> DealDamage -> VfxCone -> VfxShards
+Frost Breath   = AimAtTarget -> TelegraphCone -> Wait -> StatusPayload(Chill)
+                 -> SelectCone -> DealDamage -> VfxCone -> Wait
+```
+
+Three rules make it work:
+
+- **One mutable context**, reused per caster, so effects hold no state of their own.
+- **Effects can abort.** Returning false stops the chain and refunds the cast — that is how
+  Blink declines to fire when there is a wall in front of you.
+- **An escape hatch.** Chain Lightning loops with per-jump retargeting, and the sweeping beam
+  is sustained state over time. Loops and time are control flow, which does not belong in a
+  data chain, so those stay single bespoke effects. That is the system working, not failing.
+
+Enemy attacks add a time dimension through `ITimedEffect`: `Wait` is the wind-up that makes an
+attack readable, `Repeat` drives volleys and multi-stage slams. A wait aborts if the caster is
+killed or frozen, so a well-timed Cone of Cold genuinely cancels a wind-up.
+
+`SpawnProjectileEffect` carries an **`OnHit`** chain the projectile runs where it lands.
+Firebolt uses it: the bolt itself deals no damage, and the blast is
+`SelectSphere -> DealDamage(falloff) -> Vfx`.
+
 ### Spells (`Assets/Scripts/Spells`)
 
 Two slots bound to `Q` and `E`. `SpellBook.SlotCount` and `SlotKeys` are the only things to
@@ -221,7 +250,8 @@ sits in a few library files, each holding one list.
 | Status effects | `Effects/StatusLibrary.cs` — defaults at the top, behaviour in the classes |
 | Enemy health and damage | `Enemies/EnemyFactory.cs` — one `Build*` method per archetype |
 | Difficulty per floor | `Enemies/EnemyFactory.cs` → `HealthScale` / `DamageScale` |
-| Attack wind-ups and timings | `Enemies/EnemyAttack.cs` — the `[Header]` fields on each attack |
+| Enemy attacks | `Enemies/EnemyFactory.cs` — each is an effect chain, same effects as spells |
+| Ability effects | `Abilities/` — add an effect class, it serves spells and enemies at once |
 | What spawns in each room | `Level/RoomBuilder.cs` → `PopulateRoom()`; sizes in `SizeFor()` |
 | Crate drops | `Level/Props.cs` → `Smashable.DropReward()` |
 | Room types, names and odds | `Level/TowerMap.cs` → `RollKind()` and `MakeNode()` |

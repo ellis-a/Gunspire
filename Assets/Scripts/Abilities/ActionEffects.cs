@@ -47,6 +47,12 @@ namespace WizardGun
         /// <summary>Strength behind the blow, compared against Smashable hardness.</summary>
         public bool UseSmashPower;
 
+        /// <summary>
+        /// Never strike the same target twice in one cast. A melee swing evaluated over
+        /// several frames of a lunge needs this, or it connects once per frame.
+        /// </summary>
+        public bool OnlyOncePerCast;
+
         public override bool Execute(AbilityContext ctx)
         {
             float smash = UseSmashPower && ctx.Sheet != null ? ctx.Sheet.Get(Attr.SmashPower) : 0f;
@@ -55,6 +61,7 @@ namespace WizardGun
             {
                 IDamageable target = ctx.Targets[i];
                 if (target == null || !target.IsAlive) continue;
+                if (OnlyOncePerCast && !ctx.AlreadyHit.Add(target)) continue;
 
                 Vector3 center = AbilityContext.CenterOf(target);
                 float falloff = 1f;

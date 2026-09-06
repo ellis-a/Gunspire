@@ -57,8 +57,32 @@ namespace WizardGun
         /// <summary>Statuses that damage dealt by this cast will carry.</summary>
         public readonly List<StatusApplication> Payload = new List<StatusApplication>();
 
+        /// <summary>
+        /// Targets already struck this cast, so a swing that is evaluated over several frames
+        /// cannot hit the same enemy twice.
+        /// </summary>
+        public readonly HashSet<IDamageable> AlreadyHit = new HashSet<IDamageable>();
+
+        /// <summary>What an enemy is attacking. Null for the player, who aims with the camera.</summary>
+        public Transform TargetTransform;
+
+        /// <summary>Set when a timed effect gives up, e.g. the caster was frozen mid wind-up.</summary>
+        public bool Aborted;
+
         public int HitMask => Layers.HitMaskFor(Team);
         public int TargetMask => Layers.TargetMaskFor(Team);
+
+        /// <summary>False once the caster is dead or crowd-controlled, which interrupts wind-ups.</summary>
+        public bool CasterCanAct
+        {
+            get
+            {
+                if (Caster == null) return false;
+                if (Health != null && !Health.IsAlive) return false;
+                if (Status != null && Status.IsControlImpaired) return false;
+                return true;
+            }
+        }
 
         // ---------------------------------------------------------------- lifecycle
 
@@ -90,6 +114,8 @@ namespace WizardGun
 
             Targets.Clear();
             Payload.Clear();
+            AlreadyHit.Clear();
+            Aborted = false;
             if (ExtraStatuses != null) Payload.AddRange(ExtraStatuses);
         }
 

@@ -22,7 +22,19 @@ namespace WizardGun
         public virtual string Describe() => GetType().Name.Replace("Effect", "");
     }
 
-    /// <summary>Runs a chain of effects. Used by spells, and by enemy attacks in step two.</summary>
+    /// <summary>
+    /// An effect that takes time: a wind-up, a repeat, a sustained beam. Enemy attacks are
+    /// built from these; spells are instantaneous and never touch this path.
+    ///
+    /// Signal failure by setting <see cref="AbilityContext.Aborted"/> rather than returning,
+    /// since a coroutine cannot return a value.
+    /// </summary>
+    public interface ITimedEffect
+    {
+        System.Collections.IEnumerator Run(AbilityContext ctx);
+    }
+
+    /// <summary>Runs a chain of effects, instantly for spells or over time for enemy attacks.</summary>
     public static class AbilityRunner
     {
         /// <summary>
@@ -40,6 +52,33 @@ namespace WizardGun
                 if (!effect.Execute(ctx)) return false;
             }
             return true;
+        }
+
+        /// <summary>
+        /// Runs a chain that contains timed steps. Instant effects still run instantly; a
+        /// timed one is yielded through. Stops at the first abort.
+        /// </summary>
+        public static System.Collections.IEnumerator RunTimed(List<AbilityEffect> effects, AbilityContext ctx)
+        {
+            if (effects == null) yield break;
+
+            for (int i = 0; i < effects.Count; i++)
+            {
+                if (ctx.Aborted) yield break;
+
+                AbilityEffect effect = effects[i];
+                if (effect == null) continue;
+
+                if (effect is ITimedEffect timed)
+                {
+                    yield return timed.Run(ctx);
+                }
+                else if (!effect.Execute(ctx))
+                {
+                    ctx.Aborted = true;
+                    yield break;
+                }
+            }
         }
 
         public static string Describe(List<AbilityEffect> effects)
