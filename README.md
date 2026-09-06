@@ -239,7 +239,7 @@ sits in a few library files, each holding one list.
 
 | To change | Edit |
 |---|---|
-| Starting stats, gun and spells | `Player/StartingLoadout.cs` — the only place |
+| Starting stats, gun and spells | **Wizard with a Gun → Create Starting Loadout Asset**, then edit it in the Inspector. Falls back to the constants in `Player/StartingLoadout.cs` when no asset exists |
 | Guns | `Weapons/WeaponLibrary.cs` → `BuildRoster()`; field meanings in `WeaponDefinition.cs` |
 | Spells | `Spells/SpellLibrary.cs` — add to the `All` list, then write the class |
 | Boons | `Boons/BoonLibrary.cs` → `BuildPool()` |
