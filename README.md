@@ -77,10 +77,24 @@ the character sheet, added on activation and taken back on release.
 Rune Shrines offer either a spell or a movement ability, so the Shift slot is something a run
 can genuinely change.
 
-The three live in code (`Player/LoadoutLibrary.cs`) so a fresh clone has something to pick with
-nothing authored. **Wizard with a Gun → Create Starting Loadout Assets** writes them out as
-ScriptableObjects in `Assets/Resources` for Inspector editing; a matching id replaces the
-built-in, a new id adds a fourth card. Delete the assets to go back to the code roster.
+## Authoring as assets
+
+Loadouts and guns follow the same hybrid: **built-ins in code, assets merged over the top by
+id.** A matching id replaces the built-in, a new id is added to the roster. With no assets at
+all the game runs entirely on code, so a fresh clone needs nothing authored — and deleting the
+assets is the way back to defaults.
+
+| | Menu item | Written to |
+|---|---|---|
+| Loadouts | **Create Starting Loadout Assets** | `Assets/Resources` |
+| Guns | **Create Weapon Assets** | `Assets/Resources/Weapons` |
+
+Use the menu rather than the right-click Create menu: an asset outside a `Resources` folder is
+never found and silently does nothing. **Log Weapon Balance Table** prints the whole roster as
+one table, which is how you compare a gun against the others rather than reading initializers
+one at a time.
+
+Spells, boons, enemies and movement abilities are still code-only.
 
 ## The run
 
@@ -90,7 +104,7 @@ Stepping through offers **one of three boons**, then **a choice of route** for t
 - **Barracks Hall** — a straight fight.
 - **Warded Sanctum** — fewer, empowered enemies; the boon roll afterwards favours rares.
 - **Vault** — no guards, a gun on a plinth, reinforced crates that need Strength.
-- **Rune Shrine** — a spell to learn and a standing stone that grants a permanent stat.
+- **Rune Shrine** — a spell or movement ability to learn, and a stone granting a permanent stat.
 - **Arms Forge** — two guns, one choice, and guards who object.
 - **The Warden of the Spire** — the floor-eight boss.
 
@@ -142,7 +156,7 @@ Spells and boons can both be taken repeatedly.
 - **Spells** level up on the shrine pedestal. A spell you do not know opens the slot picker; one
   you already know levels on the spot. Levels raise the spell's own numbers via
   `LevelMultiplier`, shorten its cooldown to a floor of 60%, and often add something specific —
-  Blink gains range, Chain Lightning gains targets, Cone of Cold gains chill stacks. Levels are
+  Chain Lightning gains targets, Cone of Cold gains chill stacks, Lava Splash a wider pool. Levels are
   keyed by spell id, so moving a spell between slots keeps its level.
 - **Boons** are offered again while below `MaxLevel`. Each pick calls the boon's effect again
   with the new level, so effects apply their own per-level increment rather than recomputing a
@@ -281,7 +295,7 @@ sits in a few library files, each holding one list.
 | To change | Edit |
 |---|---|
 | Loadouts (stats, gun, spells) | `Player/LoadoutLibrary.cs` for the code roster, or **Create Starting Loadout Assets** to edit them in the Inspector |
-| Guns | `Weapons/WeaponLibrary.cs` → `BuildRoster()`; field meanings in `WeaponDefinition.cs` |
+| Guns | `Weapons/WeaponLibrary.cs` → `BuiltIn()` for the code roster, or **Create Weapon Assets** to edit them in the Inspector |
 | Spells | `Spells/SpellLibrary.cs` — add to the `All` list, then write the class |
 | Boons | `Boons/BoonLibrary.cs` → `BuildPool()` |
 | Rarity odds and Luck scaling | `Core/Rarity.cs` → `BaseChance()` and `LuckScaling` |

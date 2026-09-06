@@ -6,6 +6,11 @@ namespace WizardGun
     /// <summary>
     /// The gun roster. The starting weapon is named by <see cref="StartingLoadout.WeaponId"/>
     /// and is excluded from world drops.
+    ///
+    /// The built-ins live in code so a fresh clone runs with nothing authored. Any
+    /// <see cref="WeaponAsset"/> found under a Resources folder is merged in: a matching id
+    /// replaces the built-in, a new id is added. That gives Inspector editing without the game
+    /// depending on assets existing.
     /// </summary>
     public static class WeaponLibrary
     {
@@ -15,14 +20,43 @@ namespace WizardGun
         {
             get
             {
-                if (_all == null) BuildRoster();
+                if (_all == null) Build();
                 return _all;
+            }
+        }
+
+        /// <summary>Drops the cached roster so authored assets are picked up again.</summary>
+        public static void Reload() => _all = null;
+
+        private static void Build()
+        {
+            // Assign before merging: anything that reads the roster while assets are loading
+            // gets the built-ins rather than recursing into a half-built list.
+            _all = BuiltIn();
+
+            WeaponAsset[] authored = Resources.LoadAll<WeaponAsset>("");
+            if (authored == null) return;
+
+            for (int i = 0; i < authored.Length; i++)
+            {
+                WeaponDefinition def = authored[i] != null ? authored[i].Definition : null;
+                if (def == null) continue;
+
+                if (string.IsNullOrEmpty(def.Id))
+                {
+                    Debug.LogWarning("Weapon asset \"" + authored[i].name + "\" has no Id and was ignored.");
+                    continue;
+                }
+
+                int existing = _all.FindIndex(w => w.Id == def.Id);
+                if (existing >= 0) _all[existing] = def;
+                else _all.Add(def);
             }
         }
 
         public static WeaponDefinition Get(string id)
         {
-            if (_all == null) BuildRoster();
+            if (_all == null) Build();
             for (int i = 0; i < _all.Count; i++)
                 if (_all[i].Id == id) return _all[i].Clone();
 
@@ -40,7 +74,7 @@ namespace WizardGun
         /// </summary>
         public static WeaponDefinition Peek(string id)
         {
-            if (_all == null) BuildRoster();
+            if (_all == null) Build();
             for (int i = 0; i < _all.Count; i++)
                 if (_all[i].Id == id) return _all[i];
             return null;
@@ -53,7 +87,7 @@ namespace WizardGun
         /// </summary>
         public static WeaponDefinition RollDrop(Rng rng, float luck, float rarityBonus = 1f)
         {
-            if (_all == null) BuildRoster();
+            if (_all == null) Build();
 
             var pool = new List<WeaponDefinition>();
             for (int i = 0; i < _all.Count; i++)
@@ -65,9 +99,10 @@ namespace WizardGun
             return pick.Clone();
         }
 
-        private static void BuildRoster()
+        /// <summary>The code roster. Also what the editor tool seeds new assets from.</summary>
+        public static List<WeaponDefinition> BuiltIn()
         {
-            _all = new List<WeaponDefinition>
+            return new List<WeaponDefinition>
             {
                 new WeaponDefinition
                 {
@@ -361,5 +396,6 @@ namespace WizardGun
                 }
             };
         }
+
     }
 }
