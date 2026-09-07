@@ -176,7 +176,7 @@ namespace WizardGun
                 _alreadyHit.Add(target);
                 DamageInfo info = BuildDamage(hit.point, hit.normal);
                 target.TakeDamage(info);
-                Combat.SpawnImpact(hit.point, hit.normal, Tint, 0.3f);
+                Combat.SpawnImpact(hit.point, hit.normal, Tint, 0.3f, DamageType);
 
                 if (Pierce > 0)
                 {
@@ -190,7 +190,7 @@ namespace WizardGun
             }
 
             // Hit the world.
-            Combat.SpawnImpact(hit.point, hit.normal, Tint, 0.25f);
+            Combat.SpawnImpact(hit.point, hit.normal, Tint, 0.25f, DamageType);
             RunOnHit(hit.point);
             Destroy(gameObject);
             return true;

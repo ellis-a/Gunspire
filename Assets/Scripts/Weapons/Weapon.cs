@@ -35,6 +35,9 @@ namespace WizardGun
         private Coroutine _burstRoutine;
         private GameObject _model;
 
+        /// <summary>Synthesised once on equip rather than per shot, so the cost lands on pickup.</summary>
+        private AudioClip _fireClip;
+
         public bool IsEmpty => AmmoInMagazine <= 0;
 
         public void Equip(WeaponDefinition definition)
@@ -45,6 +48,7 @@ namespace WizardGun
             AmmoInMagazine = definition.MagazineSize;
             IsReloading = false;
             _cooldown = 0f;
+            _fireClip = SoundLibrary.ForWeapon(definition);
 
             BuildModel();
         }
@@ -90,6 +94,11 @@ namespace WizardGun
 
             bool pressedThisFrame = triggerDown && !_triggerWasDown;
             _triggerWasDown = triggerDown;
+
+            // Pulling the trigger mid-reload should click rather than do nothing at all.
+            // Gated on the press so holding an automatic down does not machine-gun the click.
+            if (pressedThisFrame && IsReloading && OwnerTeam == Team.Player)
+                Sfx.PlayFlat(SoundLibrary.Get(SoundLibrary.DryFireId));
 
             bool wantsToShoot = Definition.Mode == FireMode.Auto ? triggerDown : pressedThisFrame;
             if (wantsToShoot) TryFire();
@@ -149,6 +158,7 @@ namespace WizardGun
             }
 
             MuzzleFlash();
+            PlayFireSound();
 
             if (Look != null) Look.AddRecoil(Definition.RecoilPitch, Random.Range(-1f, 1f) * Definition.RecoilYaw);
             if (AmmoInMagazine <= 0) StartReload();
@@ -194,13 +204,13 @@ namespace WizardGun
                 {
                     // A wall stops the shot dead.
                     endPoint = hit.point;
-                    Combat.SpawnImpact(hit.point, hit.normal, Definition.Tint, 0.22f);
+                    Combat.SpawnImpact(hit.point, hit.normal, Definition.Tint, 0.22f, Definition.DamageType);
                     anythingHit = true;
                     break;
                 }
 
                 target.TakeDamage(BuildHitscanDamage(hit.point, hit.normal, direction));
-                Combat.SpawnImpact(hit.point, hit.normal, Definition.Tint, 0.3f);
+                Combat.SpawnImpact(hit.point, hit.normal, Definition.Tint, 0.3f, Definition.DamageType);
                 endPoint = hit.point;
                 anythingHit = true;
 
@@ -281,6 +291,18 @@ namespace WizardGun
             p.Statuses = statuses;
 
             p.Launch();
+        }
+
+        /// <summary>
+        /// The player's own gun plays flat so it does not pan as they turn; anyone else's is
+        /// positional, which is how you hear where you are being shot from.
+        /// </summary>
+        private void PlayFireSound()
+        {
+            if (_fireClip == null) return;
+
+            if (OwnerTeam == Team.Player) Sfx.PlayFlat(_fireClip);
+            else Sfx.PlayAt(_fireClip, Muzzle != null ? Muzzle.position : transform.position);
         }
 
         private void MuzzleFlash()

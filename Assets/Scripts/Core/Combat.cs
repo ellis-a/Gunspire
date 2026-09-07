@@ -129,11 +129,20 @@ namespace WizardGun
         }
 
         /// <summary>A short-lived glow where something got hit.</summary>
-        public static void SpawnImpact(Vector3 point, Vector3 normal, Color color, float size = 0.35f)
+        /// <summary>
+        /// The visual and audible pop where something landed. Every gun, spell and projectile
+        /// funnels through here, so this is the one place impact feedback has to be wired.
+        /// </summary>
+        public static void SpawnImpact(Vector3 point, Vector3 normal, Color color, float size = 0.35f,
+            DamageType type = DamageType.Normal)
         {
             GameObject go = Build.Sphere(null, "Impact", point + normal * 0.05f, size,
                 MaterialLibrary.Transparent(color), collider: false);
             FadeAndDie.Attach(go, 0.18f, color, Vector3.one * (size * 3f));
+
+            // Scaled by size so a glancing tick is quieter than a solid hit, and capped per
+            // frame because one explosion can call this for everything in the blast at once.
+            Sfx.PlayAt(SoundLibrary.Impact(type), point, Mathf.Clamp(size * 2.2f, 0.35f, 1f));
         }
 
         /// <summary>Straight line tracer between two points, for hitscan shots and beams.</summary>

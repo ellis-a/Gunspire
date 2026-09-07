@@ -34,6 +34,26 @@ namespace WizardGun
         /// <summary>What the crosshair is currently pointed at, for the HUD prompt.</summary>
         public string InteractPrompt => _focus != null && _focus.CanInteract(gameObject) ? _focus.Prompt : null;
 
+        // Qualified because this class also has a field called Health, and an unqualified
+        // Health.AnyDamaged reads as the field rather than the type.
+        private void OnEnable() => WizardGun.Health.AnyDamaged += OnAnythingDamaged;
+        private void OnDisable() => WizardGun.Health.AnyDamaged -= OnAnythingDamaged;
+
+        /// <summary>
+        /// The hitmarker. Combat.SpawnImpact already covers where a shot *landed*, but that
+        /// fires against walls too; this is the separate, quieter confirmation that the thing
+        /// you hit was alive. Guns, spells and the bash all route through Health, so one
+        /// subscription covers every way the player can deal damage.
+        /// </summary>
+        private void OnAnythingDamaged(WizardGun.Health victim, DamageInfo info, float amount)
+        {
+            if (info.Source != gameObject || victim == null) return;
+            if (victim.gameObject == gameObject) return;
+
+            Sfx.PlayFlat(SoundLibrary.Get(SoundLibrary.HitConfirmId),
+                info.IsCrit ? 1f : 0.7f, pitchVariance: 0.03f);
+        }
+
         private void Update()
         {
             if (_bashTimer > 0f) _bashTimer -= Time.deltaTime;
