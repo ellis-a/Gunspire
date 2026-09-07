@@ -27,6 +27,20 @@ namespace WizardGun
         public float SeparationRadius = 1.6f;
         public float MoveSpeedWhileAttacking = 0.25f;
 
+        [Header("Flight")]
+        /// <summary>Ignores gravity and holds an altitude above whatever is beneath it.</summary>
+        public bool Flying;
+        public float HoverHeight = 3.2f;
+        public float HoverBob = 0.3f;
+        public float HoverBobSpeed = 1.5f;
+        public float ClimbAcceleration = 16f;
+
+        /// <summary>
+        /// Where this enemy sees and shoots from. Ground archetypes are tall and look out of
+        /// their heads; a flier is small and looks out of its middle.
+        /// </summary>
+        public float EyeHeight = 1.35f;
+
         public Health Health { get; private set; }
         public CharacterSheet Sheet { get; private set; }
         public StatusController Status { get; private set; }
@@ -40,6 +54,7 @@ namespace WizardGun
         private float _strafeTimer;
         private int _strafeSign = 1;
         private float _retargetTimer;
+        private float _bobPhase;
 
         public bool IsAttacking
         {
@@ -65,6 +80,9 @@ namespace WizardGun
             if (Muzzle == null) Muzzle = transform;
             _strafeSign = Random.value < 0.5f ? -1 : 1;
             _strafeTimer = Random.Range(0f, StrafeInterval);
+
+            // Offset per enemy, otherwise a group of fliers bobs in perfect unison.
+            _bobPhase = Random.Range(0f, Mathf.PI * 2f);
         }
 
         private void Start()
@@ -155,7 +173,7 @@ namespace WizardGun
                 Layers.BlockingMask, QueryTriggerInteraction.Ignore);
         }
 
-        public Vector3 EyePosition => transform.position + Vector3.up * 1.35f;
+        public Vector3 EyePosition => transform.position + Vector3.up * EyeHeight;
 
         public Vector3 AimDirection
         {
@@ -174,7 +192,14 @@ namespace WizardGun
         private void FaceTarget()
         {
             if (Target == null) return;
-            Vector3 to = Flat(Target.position) - Flat(transform.position);
+
+            // A flier looks at the player properly rather than only turning on the spot. It
+            // hovers above them, so a flattened stare would point at the floor beyond them -
+            // and for something whose whole read is where it is looking, that matters.
+            Vector3 to = Flying
+                ? (Target.position + Vector3.up * 0.95f) - EyePosition
+                : Flat(Target.position) - Flat(transform.position);
+
             if (to.sqrMagnitude < 0.01f) return;
 
             Quaternion wanted = Quaternion.LookRotation(to.normalized, Vector3.up);
@@ -220,12 +245,35 @@ namespace WizardGun
             _velocity.x = horizontal.x;
             _velocity.z = horizontal.z;
 
-            if (_controller.isGrounded && _velocity.y < 0f) _velocity.y = -2f;
+            if (Flying) Hover(dt);
+            else if (_controller.isGrounded && _velocity.y < 0f) _velocity.y = -2f;
             else _velocity.y += Gravity * dt;
 
             _externalVelocity = Vector3.MoveTowards(_externalVelocity, Vector3.zero, 18f * dt);
 
             _controller.Move((_velocity + _externalVelocity) * dt);
+        }
+
+        /// <summary>
+        /// Holds station above whatever is below, rather than falling. Seeks the altitude
+        /// through velocity instead of snapping to it, so knockback can still shove a flier
+        /// around and it visibly recovers - which is most of what sells the thing as floating.
+        /// </summary>
+        private void Hover(float dt)
+        {
+            _bobPhase += dt * HoverBobSpeed;
+
+            // Enemies are not in BlockingMask, so this cannot hit the flier itself.
+            float groundY = Physics.Raycast(transform.position + Vector3.up * 0.2f, Vector3.down,
+                out RaycastHit below, HoverHeight + 30f, Layers.BlockingMask, QueryTriggerInteraction.Ignore)
+                ? below.point.y
+                : transform.position.y - HoverHeight;   // nothing underneath: keep the current altitude
+
+            float wantedY = groundY + HoverHeight + Mathf.Sin(_bobPhase) * HoverBob;
+            float error = wantedY - transform.position.y;
+
+            float wantedRise = Mathf.Clamp(error * 4f, -7f, 7f);
+            _velocity.y = Mathf.MoveTowards(_velocity.y, wantedRise, ClimbAcceleration * dt);
         }
 
         /// <summary>Used by lunges and knockback.</summary>

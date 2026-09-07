@@ -56,6 +56,17 @@ namespace WizardGun
             return Resolve(id, () => ImpactRecipe(type));
         }
 
+        /// <summary>
+        /// The onset of a beam. One shot at the moment it fires rather than a sustained loop:
+        /// beams here run anywhere from 1.3 to 2.4 seconds and the pool plays one-shots, so a
+        /// loop would need a source held for the beam's lifetime. The visual carries the tail.
+        /// </summary>
+        public static AudioClip Beam(DamageType type)
+        {
+            string id = "beam_" + DamageTypes.Name(type).ToLowerInvariant();
+            return Resolve(id, () => BeamRecipe(type));
+        }
+
         /// <summary>One of the named built-ins.</summary>
         public static AudioClip Get(string id)
         {
@@ -218,6 +229,27 @@ namespace WizardGun
             // Impacts fire far more often than shots, several at once from one explosion.
             // They are a texture, not an event, and mix accordingly.
             r.Volume = 0.32f;
+            return r;
+        }
+
+        private static SoundRecipe BeamRecipe(DamageType type)
+        {
+            SchoolVoice voice = VoiceFor(type);
+
+            SoundRecipe r = SoundRecipe.Default;
+            r.Duration = 0.40f;
+
+            // A long fall from high to low is what reads as "pew" rather than "beep".
+            r.BodyHz = 720f * voice.BodyScale;
+            r.BodyEndHz = 240f * voice.BodyScale;
+
+            // Mostly tonal. A beam is a sustained emission, not an explosion.
+            r.NoiseMix = Mathf.Clamp01(voice.NoiseMix * 0.35f);
+            r.Brightness = voice.Brightness;
+            r.Decay = 1.1f;
+            r.Crack = 0.25f;
+            r.Drive = 1.5f;
+            r.Volume = 0.55f;
             return r;
         }
 

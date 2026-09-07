@@ -10,6 +10,7 @@ namespace WizardGun
         Warden,       // telegraphed sweeping beam
         Sentinel,     // telegraphed ground areas
         Frostcaller,  // ice projectiles and a freezing cone
+        Gazer,        // floating eyeball, laser bolts and a sweeping gaze
         TowerWarden   // floor boss, uses everything
     }
 
@@ -23,7 +24,7 @@ namespace WizardGun
         public static readonly EnemyKind[] StandardRoster =
         {
             EnemyKind.Cultist, EnemyKind.Hound, EnemyKind.Warden,
-            EnemyKind.Sentinel, EnemyKind.Frostcaller
+            EnemyKind.Sentinel, EnemyKind.Frostcaller, EnemyKind.Gazer
         };
 
         public static float HealthScale(int floor) => 1f + (floor - 1) * 0.28f;
@@ -37,6 +38,7 @@ namespace WizardGun
                 case EnemyKind.Warden: return BuildWarden(position, floor, elite);
                 case EnemyKind.Sentinel: return BuildSentinel(position, floor, elite);
                 case EnemyKind.Frostcaller: return BuildFrostcaller(position, floor, elite);
+                case EnemyKind.Gazer: return BuildGazer(position, floor, elite);
                 case EnemyKind.TowerWarden: return BuildBoss(position, floor);
                 default: return BuildCultist(position, floor, elite);
             }
@@ -110,6 +112,57 @@ namespace WizardGun
             }
 
             var muzzle = Build.Empty(root, "Muzzle", new Vector3(0f, height * 0.85f, width * 0.55f));
+            enemy.Muzzle = muzzle.transform;
+
+            Layers.SetRecursively(enemy.gameObject, Layers.Enemy);
+        }
+
+        /// <summary>
+        /// A floating eyeball. No torso, no legs - a sclera, an iris that faces wherever it is
+        /// looking, and trailing nerve cords for a silhouette. The muzzle sits in the pupil so
+        /// the laser leaves the eye rather than the middle of the body.
+        /// </summary>
+        private static void BuildEyeball(EnemyController enemy, Color sclera, Color iris, float diameter,
+            bool elite)
+        {
+            Transform root = enemy.transform;
+            Material scleraMaterial = MaterialLibrary.Lit(sclera, 0.25f, 0.15f);
+            Material irisMaterial = MaterialLibrary.Emissive(iris, 3.5f);
+            Material cordMaterial = MaterialLibrary.Lit(Color.Lerp(sclera, Color.black, 0.55f), 0.3f);
+
+            float centre = enemy.EyeHeight;
+            float front = diameter * 0.42f;
+
+            Build.Sphere(root, "Sclera", new Vector3(0f, centre, 0f), diameter, scleraMaterial, collider: false);
+
+            // Flattened against the eye so it reads as a disc on a sphere, not a second ball.
+            GameObject irisBall = Build.Sphere(root, "Iris", new Vector3(0f, centre, front),
+                diameter * 0.5f, irisMaterial, collider: false);
+            irisBall.transform.localScale = new Vector3(diameter * 0.5f, diameter * 0.5f, diameter * 0.22f);
+
+            Build.Sphere(root, "Pupil", new Vector3(0f, centre, front + diameter * 0.06f),
+                diameter * 0.22f, MaterialLibrary.Lit(new Color(0.04f, 0.03f, 0.06f), 0.1f), collider: false);
+
+            // Nerve cords trailing behind. Purely silhouette - they give the thing an
+            // orientation from behind, where the iris cannot be seen.
+            for (int i = 0; i < 5; i++)
+            {
+                float angle = (i / 5f) * Mathf.PI * 2f;
+                var offset = new Vector3(Mathf.Cos(angle) * diameter * 0.26f,
+                    centre + Mathf.Sin(angle) * diameter * 0.26f, -diameter * 0.48f);
+
+                GameObject cord = Build.Cube(root, "Cord" + i, offset,
+                    new Vector3(0.05f, 0.05f, diameter * 0.85f), cordMaterial, collider: false);
+                cord.transform.localRotation = Quaternion.Euler(Mathf.Cos(angle) * 22f, Mathf.Sin(angle) * 22f, 0f);
+            }
+
+            if (elite)
+            {
+                Build.Sphere(root, "Halo", new Vector3(0f, centre + diameter * 0.62f, 0f),
+                    diameter * 0.26f, MaterialLibrary.Emissive(new Color(1f, 0.85f, 0.3f), 2.5f), collider: false);
+            }
+
+            var muzzle = Build.Empty(root, "Muzzle", new Vector3(0f, centre, front + diameter * 0.14f));
             enemy.Muzzle = muzzle.transform;
 
             Layers.SetRecursively(enemy.gameObject, Layers.Enemy);
@@ -310,6 +363,74 @@ namespace WizardGun
                 new WaitEffect { Seconds = 0.8f });
 
             SetAffinity(e, DamageType.Frost, DamageType.Fire);
+            return e;
+        }
+
+        private static EnemyController BuildGazer(Vector3 position, int floor, bool elite)
+        {
+            const float diameter = 1.15f;
+
+            // Fragile. It is the only thing in the roster the melee bash cannot reach, so its
+            // answer to being shot has to be dying quickly rather than soaking.
+            const float hover = 3.6f;
+
+            // Spawned already airborne. RoomBuilder places enemies on the floor, and rising
+            // into position at the start of a fight looks like a bug rather than an entrance.
+            EnemyController e = CreateBase("Gazer", position + Vector3.up * hover, 48f, 4.4f,
+                radius: 0.45f, height: 1.1f, Palette.EnemyFlyer, floor, elite);
+
+            e.Flying = true;
+            e.HoverHeight = hover;
+            e.EyeHeight = 0.55f;          // it looks out of its middle; there is no head
+            e.PreferredRange = 15f;
+            e.MinComfortRange = 9f;
+            e.StrafeInterval = 2.2f;
+            e.TurnSpeed = 5f;             // slow to track, so circling it beats standing still
+
+            BuildEyeball(e, Palette.EnemyFlyer, new Color(1f, 0.35f, 0.30f), diameter, elite);
+
+            // The cheap attack: dodgeable bolts that punish standing in the open.
+            EnemyAttack.Add(e, "Laser Bolts", DamageType.Shadow, new Color(1f, 0.4f, 0.35f),
+                minRange: 0f, maxRange: 30f, cooldown: 2.9f, priority: 0,
+                new TelegraphFlashEffect { Duration = 0.5f, Radius = 0.4f, Height = 0.6f },
+                new WaitEffect { Seconds = 0.5f },
+                new RepeatEffect
+                {
+                    Times = elite ? 4 : 3, Interval = 0.18f,
+                    Body =
+                    {
+                        new AimAtTargetEffect(),
+                        new SpawnProjectileEffect
+                        {
+                            Damage = 8f * DamageScale(floor), Speed = 26f, Radius = 0.18f,
+                            Lifetime = 5f, SpreadDegrees = 1.8f
+                        }
+                    }
+                },
+                new WaitEffect { Seconds = 0.5f });
+
+            // The signature. Telegraphed, then a slow sweep - break line of sight or move.
+            EnemyAttack.Add(e, "Searing Gaze", DamageType.Shadow, new Color(1f, 0.3f, 0.25f),
+                minRange: 5f, maxRange: 34f, cooldown: 7.5f, priority: 1,
+                // Deliberately not flattened: the line has to show the real downward angle.
+                new AimAtTargetEffect(),
+                new TelegraphLineEffect { Length = 36f, Width = 0.3f, Duration = 1.15f },
+                new WaitEffect { Seconds = 1.15f },
+                new BeamEffect
+                {
+                    Duration = elite ? 1.9f : 1.4f,
+                    Width = 0.45f,
+                    DamagePerTick = 5f * DamageScale(floor),
+                    SweepDegreesPerSecond = elite ? 24f : 18f,
+
+                    // Firing down from hover height, the default 0.25 would send the beam
+                    // over the player's head from anywhere inside its preferred range.
+                    MaxPitch = 0.95f
+                },
+                new WaitEffect { Seconds = 1.1f });
+
+            // Inverts the Warden: Astral guns are the answer to it.
+            SetAffinity(e, DamageType.Shadow, DamageType.Astral);
             return e;
         }
 

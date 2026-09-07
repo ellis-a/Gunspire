@@ -87,18 +87,28 @@ namespace WizardGun
         public float TickInterval = 0.12f;
         public float SweepDegreesPerSecond = 26f;
 
+        /// <summary>
+        /// How far off horizontal the beam may point. Ground casters are held near level so a
+        /// sweep stays readable; a flier firing down at the player needs the full range, and
+        /// at 0.25 would shoot over their head from anywhere close.
+        /// </summary>
+        public float MaxPitch = 0.25f;
+
         public override bool Execute(AbilityContext ctx) => true;
 
         public IEnumerator Run(AbilityContext ctx)
         {
             Vector3 direction = ctx.Forward;
-            direction.y = Mathf.Clamp(direction.y, -0.25f, 0.25f);
+            direction.y = Mathf.Clamp(direction.y, -MaxPitch, MaxPitch);
             direction.Normalize();
 
             float sweepSign = Random.value < 0.5f ? -1f : 1f;
 
             GameObject beam = Build.Cube(null, "Beam", Vector3.zero, Vector3.one,
                 MaterialLibrary.Emissive(ctx.Tint, 3f), collider: false);
+
+            Sfx.PlayAt(SoundLibrary.Beam(ctx.DamageType),
+                ctx.Aim != null ? ctx.Aim.position : ctx.Origin, 0.85f);
 
             float elapsed = 0f;
             float tickTimer = 0f;

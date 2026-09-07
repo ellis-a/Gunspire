@@ -177,6 +177,9 @@ namespace WizardGun
         public static readonly Color EnemyCaster = new Color(0.75f, 0.55f, 0.20f);
         public static readonly Color EnemyBoss = new Color(0.85f, 0.25f, 0.45f);
 
+        /// <summary>Pale, unlike the saturated ground archetypes, so a flier reads at a glance.</summary>
+        public static readonly Color EnemyFlyer = new Color(0.84f, 0.82f, 0.88f);
+
         public static readonly Color Telegraph = new Color(1.00f, 0.25f, 0.25f);
         public static readonly Color Portal = new Color(0.45f, 0.85f, 1.00f);
 
