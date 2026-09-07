@@ -267,6 +267,29 @@ namespace WizardGun
                 Rarity.Rare, 2,
                 new AltFireTierEffect());
 
+            // Familiars. Each is its own boon rather than one boon with a random pick, so a
+            // build can be steered toward the one it wants. Later picks deepen the familiar
+            // you have instead of granting a second - see GrantFamiliarEffect.
+            Add("familiar_wisp", "Bound Wisp",
+                "Summons an Arcane Wisp that fires at your enemies. It returns each room.",
+                Rarity.Rare, 3,
+                new GrantFamiliarEffect { FamiliarId = "wisp" });
+
+            Add("familiar_mender", "Bound Mender",
+                "Summons a Mender that heals you while enemies are near. It returns each room.",
+                Rarity.Rare, 3,
+                new GrantFamiliarEffect { FamiliarId = "mender" });
+
+            Add("familiar_imp", "Bound Imp",
+                "Summons a Fel Imp. While it lives you deal 12% more damage and attack 8% faster.",
+                Rarity.Rare, 3,
+                new GrantFamiliarEffect { FamiliarId = "imp" });
+
+            Add("familiar_watcher", "Bound Watcher",
+                "Summons a Rime Watcher that freezes the ground beneath your enemies.",
+                Rarity.Mythic, 3,
+                new GrantFamiliarEffect { FamiliarId = "watcher" });
+
             Add("vampiric_sigil", "Vampiric Sigil", "Heal for 6% of all damage you deal.", Rarity.Rare, 3,
                 new LifestealEffect { Fraction = 0.06f });
 

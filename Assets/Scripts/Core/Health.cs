@@ -160,6 +160,31 @@ namespace WizardGun
             if (Current <= 0f) Die(info);
         }
 
+        /// <summary>
+        /// Spends health as a cost rather than taking damage. Skips resistances, statuses,
+        /// invulnerability, lifesteal and the damage hooks, because none of those should apply
+        /// to a price the player agreed to pay - a Fortify buff must not make a blood cost
+        /// cheaper, and draining yourself must not proc your own on-hit effects.
+        ///
+        /// It can kill. Anything that would leave you dead should check first if that is not
+        /// wanted.
+        /// </summary>
+        public float Drain(float amount)
+        {
+            if (!IsAlive || amount <= 0f) return 0f;
+
+            float before = Current;
+            Current = Mathf.Max(0f, Current - amount);
+            float paid = before - Current;
+
+            if (paid <= 0f) return 0f;
+
+            HealthChanged?.Invoke();
+            if (Current <= 0f) Die(DamageInfo.Create(0f, DamageType.True, Team.Neutral, null));
+
+            return paid;
+        }
+
         public float Heal(float amount, bool silent = false)
         {
             if (!IsAlive || amount <= 0f) return 0f;

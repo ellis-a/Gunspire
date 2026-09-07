@@ -129,7 +129,7 @@ namespace WizardGun.EditorTools
                     }
 
                     var sheet = enemy.GetComponent<CharacterSheet>();
-                    EnemyAttack[] attacks = enemy.GetComponents<EnemyAttack>();
+                    AbilityAttack[] attacks = enemy.GetComponents<AbilityAttack>();
 
                     text.AppendLine(string.Format("{0,-14} {1,-14} {2,4:0} {3,6:0.0} {4,7} {5,6:0.0}  {6}",
                         id, enemy.DisplayName,
@@ -214,7 +214,7 @@ namespace WizardGun.EditorTools
             else Debug.LogError(text.ToString());
         }
 
-        private static string DescribeAttacks(EnemyAttack[] attacks)
+        private static string DescribeAttacks(AbilityAttack[] attacks)
         {
             if (attacks.Length == 0) return "(none)";
 

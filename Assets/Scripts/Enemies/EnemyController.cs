@@ -5,12 +5,18 @@ namespace WizardGun
 {
     /// <summary>
     /// Enemy brain and body. Keeps its preferred distance from the player, strafes so it is
-    /// not a static target, and hands off to whichever <see cref="EnemyAttack"/> is in range
+    /// not a static target, and hands off to whichever <see cref="AbilityAttack"/> is in range
     /// and off cooldown. No navmesh: rooms are open arenas and steering is enough.
     /// </summary>
     [RequireComponent(typeof(CharacterController))]
-    public class EnemyController : MonoBehaviour
+    public class EnemyController : MonoBehaviour, IAbilityOwner
     {
+        // IAbilityOwner. MonoBehaviour already has gameObject and transform in lower case;
+        // these just expose them under the interface's names.
+        public GameObject GameObject => gameObject;
+        public Transform Transform => transform;
+        public Team Team => Team.Enemy;
+
         [Header("Identity")]
         public string DisplayName = "Cultist";
 
@@ -45,10 +51,13 @@ namespace WizardGun
         public CharacterSheet Sheet { get; private set; }
         public StatusController Status { get; private set; }
         public Transform Target { get; private set; }
-        public Transform Muzzle;
+
+        /// <summary>Set by the factory once the body is built. A property so it satisfies
+        /// <see cref="IAbilityOwner"/>; enemies have no prefab, so nothing serializes it.</summary>
+        public Transform Muzzle { get; set; }
 
         private CharacterController _controller;
-        private readonly List<EnemyAttack> _attacks = new List<EnemyAttack>();
+        private readonly List<AbilityAttack> _attacks = new List<AbilityAttack>();
         private Vector3 _velocity;
         private Vector3 _externalVelocity;
         private float _strafeTimer;
@@ -142,12 +151,12 @@ namespace WizardGun
             bool los = HasLineOfSight();
 
             // Highest priority ready attack wins; ties fall back to declaration order.
-            EnemyAttack best = null;
+            AbilityAttack best = null;
             int bestPriority = int.MinValue;
 
             for (int i = 0; i < _attacks.Count; i++)
             {
-                EnemyAttack attack = _attacks[i];
+                AbilityAttack attack = _attacks[i];
                 if (!attack.CanUse(distance, los)) continue;
                 if (attack.Priority > bestPriority)
                 {

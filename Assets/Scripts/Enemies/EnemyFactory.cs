@@ -128,10 +128,10 @@ namespace WizardGun
 
             for (int i = 0; i < def.Attacks.Count; i++)
             {
-                EnemyAttackDefinition attack = def.Attacks[i];
+                AttackDefinition attack = def.Attacks[i];
                 if (attack == null) continue;
 
-                EnemyAttack added = EnemyAttack.Add(enemy, attack);
+                AbilityAttack added = AbilityAttack.Add(enemy.gameObject, attack);
                 added.DamageMultiplier = damage;
                 added.Cooldown *= cooldown;
             }

@@ -49,6 +49,34 @@ namespace WizardGun
         public bool BlinkDetonates;
         public float BlinkDetonationDamage = 45f;
 
+        /// <summary>A familiar the player has been granted, and how many times.</summary>
+        public class OwnedFamiliar
+        {
+            public string Id;
+            public int Level;
+        }
+
+        /// <summary>
+        /// Familiars granted this run. They are re-summoned on entering each room, so this is
+        /// the ownership record rather than the live creatures - see FamiliarSummoner.
+        /// </summary>
+        public readonly List<OwnedFamiliar> Familiars = new List<OwnedFamiliar>();
+
+        /// <summary>Grants a familiar, or raises the level of one already owned.</summary>
+        public void GrantFamiliar(string id, int level)
+        {
+            if (string.IsNullOrEmpty(id)) return;
+
+            for (int i = 0; i < Familiars.Count; i++)
+            {
+                if (Familiars[i].Id != id) continue;
+                Familiars[i].Level = Mathf.Max(Familiars[i].Level, level);
+                return;
+            }
+
+            Familiars.Add(new OwnedFamiliar { Id = id, Level = Mathf.Max(1, level) });
+        }
+
         /// <summary>
         /// Highest alt fire unlock tier available this run. A gun whose alt fire declares a
         /// higher tier keeps it locked, which is what lets a strong gun arrive before its

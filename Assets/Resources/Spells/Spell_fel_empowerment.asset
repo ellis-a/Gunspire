@@ -1,0 +1,49 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 742cfdfb30a993f448892174ad3ab0e9, type: 3}
+  m_Name: Spell_fel_empowerment
+  m_EditorClassIdentifier: Assembly-CSharp::WizardGun.SpellAsset
+  Definition:
+    Id: fel_empowerment
+    DisplayName: Fel Empowerment
+    ShortName: FEL
+    Description: Your familiars strike far harder for a time, and take a bite out
+      of you for every blow they land.
+    ManaCost: 12
+    Cooldown: 18
+    Rarity: 2
+    Type: 3
+    DamageType: 4
+    MaxLevel: 5
+    GrowthPerLevel: 0.22
+    LevelUpNote: and a longer empowerment
+    TintOverride: {r: 0.85, g: 0.35, b: 0.3, a: 1}
+    OnCast:
+    - rid: 5643702088049623040
+    - rid: 5643702088049623041
+  references:
+    version: 2
+    RefIds:
+    - rid: 5643702088049623040
+      type: {class: EmpowerFamiliarsEffect, ns: WizardGun, asm: Assembly-CSharp}
+      data:
+        DamageMultiplier: 1.8
+        Duration: 10
+        HealthCostPerAttack: 4
+    - rid: 5643702088049623041
+      type: {class: VfxSphereEffect, ns: WizardGun, asm: Assembly-CSharp}
+      data:
+        Diameter: 2.2
+        Alpha: 0.3
+        Lifetime: 0.5
+        AttachToCaster: 1
+        GrowPerSecond: 0

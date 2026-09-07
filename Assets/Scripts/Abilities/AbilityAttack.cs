@@ -13,7 +13,7 @@ namespace WizardGun
     /// telegraphed before it fires, or a swing with a visible wind-up that can be kited. Those
     /// properties come from the effects the chain is built out of, not from this class.
     /// </summary>
-    public class EnemyAttack : MonoBehaviour
+    public class AbilityAttack : MonoBehaviour
     {
         [Header("Usage")]
         public string Name = "Attack";
@@ -39,26 +39,31 @@ namespace WizardGun
         /// </summary>
         public float DamageMultiplier = 1f;
 
-        private EnemyController _owner;
+        private IAbilityOwner _owner;
         private AbilityContext _context;
         private float _timer;
 
         public bool IsExecuting { get; private set; }
         public float CooldownRemaining => _timer;
 
-        public void Initialise(EnemyController owner)
+        /// <summary>
+        /// Binds this attack to whatever is using it. Taking an interface rather than an
+        /// EnemyController is what lets a familiar run the same chains on the player's team -
+        /// the attack does not care which side of the fight it is on.
+        /// </summary>
+        public void Initialise(IAbilityOwner owner)
         {
             _owner = owner;
             _timer = InitialDelay;
 
             _context = new AbilityContext
             {
-                Caster = owner.gameObject,
-                Team = Team.Enemy,
+                Caster = owner.GameObject,
+                Team = owner.Team,
                 Sheet = owner.Sheet,
                 Health = owner.Health,
                 Status = owner.Status,
-                Aim = owner.Muzzle != null ? owner.Muzzle : owner.transform
+                Aim = owner.Muzzle != null ? owner.Muzzle : owner.Transform
             };
         }
 
@@ -103,10 +108,10 @@ namespace WizardGun
 
         // ---------------------------------------------------------------- construction
 
-        /// <summary>Builds the component from authored data. Used by <see cref="EnemyFactory"/>.</summary>
-        public static EnemyAttack Add(EnemyController enemy, EnemyAttackDefinition def)
+        /// <summary>Builds the component from authored data. Used by the enemy and familiar factories.</summary>
+        public static AbilityAttack Add(GameObject host, AttackDefinition def)
         {
-            var attack = enemy.gameObject.AddComponent<EnemyAttack>();
+            var attack = host.AddComponent<AbilityAttack>();
             attack.Name = def.Name;
             attack.DamageType = def.DamageType;
             attack.Category = def.Category;

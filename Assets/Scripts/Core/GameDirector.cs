@@ -165,6 +165,10 @@ namespace WizardGun
             DestroyAllOfType<Projectile>();
             DestroyAllOfType<OrbPickup>();
             DestroyAllOfType<EnemyController>();
+
+            // Familiars are not parented to the room, so they would otherwise survive a
+            // restart and pile up. LoadRoom summons a fresh set immediately after.
+            FamiliarController.DespawnAll();
             DestroyAllOfType<TelegraphVisual>();
             DestroyAllOfType<FadeAndDie>();
         }
@@ -193,6 +197,10 @@ namespace WizardGun
             Player.Weapon.RefillMagazine();
             Player.Motor.RefillDashes();
             Player.Mana.Add(Player.Mana.Max * 0.5f);
+
+            // Familiars come back at every door. Losing one costs you the rest of the room
+            // rather than the rest of the run.
+            FamiliarSummoner.Resummon(Run);
 
             SetState(GameStateKind.Playing);
             Notify(node.Title);

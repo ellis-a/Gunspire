@@ -1,0 +1,57 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cf3f71eaef511144985c147b1a3c0095, type: 3}
+  m_Name: Familiar_mender
+  m_EditorClassIdentifier: Assembly-CSharp::WizardGun.FamiliarAsset
+  Familiar:
+    Id: mender
+    DisplayName: Mender
+    Description: A patient little thing that stitches you back together, slowly.
+      Only works while there is something to fight.
+    Health: 70
+    MoveSpeed: 8.5
+    Radius: 0.35
+    FollowDistance: 2.2
+    HoverHeight: 1.9
+    EngageRange: 24
+    BodyDiameter: 0.6
+    BodyColor: {r: 0.55, g: 0.95, b: 0.65, a: 1}
+    EyeColor: {r: 0.9, g: 1, b: 0.85, a: 1}
+    Attacks:
+    - Name: Mend
+      MinRange: 0
+      MaxRange: 999
+      Cooldown: 6
+      InitialDelay: 3
+      RequiresLineOfSight: 0
+      Priority: 0
+      DamageType: 3
+      Category: 0
+      Tint: {r: 0.55, g: 0.9, b: 0.35, a: 1}
+      Sequence:
+      - rid: 5643702088038612994
+      - rid: 5643702088038612995
+    Auras: []
+    DamageMultiplier: 1
+  references:
+    version: 2
+    RefIds:
+    - rid: 5643702088038612994
+      type: {class: HealOwnerEffect, ns: WizardGun, asm: Assembly-CSharp}
+      data:
+        Amount: 14
+        ScaleWithPower: 1
+    - rid: 5643702088038612995
+      type: {class: VfxOnOwnerEffect, ns: WizardGun, asm: Assembly-CSharp}
+      data:
+        Diameter: 1.4
+        Lifetime: 0.4

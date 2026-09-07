@@ -97,6 +97,7 @@ namespace WizardGun
                 Firebolt(),
                 KineticSlam(),
                 ArcaneWard(),
+                FelEmpowerment(),
                 Blightbloom(),
                 ChainLightning(),
                 GlacialPrison(),
@@ -244,6 +245,37 @@ namespace WizardGun
                     MinFraction = 0.5f, Knockback = 9f, UseSmashPower = true
                 },
                 new VfxGroundRingEffect { Radius = 6.5f }
+            }
+        };
+
+        /// <summary>
+        /// The familiar buff. Costs no mana on purpose - its price is health, and charging both
+        /// would make it a spell you never cast. Fails and refunds if nothing is out.
+        /// </summary>
+        private static Spell FelEmpowerment() => new Spell
+        {
+            Id = "fel_empowerment",
+            DisplayName = "Fel Empowerment",
+            ShortName = "FEL",
+            Description = "Your familiars strike far harder for a time, and take a bite out of you " +
+                          "for every blow they land.",
+            ManaCost = 12f,
+            Cooldown = 18f,
+            Rarity = Rarity.Rare,
+            Type = SpellType.Ward,
+            DamageType = DamageType.Shadow,
+            TintOverride = new Color(0.85f, 0.35f, 0.30f),
+            LevelUpNote = "and a longer empowerment",
+            OnCast =
+            {
+                new EmpowerFamiliarsEffect
+                {
+                    DamageMultiplier = 1.8f, Duration = 10f, HealthCostPerAttack = 4f
+                },
+                new VfxSphereEffect
+                {
+                    Diameter = 2.2f, Alpha = 0.3f, Lifetime = 0.5f, AttachToCaster = true
+                }
             }
         };
 

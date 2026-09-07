@@ -7,7 +7,7 @@ namespace WizardGun
     public enum BodyShape { Humanoid, Eyeball }
 
     /// <summary>
-    /// One attack, as data. Mirrors the usage rules on <see cref="EnemyAttack"/>; the component
+    /// One attack, as data. Mirrors the usage rules on <see cref="AbilityAttack"/>; the component
     /// is built from this at spawn.
     ///
     /// Damage inside the sequence is a base value at floor 1. Floor scaling is applied through
@@ -15,7 +15,7 @@ namespace WizardGun
     /// what the attack is worth, not what it happens to be worth on floor three.
     /// </summary>
     [System.Serializable]
-    public class EnemyAttackDefinition
+    public class AttackDefinition
     {
         public string Name = "Attack";
 
@@ -35,9 +35,9 @@ namespace WizardGun
         /// <summary>What happens, in order. Wind-ups and repeats are effects like any other.</summary>
         [SerializeReference] public List<AbilityEffect> Sequence = new List<AbilityEffect>();
 
-        public EnemyAttackDefinition Clone()
+        public AttackDefinition Clone()
         {
-            var copy = (EnemyAttackDefinition)MemberwiseClone();
+            var copy = (AttackDefinition)MemberwiseClone();
             copy.Sequence = new List<AbilityEffect>(Sequence);
             return copy;
         }
@@ -112,7 +112,7 @@ namespace WizardGun
         public float EliteCooldownMultiplier = 0.8f;
 
         [Header("Attacks")]
-        public List<EnemyAttackDefinition> Attacks = new List<EnemyAttackDefinition>();
+        public List<AttackDefinition> Attacks = new List<AttackDefinition>();
 
         /// <summary>Eye height, falling back to something reasonable for the body.</summary>
         public float ResolvedEyeHeight => EyeHeight > 0f ? EyeHeight : BodyHeight * 0.75f;
@@ -124,7 +124,7 @@ namespace WizardGun
             // Attacks are mutated per spawn - floor scaling and elite cooldowns - so both the
             // list and the entries have to be fresh, or spawning one enemy would retune the
             // roster for every enemy after it.
-            copy.Attacks = new List<EnemyAttackDefinition>();
+            copy.Attacks = new List<AttackDefinition>();
             for (int i = 0; i < Attacks.Count; i++)
                 if (Attacks[i] != null) copy.Attacks.Add(Attacks[i].Clone());
 

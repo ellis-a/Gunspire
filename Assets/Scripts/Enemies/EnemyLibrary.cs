@@ -102,7 +102,7 @@ namespace WizardGun
                 Resists = DamageType.Astral, WeakTo = DamageType.Nature,
                 Attacks =
                 {
-                    new EnemyAttackDefinition
+                    new AttackDefinition
                     {
                         Name = "Arcane Volley", DamageType = DamageType.Astral, Tint = Palette.Arcane,
                         MinRange = 0f, MaxRange = 26f, Cooldown = 2.6f, Priority = 0,
@@ -142,7 +142,7 @@ namespace WizardGun
                 Resists = DamageType.Normal, WeakTo = DamageType.Frost,
                 Attacks =
                 {
-                    new EnemyAttackDefinition
+                    new AttackDefinition
                     {
                         Name = "Lunge", DamageType = DamageType.Normal, Tint = Palette.EnemyMelee,
                         MinRange = 0f, MaxRange = 4.6f, Cooldown = 1.9f, Priority = 0,
@@ -183,7 +183,7 @@ namespace WizardGun
                 Resists = DamageType.Astral, WeakTo = DamageType.Shadow,
                 Attacks =
                 {
-                    new EnemyAttackDefinition
+                    new AttackDefinition
                     {
                         Name = "Sweeping Beam", DamageType = DamageType.Astral, Tint = Palette.Lightning,
                         MinRange = 6f, MaxRange = 38f, Cooldown = 5.5f, Priority = 0,
@@ -219,7 +219,7 @@ namespace WizardGun
                 Resists = DamageType.Fire, WeakTo = DamageType.Frost,
                 Attacks =
                 {
-                    new EnemyAttackDefinition
+                    new AttackDefinition
                     {
                         Name = "Cinder Slam", DamageType = DamageType.Fire, Tint = Palette.Fire,
                         MinRange = 0f, MaxRange = 24f, Cooldown = 4.6f, Priority = 0,
@@ -265,7 +265,7 @@ namespace WizardGun
                 Resists = DamageType.Frost, WeakTo = DamageType.Fire,
                 Attacks =
                 {
-                    new EnemyAttackDefinition
+                    new AttackDefinition
                     {
                         Name = "Ice Shards", DamageType = DamageType.Frost, Tint = Palette.Ice,
                         MinRange = 5f, MaxRange = 28f, Cooldown = 3.2f, Priority = 0,
@@ -294,7 +294,7 @@ namespace WizardGun
                         }
                     },
 
-                    new EnemyAttackDefinition
+                    new AttackDefinition
                     {
                         Name = "Frost Breath", DamageType = DamageType.Frost, Tint = Palette.Ice,
                         MinRange = 0f, MaxRange = 10f, Cooldown = 6.5f, Priority = 1,
@@ -338,7 +338,7 @@ namespace WizardGun
                 Attacks =
                 {
                     // The cheap attack: dodgeable bolts that punish standing in the open.
-                    new EnemyAttackDefinition
+                    new AttackDefinition
                     {
                         Name = "Laser Bolts", DamageType = DamageType.Shadow,
                         Tint = new Color(1f, 0.4f, 0.35f),
@@ -365,7 +365,7 @@ namespace WizardGun
                     },
 
                     // The signature. Telegraphed, then a slow sweep - break line of sight or move.
-                    new EnemyAttackDefinition
+                    new AttackDefinition
                     {
                         Name = "Searing Gaze", DamageType = DamageType.Shadow,
                         Tint = new Color(1f, 0.3f, 0.25f),
@@ -408,7 +408,7 @@ namespace WizardGun
                 ResistsEverything = true, BroadResistance = 0.18f,
                 Attacks =
                 {
-                    new EnemyAttackDefinition
+                    new AttackDefinition
                     {
                         Name = "Arcane Fan", DamageType = DamageType.Astral, Tint = Palette.Arcane,
                         MinRange = 0f, MaxRange = 34f, Cooldown = 3.4f, Priority = 0,
@@ -426,7 +426,7 @@ namespace WizardGun
                         }
                     },
 
-                    new EnemyAttackDefinition
+                    new AttackDefinition
                     {
                         Name = "Warden Beam", DamageType = DamageType.Astral, Tint = Palette.Lightning,
                         MinRange = 5f, MaxRange = 40f, Cooldown = 7.5f, Priority = 1,
@@ -444,7 +444,7 @@ namespace WizardGun
                         }
                     },
 
-                    new EnemyAttackDefinition
+                    new AttackDefinition
                     {
                         Name = "Cinder Rain", DamageType = DamageType.Fire, Tint = Palette.Fire,
                         MinRange = 0f, MaxRange = 28f, Cooldown = 6.5f, Priority = 1,
@@ -472,7 +472,7 @@ namespace WizardGun
                         }
                     },
 
-                    new EnemyAttackDefinition
+                    new AttackDefinition
                     {
                         Name = "Withering Breath", DamageType = DamageType.Nature, Tint = Palette.Poison,
                         MinRange = 0f, MaxRange = 13f, Cooldown = 8f, Priority = 2,

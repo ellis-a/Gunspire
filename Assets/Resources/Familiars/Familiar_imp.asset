@@ -1,0 +1,75 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cf3f71eaef511144985c147b1a3c0095, type: 3}
+  m_Name: Familiar_imp
+  m_EditorClassIdentifier: Assembly-CSharp::WizardGun.FamiliarAsset
+  Familiar:
+    Id: imp
+    DisplayName: Fel Imp
+    Description: Sharpens everything you do, and never stops complaining about it.
+    Health: 45
+    MoveSpeed: 8
+    Radius: 0.35
+    FollowDistance: 2.4
+    HoverHeight: 1.9
+    EngageRange: 18
+    BodyDiameter: 0.6
+    BodyColor: {r: 0.85, g: 0.35, b: 0.3, a: 1}
+    EyeColor: {r: 1, g: 0.75, b: 0.35, a: 1}
+    Attacks:
+    - Name: Cinder Nip
+      MinRange: 0
+      MaxRange: 14
+      Cooldown: 2.2
+      InitialDelay: 1
+      RequiresLineOfSight: 1
+      Priority: 0
+      DamageType: 1
+      Category: 0
+      Tint: {r: 1, g: 0.48, b: 0.15, a: 1}
+      Sequence:
+      - rid: 5643702088038612996
+      - rid: 5643702088038612997
+    Auras:
+    - Attribute: 9
+      Mode: 1
+      Amount: 0.12
+    - Attribute: 15
+      Mode: 1
+      Amount: 0.08
+    DamageMultiplier: 1
+  references:
+    version: 2
+    RefIds:
+    - rid: 5643702088038612996
+      type: {class: AimAtTargetEffect, ns: WizardGun, asm: Assembly-CSharp}
+      data:
+        AimHeight: 0.95
+        Flatten: 0
+    - rid: 5643702088038612997
+      type: {class: SpawnProjectileEffect, ns: WizardGun, asm: Assembly-CSharp}
+      data:
+        Damage: 6
+        Speed: 28
+        Radius: 0.14
+        Lifetime: 3
+        Gravity: 0
+        Knockback: 0
+        Pierce: 0
+        Homing: 0
+        Count: 1
+        ArcSpreadDegrees: 0
+        SpreadDegrees: 0
+        SplashRadius: 0
+        SplashDamage: 0
+        ScaleSplashWithLevel: 1
+        OnHit: []
