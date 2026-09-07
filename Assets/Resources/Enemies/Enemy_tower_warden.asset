@@ -16,7 +16,7 @@ MonoBehaviour:
     Id: tower_warden
     DisplayName: Tower Warden
     InStandardRoster: 0
-    Health: 620
+    Health: 300
     MoveSpeed: 4
     Radius: 0.9
     BodyHeight: 3.2

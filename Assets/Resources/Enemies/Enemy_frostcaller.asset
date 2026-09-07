@@ -16,7 +16,7 @@ MonoBehaviour:
     Id: frostcaller
     DisplayName: Frostcaller
     InStandardRoster: 1
-    Health: 68
+    Health: 30
     MoveSpeed: 4.6
     Radius: 0.45
     BodyHeight: 1.9

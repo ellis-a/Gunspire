@@ -16,7 +16,7 @@ MonoBehaviour:
     Id: cultist
     DisplayName: Cultist
     InStandardRoster: 1
-    Health: 55
+    Health: 20
     MoveSpeed: 4.2
     Radius: 0.42
     BodyHeight: 1.8

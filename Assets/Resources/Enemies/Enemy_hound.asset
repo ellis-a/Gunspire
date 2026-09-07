@@ -16,7 +16,7 @@ MonoBehaviour:
     Id: hound
     DisplayName: Hound
     InStandardRoster: 1
-    Health: 46
+    Health: 15
     MoveSpeed: 6.9
     Radius: 0.4
     BodyHeight: 1.2

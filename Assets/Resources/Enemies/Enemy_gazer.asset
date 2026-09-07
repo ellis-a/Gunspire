@@ -16,7 +16,7 @@ MonoBehaviour:
     Id: gazer
     DisplayName: Gazer
     InStandardRoster: 1
-    Health: 48
+    Health: 15
     MoveSpeed: 4.4
     Radius: 0.45
     BodyHeight: 1.1

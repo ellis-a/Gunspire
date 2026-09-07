@@ -16,7 +16,7 @@ MonoBehaviour:
     Id: warden
     DisplayName: Warden
     InStandardRoster: 1
-    Health: 95
+    Health: 45
     MoveSpeed: 3.1
     Radius: 0.5
     BodyHeight: 2.2

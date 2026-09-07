@@ -16,7 +16,7 @@ MonoBehaviour:
     Id: sentinel
     DisplayName: Sentinel
     InStandardRoster: 1
-    Health: 84
+    Health: 40
     MoveSpeed: 3.6
     Radius: 0.55
     BodyHeight: 2
