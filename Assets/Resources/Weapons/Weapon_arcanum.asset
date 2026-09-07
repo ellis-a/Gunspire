@@ -44,3 +44,33 @@ MonoBehaviour:
     ManaPerShot: 0
     Tint: {r: 1, g: 0.92, b: 0.7, a: 1}
     OnHitStatuses: []
+    AltFire:
+      Kind: 2
+      Name: Fan the Hammer
+      Description: Empties the cylinder as fast as the hammer will fall.
+      UnlockTier: 0
+      Cooldown: 2.6
+      AmmoCost: 1
+      ManaCost: 0
+      Delivery: 1
+      Damage: 40
+      Pellets: 1
+      SpreadDegrees: 0
+      Knockback: 0
+      MaxPierce: 0
+      SplashRadius: 0
+      SplashDamage: 0
+      ProjectileSpeed: 40
+      ProjectileRadius: 0.2
+      ProjectileGravity: 0
+      ProjectileLifetime: 5
+      RecoilPitch: 3.2
+      OnHitStatuses: []
+      SalvoRateMultiplier: 4.5
+      SalvoDamageMultiplier: 0.8
+      SalvoMaxRounds: 12
+      FocusFov: 50
+      FocusSpreadMultiplier: 0.15
+      FocusDamageMultiplier: 1.25
+      FocusMoveMultiplier: 0.55
+      FocusRateMultiplier: 0.8

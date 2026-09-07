@@ -64,6 +64,59 @@ namespace WizardGun.EditorTools
         }
 
         /// <summary>
+        /// Copies just the alt fire block from the code roster onto existing weapon assets.
+        ///
+        /// Adding a field to WeaponDefinition leaves it at its default in every asset already
+        /// on disk, and the assets are the source of truth - so without this every gun would
+        /// silently have no alt fire. Regenerating the assets wholesale would fix that and
+        /// throw away any Inspector tuning with it, which is not a trade worth making when the
+        /// tuning is the entire reason the assets exist.
+        ///
+        /// Only touches assets whose alt fire is still empty, so running it twice is safe and
+        /// an alt fire edited in the Inspector is never overwritten.
+        /// </summary>
+        [MenuItem("Wizard with a Gun/Sync Alt Fires To Assets")]
+        public static void SyncAltFires()
+        {
+            List<WeaponDefinition> code = WeaponLibrary.BuiltIn();
+            var text = new System.Text.StringBuilder();
+            int written = 0;
+            int skipped = 0;
+
+            for (int i = 0; i < code.Count; i++)
+            {
+                WeaponDefinition source = code[i];
+                string path = FolderPath + "/Weapon_" + source.Id + ".asset";
+
+                var asset = AssetDatabase.LoadAssetAtPath<WeaponAsset>(path);
+                if (asset == null || asset.Definition == null) continue;
+
+                if (asset.Definition.HasAltFire)
+                {
+                    text.AppendLine("  kept   " + source.Id + ": already has \""
+                                    + asset.Definition.AltFire.Name + "\"");
+                    skipped++;
+                    continue;
+                }
+
+                asset.Definition.AltFire = source.AltFire != null
+                    ? source.AltFire.Clone()
+                    : new AltFireProfile();
+
+                EditorUtility.SetDirty(asset);
+                text.AppendLine("  wrote  " + source.Id + ": " + asset.Definition.AltLine(99));
+                written++;
+            }
+
+            AssetDatabase.SaveAssets();
+            AssetDatabase.Refresh();
+            WeaponLibrary.Reload();
+
+            Debug.Log("Alt fire sync: " + written + " written, " + skipped
+                      + " left alone.\n" + text);
+        }
+
+        /// <summary>
         /// Prints the roster as a table. Balancing a gun means comparing it with the others,
         /// which is hard to do reading object initializers one at a time.
         /// </summary>
@@ -94,9 +147,22 @@ namespace WizardGun.EditorTools
             }
 
             text.AppendLine();
+            text.AppendLine("alt fire (right click)");
+            for (int i = 0; i < all.Count; i++)
+            {
+                WeaponDefinition w = all[i];
+                text.AppendLine(string.Format("{0,-18} tier {1}  {2,-22} {3}",
+                    w.Id,
+                    w.HasAltFire ? w.AltFire.UnlockTier.ToString() : "-",
+                    w.HasAltFire ? w.AltFire.Name : "(none)",
+                    w.HasAltFire ? w.AltFire.Summary() : string.Empty));
+            }
+
+            text.AppendLine();
             text.AppendLine("dps is sustained single-target, ignoring reloads. It counts splash at full "
                             + "value, so a launcher reads high against one target and higher against a "
-                            + "group; pierce is not folded in at all.");
+                            + "group; pierce is not folded in at all. Alt fire is not in the dps column "
+                            + "at all - it is on its own cooldown and does not sustain.");
 
             Debug.Log(text.ToString());
         }

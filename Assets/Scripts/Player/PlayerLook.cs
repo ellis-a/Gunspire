@@ -12,6 +12,14 @@ namespace WizardGun
         [SerializeField] private float pitchLimit = 89f;
         [SerializeField] private float baseFov = 90f;
         [SerializeField] private float maxFovBoost = 14f;
+        [SerializeField] private float zoomLerp = 16f;
+
+        /// <summary>
+        /// Field of view to hold while a gun's focus alt fire is held down. Zero is off.
+        /// Driven by <see cref="PlayerCombat"/> rather than read from the weapon here, so the
+        /// camera stays unaware of guns.
+        /// </summary>
+        public float ZoomFov { get; set; }
         [SerializeField] private float fovLerp = 6f;
 
         private Transform _cameraPivot;
@@ -44,8 +52,9 @@ namespace WizardGun
 
         private void ReadMouse()
         {
-            float mx = Input.GetAxisRaw("Mouse X") * sensitivity;
-            float my = Input.GetAxisRaw("Mouse Y") * sensitivity;
+            float scale = sensitivity * ZoomSensitivityScale();
+            float mx = Input.GetAxisRaw("Mouse X") * scale;
+            float my = Input.GetAxisRaw("Mouse Y") * scale;
 
             transform.Rotate(Vector3.up, mx, Space.World);
             _pitch = Mathf.Clamp(_pitch - my, -pitchLimit, pitchLimit);
@@ -67,10 +76,34 @@ namespace WizardGun
         {
             if (_camera == null || _motor == null) return;
 
-            float baseSpeed = 8f;
-            float excess = Mathf.Max(0f, _motor.HorizontalSpeed - baseSpeed);
-            float target = baseFov + Mathf.Min(maxFovBoost, excess * 0.8f);
-            _camera.fieldOfView = Mathf.Lerp(_camera.fieldOfView, target, fovLerp * Time.deltaTime);
+            float target;
+            float rate = fovLerp;
+
+            if (ZoomFov > 0f)
+            {
+                // A zoomed view ignores the speed stretch entirely. Sprinting while scoped
+                // should not quietly widen the shot you are lining up.
+                target = ZoomFov;
+                rate = zoomLerp;
+            }
+            else
+            {
+                float baseSpeed = 8f;
+                float excess = Mathf.Max(0f, _motor.HorizontalSpeed - baseSpeed);
+                target = baseFov + Mathf.Min(maxFovBoost, excess * 0.8f);
+            }
+
+            _camera.fieldOfView = Mathf.Lerp(_camera.fieldOfView, target, rate * Time.deltaTime);
+        }
+
+        /// <summary>
+        /// Turning is scaled by how far the view is zoomed in, so the same mouse movement
+        /// covers the same distance on screen. Without this a scope makes aiming harder.
+        /// </summary>
+        private float ZoomSensitivityScale()
+        {
+            if (ZoomFov <= 0f || _camera == null) return 1f;
+            return Mathf.Clamp(_camera.fieldOfView / Mathf.Max(1f, baseFov), 0.35f, 1f);
         }
 
         /// <summary>Called by weapons on fire.</summary>

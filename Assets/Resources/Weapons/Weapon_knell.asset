@@ -48,3 +48,33 @@ MonoBehaviour:
       Duration: 4
       Stacks: 1
       Magnitude: 0.15
+    AltFire:
+      Kind: 1
+      Name: Contact Fuse
+      Description: A flat, fast round that spends everything on the thing it hits.
+      UnlockTier: 0
+      Cooldown: 1.6
+      AmmoCost: 1
+      ManaCost: 0
+      Delivery: 1
+      Damage: 78
+      Pellets: 1
+      SpreadDegrees: 0
+      Knockback: 5
+      MaxPierce: 0
+      SplashRadius: 0
+      SplashDamage: 0
+      ProjectileSpeed: 62
+      ProjectileRadius: 0.2
+      ProjectileGravity: 0
+      ProjectileLifetime: 5
+      RecoilPitch: 3.4
+      OnHitStatuses: []
+      SalvoRateMultiplier: 3
+      SalvoDamageMultiplier: 0.85
+      SalvoMaxRounds: 12
+      FocusFov: 50
+      FocusSpreadMultiplier: 0.15
+      FocusDamageMultiplier: 1.25
+      FocusMoveMultiplier: 0.55
+      FocusRateMultiplier: 0.8

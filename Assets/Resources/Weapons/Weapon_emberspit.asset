@@ -48,3 +48,33 @@ MonoBehaviour:
       Duration: 2.5
       Stacks: 1
       Magnitude: 3
+    AltFire:
+      Kind: 3
+      Name: Cinder Sights
+      Description: Hold to steady the spray.
+      UnlockTier: 0
+      Cooldown: 1.2
+      AmmoCost: 1
+      ManaCost: 0
+      Delivery: 1
+      Damage: 40
+      Pellets: 1
+      SpreadDegrees: 0
+      Knockback: 0
+      MaxPierce: 0
+      SplashRadius: 0
+      SplashDamage: 0
+      ProjectileSpeed: 40
+      ProjectileRadius: 0.2
+      ProjectileGravity: 0
+      ProjectileLifetime: 5
+      RecoilPitch: 3.2
+      OnHitStatuses: []
+      SalvoRateMultiplier: 3
+      SalvoDamageMultiplier: 0.85
+      SalvoMaxRounds: 12
+      FocusFov: 62
+      FocusSpreadMultiplier: 0.3
+      FocusDamageMultiplier: 1.15
+      FocusMoveMultiplier: 0.55
+      FocusRateMultiplier: 0.85

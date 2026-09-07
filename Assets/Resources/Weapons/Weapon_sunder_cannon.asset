@@ -44,3 +44,33 @@ MonoBehaviour:
     ManaPerShot: 0
     Tint: {r: 0.9, g: 0.8, b: 0.55, a: 1}
     OnHitStatuses: []
+    AltFire:
+      Kind: 1
+      Name: Airburst
+      Description: Arcs high and opens wide. Less bite, far more reach.
+      UnlockTier: 1
+      Cooldown: 2.4
+      AmmoCost: 2
+      ManaCost: 0
+      Delivery: 1
+      Damage: 14
+      Pellets: 1
+      SpreadDegrees: 0
+      Knockback: 9
+      MaxPierce: 0
+      SplashRadius: 7.5
+      SplashDamage: 52
+      ProjectileSpeed: 26
+      ProjectileRadius: 0.32
+      ProjectileGravity: 14
+      ProjectileLifetime: 5
+      RecoilPitch: 5
+      OnHitStatuses: []
+      SalvoRateMultiplier: 3
+      SalvoDamageMultiplier: 0.85
+      SalvoMaxRounds: 12
+      FocusFov: 50
+      FocusSpreadMultiplier: 0.15
+      FocusDamageMultiplier: 1.25
+      FocusMoveMultiplier: 0.55
+      FocusRateMultiplier: 0.8

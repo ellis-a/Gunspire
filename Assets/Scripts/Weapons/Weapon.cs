@@ -30,9 +30,12 @@ namespace WizardGun
         public float ReloadProgress { get; private set; }
 
         private float _cooldown;
+        private float _altCooldown;
         private bool _triggerWasDown;
+        private bool _altWasDown;
         private Coroutine _reloadRoutine;
         private Coroutine _burstRoutine;
+        private Coroutine _salvoRoutine;
         private GameObject _model;
 
         /// <summary>Synthesised once on equip rather than per shot, so the cost lands on pickup.</summary>
@@ -48,6 +51,9 @@ namespace WizardGun
             AmmoInMagazine = definition.MagazineSize;
             IsReloading = false;
             _cooldown = 0f;
+            _altCooldown = 0f;
+            IsFocusing = false;
+            _altWasDown = false;
             _fireClip = SoundLibrary.ForWeapon(definition);
 
             BuildModel();
@@ -57,6 +63,7 @@ namespace WizardGun
         {
             if (_reloadRoutine != null) { StopCoroutine(_reloadRoutine); _reloadRoutine = null; }
             if (_burstRoutine != null) { StopCoroutine(_burstRoutine); _burstRoutine = null; }
+            if (_salvoRoutine != null) { StopCoroutine(_salvoRoutine); _salvoRoutine = null; }
         }
 
         /// <summary>Blocky viewmodel so the player can see which gun they are holding.</summary>
@@ -82,11 +89,12 @@ namespace WizardGun
         private void Update()
         {
             if (_cooldown > 0f) _cooldown -= Time.deltaTime;
+            if (_altCooldown > 0f) _altCooldown -= Time.deltaTime;
         }
 
         // ---------------------------------------------------------------- input
 
-        public void HandleInput(bool triggerDown, bool reloadPressed)
+        public void HandleInput(bool triggerDown, bool altDown, bool reloadPressed)
         {
             if (Definition == null) return;
 
@@ -94,6 +102,11 @@ namespace WizardGun
 
             bool pressedThisFrame = triggerDown && !_triggerWasDown;
             _triggerWasDown = triggerDown;
+
+            bool altPressedThisFrame = altDown && !_altWasDown;
+            _altWasDown = altDown;
+
+            HandleAltInput(altDown, altPressedThisFrame);
 
             // Pulling the trigger mid-reload should click rather than do nothing at all.
             // Gated on the press so holding an automatic down does not machine-gun the click.
@@ -119,6 +132,11 @@ namespace WizardGun
                 return;
 
             float attackSpeed = OwnerSheet != null ? OwnerSheet.Get(Attr.AttackSpeed) : 1f;
+
+            // Focus trades rate of fire for accuracy and damage, so it is a choice rather than
+            // a strictly better way to hold the gun.
+            if (IsFocusing) attackSpeed *= Definition.AltFire.FocusRateMultiplier;
+
             _cooldown = Definition.SecondsBetweenShots / Mathf.Max(0.1f, attackSpeed);
 
             if (Definition.Mode == FireMode.Burst && Definition.BurstCount > 1)
@@ -129,6 +147,84 @@ namespace WizardGun
             {
                 FireOnce();
             }
+        }
+
+        // ---------------------------------------------------------------- alt fire
+
+        /// <summary>Why an alt fire did not happen, so the HUD can say something useful.</summary>
+        public enum AltOutcome { Fired, Held, None, Locked, OnCooldown, NoAmmo, NotEnoughMana, Busy }
+
+        public bool IsFocusing { get; private set; }
+
+        public AltFireProfile Alt => Definition != null ? Definition.AltFire : null;
+
+        /// <summary>Available on this gun and unlocked for this run.</summary>
+        public bool AltUnlocked =>
+            Alt != null && Alt.Exists && RunState.Current != null &&
+            RunState.Current.AltFireTier >= Alt.UnlockTier;
+
+        public float AltCooldownRemaining => _altCooldown;
+
+        /// <summary>
+        /// Reports rather than acts when it cannot fire, so the caller can tell the player why.
+        /// A gun with no alt fire has to say so - a dead button reads as a broken game.
+        /// </summary>
+        public AltOutcome EvaluateAlt()
+        {
+            if (Definition == null || Alt == null || !Alt.Exists) return AltOutcome.None;
+            if (!AltUnlocked) return AltOutcome.Locked;
+            if (IsReloading || _burstRoutine != null || _salvoRoutine != null) return AltOutcome.Busy;
+            if (_altCooldown > 0f) return AltOutcome.OnCooldown;
+            if (AmmoInMagazine < Alt.AmmoCost) return AltOutcome.NoAmmo;
+            if (Alt.ManaCost > 0f && (OwnerMana == null || OwnerMana.Current < Alt.ManaCost))
+                return AltOutcome.NotEnoughMana;
+
+            return Alt.Kind == AltFireKind.Focus ? AltOutcome.Held : AltOutcome.Fired;
+        }
+
+        private void HandleAltInput(bool altDown, bool altPressedThisFrame)
+        {
+            bool focusable = Alt != null && Alt.Kind == AltFireKind.Focus && AltUnlocked && !IsReloading;
+            IsFocusing = focusable && altDown;
+
+            if (!altPressedThisFrame || Alt == null || Alt.IsHeld) return;
+            if (EvaluateAlt() != AltOutcome.Fired) return;
+
+            TriggerAlt();
+        }
+
+        /// <summary>Fires the alt. Assumes <see cref="EvaluateAlt"/> already said yes.</summary>
+        private void TriggerAlt()
+        {
+            if (Alt.ManaCost > 0f && (OwnerMana == null || !OwnerMana.TrySpend(Alt.ManaCost))) return;
+
+            _altCooldown = Alt.Cooldown;
+
+            if (Alt.Kind == AltFireKind.Salvo) _salvoRoutine = StartCoroutine(FireSalvo());
+            else FireRound(ShotSpec.Alt(Definition, Alt), Alt.AmmoCost);
+        }
+
+        /// <summary>
+        /// Empties the magazine at speed. Capped, because a 34-round drum would otherwise
+        /// produce a salvo you cannot cancel and cannot aim.
+        /// </summary>
+        private IEnumerator FireSalvo()
+        {
+            ShotSpec spec = ShotSpec.Primary(Definition, CurrentSpread(), Alt.SalvoDamageMultiplier);
+            float interval = Definition.SecondsBetweenShots / Mathf.Max(0.1f, Alt.SalvoRateMultiplier);
+            int fired = 0;
+
+            while (AmmoInMagazine > 0 && fired < Alt.SalvoMaxRounds)
+            {
+                FireRound(spec, 1);
+                fired++;
+
+                // FireRound starts a reload when the magazine runs dry, which ends the salvo.
+                if (IsReloading) break;
+                yield return new WaitForSeconds(interval);
+            }
+
+            _salvoRoutine = null;
         }
 
         private IEnumerator FireBurst()
@@ -144,23 +240,33 @@ namespace WizardGun
 
         private void FireOnce()
         {
-            AmmoInMagazine--;
+            float damageMultiplier = IsFocusing ? Definition.AltFire.FocusDamageMultiplier : 1f;
+            FireRound(ShotSpec.Primary(Definition, CurrentSpread(), damageMultiplier), 1);
+        }
+
+        /// <summary>
+        /// Puts one round downrange and pays for it. Both triggers come through here, so
+        /// impacts, tracers, recoil, the muzzle flash and the auto-reload behave identically
+        /// whichever button asked.
+        /// </summary>
+        private void FireRound(ShotSpec spec, int ammoCost)
+        {
+            AmmoInMagazine -= Mathf.Max(0, ammoCost);
 
             Vector3 origin = AimOrigin != null ? AimOrigin.position : transform.position;
             Vector3 forward = AimOrigin != null ? AimOrigin.forward : transform.forward;
-            float spread = CurrentSpread();
 
-            for (int i = 0; i < Mathf.Max(1, Definition.PelletsPerShot); i++)
+            for (int i = 0; i < spec.Pellets; i++)
             {
-                Vector3 direction = ApplySpread(forward, spread);
-                if (Definition.Delivery == DeliveryKind.Hitscan) FireHitscan(origin, direction);
-                else FireProjectile(origin, direction);
+                Vector3 direction = ApplySpread(forward, spec.SpreadDegrees);
+                if (spec.Delivery == DeliveryKind.Hitscan) FireHitscan(spec, origin, direction);
+                else FireProjectile(spec, origin, direction);
             }
 
             MuzzleFlash();
             PlayFireSound();
 
-            if (Look != null) Look.AddRecoil(Definition.RecoilPitch, Random.Range(-1f, 1f) * Definition.RecoilYaw);
+            if (Look != null) Look.AddRecoil(spec.RecoilPitch, Random.Range(-1f, 1f) * spec.RecoilYaw);
             if (AmmoInMagazine <= 0) StartReload();
         }
 
@@ -168,7 +274,11 @@ namespace WizardGun
         {
             var motor = Owner != null ? Owner.GetComponent<PlayerMotor>() : null;
             bool moving = motor != null && motor.HorizontalSpeed > 1.5f;
-            return moving ? Definition.MovingSpreadDegrees : Definition.SpreadDegrees;
+            float spread = moving ? Definition.MovingSpreadDegrees : Definition.SpreadDegrees;
+
+            // Holding focus is what actually makes an inaccurate gun usable at range.
+            if (IsFocusing) spread *= Definition.AltFire.FocusSpreadMultiplier;
+            return spread;
         }
 
         private static Vector3 ApplySpread(Vector3 forward, float degrees)
@@ -180,17 +290,17 @@ namespace WizardGun
 
         // ---------------------------------------------------------------- delivery
 
-        private void FireHitscan(Vector3 origin, Vector3 direction)
+        private void FireHitscan(in ShotSpec spec, Vector3 origin, Vector3 direction)
         {
             int mask = Layers.HitMaskFor(OwnerTeam);
-            float range = Definition.Range;
+            float range = spec.Range;
             Vector3 endPoint = origin + direction * range;
 
             int count = Physics.RaycastNonAlloc(new Ray(origin, direction), HitBuffer, range, mask,
                 QueryTriggerInteraction.Ignore);
             if (count > 1) SortHitsByDistance(count);
 
-            int pierceBudget = Definition.MaxPierce;
+            int pierceBudget = spec.MaxPierce;
             bool anythingHit = false;
 
             for (int i = 0; i < count; i++)
@@ -204,13 +314,13 @@ namespace WizardGun
                 {
                     // A wall stops the shot dead.
                     endPoint = hit.point;
-                    Combat.SpawnImpact(hit.point, hit.normal, Definition.Tint, 0.22f, Definition.DamageType);
+                    Combat.SpawnImpact(hit.point, hit.normal, spec.Tint, 0.22f, spec.DamageType);
                     anythingHit = true;
                     break;
                 }
 
-                target.TakeDamage(BuildHitscanDamage(hit.point, hit.normal, direction));
-                Combat.SpawnImpact(hit.point, hit.normal, Definition.Tint, 0.3f, Definition.DamageType);
+                target.TakeDamage(BuildHitscanDamage(spec, hit.point, hit.normal, direction));
+                Combat.SpawnImpact(hit.point, hit.normal, spec.Tint, 0.3f, spec.DamageType);
                 endPoint = hit.point;
                 anythingHit = true;
 
@@ -221,7 +331,7 @@ namespace WizardGun
             if (!anythingHit) endPoint = origin + direction * range;
 
             Vector3 tracerStart = Muzzle != null ? Muzzle.position : origin;
-            Combat.SpawnTracer(tracerStart, endPoint, Definition.Tint, 0.035f, 0.05f);
+            Combat.SpawnTracer(tracerStart, endPoint, spec.Tint, 0.035f, 0.05f);
         }
 
         private static void SortHitsByDistance(int count)
@@ -239,9 +349,9 @@ namespace WizardGun
             }
         }
 
-        private DamageInfo BuildHitscanDamage(Vector3 point, Vector3 normal, Vector3 direction)
+        private DamageInfo BuildHitscanDamage(in ShotSpec spec, Vector3 point, Vector3 normal, Vector3 direction)
         {
-            float amount = Definition.Damage * Combat.OutgoingMultiplier(OwnerSheet, false, Definition.DamageType);
+            float amount = spec.Damage * Combat.OutgoingMultiplier(OwnerSheet, false, spec.DamageType);
             bool crit = false;
             if (Combat.RollCrit(OwnerSheet, out float critMultiplier))
             {
@@ -249,16 +359,16 @@ namespace WizardGun
                 crit = true;
             }
 
-            DamageInfo info = DamageInfo.Create(amount, Definition.DamageType, OwnerTeam, Owner);
+            DamageInfo info = DamageInfo.Create(amount, spec.DamageType, OwnerTeam, Owner);
             info.IsCrit = crit;
-            info.Knockback = direction * Definition.Knockback;
+            info.Knockback = direction * spec.Knockback;
             info = info.At(point, normal)
-                       .WithStatuses(Definition.OnHitStatuses)
+                       .WithStatuses(spec.Statuses)
                        .WithStatuses(ExtraStatuses);
             return info;
         }
 
-        private void FireProjectile(Vector3 origin, Vector3 direction)
+        private void FireProjectile(in ShotSpec spec, Vector3 origin, Vector3 direction)
         {
             Vector3 spawn = Muzzle != null ? Muzzle.position : origin + direction * 0.6f;
 
@@ -271,22 +381,24 @@ namespace WizardGun
 
             Vector3 travelDirection = (aimPoint - spawn).normalized;
 
-            Projectile p = Projectile.Create(spawn, travelDirection, Definition.Tint, Definition.ProjectileRadius);
+            float outgoing = Combat.OutgoingMultiplier(OwnerSheet, false, spec.DamageType);
+
+            Projectile p = Projectile.Create(spawn, travelDirection, spec.Tint, spec.ProjectileRadius);
             p.OwnerTeam = OwnerTeam;
             p.Owner = Owner;
             p.OwnerSheet = OwnerSheet;
-            p.Damage = Definition.Damage * Combat.OutgoingMultiplier(OwnerSheet, false, Definition.DamageType);
-            p.DamageType = Definition.DamageType;
-            p.Speed = Definition.ProjectileSpeed;
-            p.Gravity = Definition.ProjectileGravity;
-            p.Lifetime = Definition.ProjectileLifetime;
-            p.Knockback = Definition.Knockback;
-            p.SplashRadius = Definition.SplashRadius;
-            p.SplashDamage = Definition.SplashDamage * Combat.OutgoingMultiplier(OwnerSheet, false, Definition.DamageType);
-            p.Pierce = Definition.MaxPierce;
-            p.HomingEnabled = Definition.ProjectileHoming;
+            p.Damage = spec.Damage * outgoing;
+            p.DamageType = spec.DamageType;
+            p.Speed = spec.ProjectileSpeed;
+            p.Gravity = spec.ProjectileGravity;
+            p.Lifetime = spec.ProjectileLifetime;
+            p.Knockback = spec.Knockback;
+            p.SplashRadius = spec.SplashRadius;
+            p.SplashDamage = spec.SplashDamage * outgoing;
+            p.Pierce = spec.MaxPierce;
+            p.HomingEnabled = spec.ProjectileHoming;
 
-            var statuses = new List<StatusApplication>(Definition.OnHitStatuses);
+            var statuses = new List<StatusApplication>(spec.Statuses);
             if (ExtraStatuses != null) statuses.AddRange(ExtraStatuses);
             p.Statuses = statuses;
 

@@ -134,7 +134,8 @@ namespace WizardGun
         public string Prompt => Definition == null
             ? null
             : "Take " + Definition.DisplayName + "  [" + Rarities.Name(Definition.Rarity) + "]  -  "
-              + Definition.StatLine();
+              + Definition.StatLine() + "  |  "
+              + Definition.AltLine(RunState.Current != null ? RunState.Current.AltFireTier : 0);
 
         public bool CanInteract(GameObject interactor) => Definition != null;
 

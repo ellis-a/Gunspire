@@ -48,3 +48,33 @@ MonoBehaviour:
       Duration: 4
       Stacks: 2
       Magnitude: 0.11
+    AltFire:
+      Kind: 3
+      Name: Steady Aim
+      Description: Hold to brace the lance.
+      UnlockTier: 0
+      Cooldown: 1.2
+      AmmoCost: 1
+      ManaCost: 0
+      Delivery: 1
+      Damage: 40
+      Pellets: 1
+      SpreadDegrees: 0
+      Knockback: 0
+      MaxPierce: 0
+      SplashRadius: 0
+      SplashDamage: 0
+      ProjectileSpeed: 40
+      ProjectileRadius: 0.2
+      ProjectileGravity: 0
+      ProjectileLifetime: 5
+      RecoilPitch: 3.2
+      OnHitStatuses: []
+      SalvoRateMultiplier: 3
+      SalvoDamageMultiplier: 0.85
+      SalvoMaxRounds: 12
+      FocusFov: 45
+      FocusSpreadMultiplier: 0.1
+      FocusDamageMultiplier: 1.35
+      FocusMoveMultiplier: 0.55
+      FocusRateMultiplier: 0.75

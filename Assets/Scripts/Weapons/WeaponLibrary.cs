@@ -102,6 +102,196 @@ namespace WizardGun
         /// <summary>The code roster. Also what the editor tool seeds new assets from.</summary>
         public static List<WeaponDefinition> BuiltIn()
         {
+            List<WeaponDefinition> guns = BuiltInBodies();
+            AttachAltFires(guns);
+            return guns;
+        }
+
+        /// <summary>
+        /// Right click, kept in one place rather than spread through the table above.
+        /// Balancing an alt fire means comparing it against the other alt fires, and every gun
+        /// that has none is visible here by its absence.
+        ///
+        /// UnlockTier 0 is live the moment you pick the gun up. Every starting gun is tier 0,
+        /// so all three classes meet the mechanic in the first room; the stronger alt fires sit
+        /// behind the Gunsmith boon, which is what lets a good gun arrive before its best
+        /// button does.
+        /// </summary>
+        private static void AttachAltFires(List<WeaponDefinition> guns)
+        {
+            // The revolver dump. Costs the rest of the cylinder and a long reload after.
+            Set(guns, "arcanum", new AltFireProfile
+            {
+                Kind = AltFireKind.Salvo,
+                Name = "Fan the Hammer",
+                Description = "Empties the cylinder as fast as the hammer will fall.",
+                Cooldown = 2.6f,
+                SalvoRateMultiplier = 4.5f,
+                SalvoDamageMultiplier = 0.8f,
+                SalvoMaxRounds = 12
+            });
+
+            // An uzi is inaccurate by design, so its alt is the answer to that rather than
+            // more of the same.
+            Set(guns, "emberspit", new AltFireProfile
+            {
+                Kind = AltFireKind.Focus,
+                Name = "Cinder Sights",
+                Description = "Hold to steady the spray.",
+                FocusFov = 62f,
+                FocusSpreadMultiplier = 0.30f,
+                FocusDamageMultiplier = 1.15f,
+                FocusRateMultiplier = 0.85f
+            });
+
+            Set(guns, "hailmaker", new AltFireProfile
+            {
+                Kind = AltFireKind.Shot,
+                Name = "Slug Round",
+                Description = "One solid slug instead of the spread. Hits hard, hits far.",
+                Cooldown = 1.1f,
+                AmmoCost = 1,
+                Delivery = DeliveryKind.Hitscan,
+                Damage = 62f,
+                Knockback = 7f,
+                RecoilPitch = 4.5f
+            });
+
+            // Already a launcher, so its alt inverts it: no blast, all impact.
+            Set(guns, "knell", new AltFireProfile
+            {
+                Kind = AltFireKind.Shot,
+                Name = "Contact Fuse",
+                Description = "A flat, fast round that spends everything on the thing it hits.",
+                Cooldown = 1.6f,
+                Delivery = DeliveryKind.Projectile,
+                Damage = 78f,
+                ProjectileSpeed = 62f,
+                ProjectileRadius = 0.2f,
+                Knockback = 5f,
+                RecoilPitch = 3.4f
+            });
+
+            // ember_repeater deliberately has none. It is the plain one.
+
+            Set(guns, "frost_lance", new AltFireProfile
+            {
+                Kind = AltFireKind.Focus,
+                Name = "Steady Aim",
+                Description = "Hold to brace the lance.",
+                FocusFov = 45f,
+                FocusSpreadMultiplier = 0.1f,
+                FocusDamageMultiplier = 1.35f,
+                FocusRateMultiplier = 0.75f
+            });
+
+            Set(guns, "hexshot", new AltFireProfile
+            {
+                Kind = AltFireKind.Salvo,
+                Name = "Both Barrels",
+                Description = "Dumps every shell in the tube.",
+                UnlockTier = 1,
+                Cooldown = 4f,
+                SalvoRateMultiplier = 3.2f,
+                SalvoDamageMultiplier = 0.9f,
+                SalvoMaxRounds = 6
+            });
+
+            Set(guns, "sunder_cannon", new AltFireProfile
+            {
+                Kind = AltFireKind.Shot,
+                Name = "Airburst",
+                Description = "Arcs high and opens wide. Less bite, far more reach.",
+                UnlockTier = 1,
+                Cooldown = 2.4f,
+                AmmoCost = 2,
+                Delivery = DeliveryKind.Projectile,
+                Damage = 14f,
+                SplashRadius = 7.5f,
+                SplashDamage = 52f,
+                ProjectileSpeed = 26f,
+                ProjectileGravity = 14f,
+                ProjectileRadius = 0.32f,
+                Knockback = 9f,
+                RecoilPitch = 5f
+            });
+
+            Set(guns, "voltaic_rail", new AltFireProfile
+            {
+                Kind = AltFireKind.Focus,
+                Name = "Overcharge",
+                Description = "Hold to narrow the coil.",
+                UnlockTier = 1,
+                FocusFov = 38f,
+                FocusSpreadMultiplier = 0.05f,
+                FocusDamageMultiplier = 1.5f,
+                FocusRateMultiplier = 0.7f
+            });
+
+            // The underbarrel launcher on a burst rifle.
+            Set(guns, "trigram", new AltFireProfile
+            {
+                Kind = AltFireKind.Shot,
+                Name = "Underbarrel Grenade",
+                Description = "Lobs a grenade. Arcs, so lead your throws.",
+                UnlockTier = 1,
+                Cooldown = 3.2f,
+                AmmoCost = 3,
+                Delivery = DeliveryKind.Projectile,
+                Damage = 20f,
+                SplashRadius = 4.6f,
+                SplashDamage = 46f,
+                ProjectileSpeed = 30f,
+                ProjectileGravity = 16f,
+                ProjectileRadius = 0.26f,
+                Knockback = 7f,
+                RecoilPitch = 4f
+            });
+
+            Set(guns, "nightfall", new AltFireProfile
+            {
+                Kind = AltFireKind.Shot,
+                Name = "Umbral Lance",
+                Description = "A heavy bolt that runs the length of a corridor.",
+                UnlockTier = 2,
+                Cooldown = 2.8f,
+                AmmoCost = 4,
+                Delivery = DeliveryKind.Projectile,
+                Damage = 96f,
+                MaxPierce = 5,
+                ProjectileSpeed = 70f,
+                ProjectileRadius = 0.34f,
+                Knockback = 6f,
+                RecoilPitch = 4.2f
+            });
+
+            Set(guns, "requiem", new AltFireProfile
+            {
+                Kind = AltFireKind.Focus,
+                Name = "Dirge",
+                Description = "Hold to sight down the barrel.",
+                UnlockTier = 2,
+                FocusFov = 32f,
+                FocusSpreadMultiplier = 0.02f,
+                FocusDamageMultiplier = 1.6f,
+                FocusRateMultiplier = 0.65f
+            });
+        }
+
+        private static void Set(List<WeaponDefinition> guns, string id, AltFireProfile alt)
+        {
+            WeaponDefinition gun = guns.Find(w => w.Id == id);
+            if (gun == null)
+            {
+                // A renamed gun would otherwise lose its alt fire silently.
+                Debug.LogWarning("Alt fire authored for unknown weapon id \"" + id + "\".");
+                return;
+            }
+            gun.AltFire = alt;
+        }
+
+        private static List<WeaponDefinition> BuiltInBodies()
+        {
             return new List<WeaponDefinition>
             {
                 new WeaponDefinition

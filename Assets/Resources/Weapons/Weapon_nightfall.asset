@@ -52,3 +52,33 @@ MonoBehaviour:
       Duration: 5
       Stacks: 1
       Magnitude: 3
+    AltFire:
+      Kind: 1
+      Name: Umbral Lance
+      Description: A heavy bolt that runs the length of a corridor.
+      UnlockTier: 2
+      Cooldown: 2.8
+      AmmoCost: 4
+      ManaCost: 0
+      Delivery: 1
+      Damage: 96
+      Pellets: 1
+      SpreadDegrees: 0
+      Knockback: 6
+      MaxPierce: 5
+      SplashRadius: 0
+      SplashDamage: 0
+      ProjectileSpeed: 70
+      ProjectileRadius: 0.34
+      ProjectileGravity: 0
+      ProjectileLifetime: 5
+      RecoilPitch: 4.2
+      OnHitStatuses: []
+      SalvoRateMultiplier: 3
+      SalvoDamageMultiplier: 0.85
+      SalvoMaxRounds: 12
+      FocusFov: 50
+      FocusSpreadMultiplier: 0.15
+      FocusDamageMultiplier: 1.25
+      FocusMoveMultiplier: 0.55
+      FocusRateMultiplier: 0.8

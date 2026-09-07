@@ -72,6 +72,14 @@ namespace WizardGun
 
     public enum DeliveryKind { Hitscan, Projectile }
 
+    /// <summary>
+    /// What right click does on a gun. Only three shapes, because they are the three that
+    /// behave differently rather than the three that sound different: Shot fires one modified
+    /// round, Salvo empties what is left in the magazine, and Focus is a state held down
+    /// rather than a shot at all. A slug and an underbarrel grenade are both Shot.
+    /// </summary>
+    public enum AltFireKind { None, Shot, Salvo, Focus }
+
     public enum RoomKind { Combat, Elite, Treasure, Shrine, Forge, Boss }
 
     /// <summary>Top level flow of a run.</summary>

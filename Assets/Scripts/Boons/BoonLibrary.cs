@@ -221,6 +221,13 @@ namespace WizardGun
 
         private static void BuildRare()
         {
+            // Unlocks the alt fires guns keep behind a tier. Levelled rather than a one-off so
+            // it can stay in the pool, and so the strongest right clicks arrive last.
+            Add("gunsmith", "Gunsmith's Kit",
+                "Unlocks the next tier of locked alt fires. Right click uses a gun's alt fire.",
+                Rarity.Rare, 2,
+                (run, level) => run.AltFireTier = Mathf.Max(run.AltFireTier, level));
+
             Add("vampiric_sigil", "Vampiric Sigil", "Heal for 6% of all damage you deal.", Rarity.Rare, 3,
                 (run, level) => run.LifestealFraction += 0.06f);
 

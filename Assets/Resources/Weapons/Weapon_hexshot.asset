@@ -48,3 +48,33 @@ MonoBehaviour:
       Duration: 6
       Stacks: 1
       Magnitude: 2.5
+    AltFire:
+      Kind: 2
+      Name: Both Barrels
+      Description: Dumps every shell in the tube.
+      UnlockTier: 1
+      Cooldown: 4
+      AmmoCost: 1
+      ManaCost: 0
+      Delivery: 1
+      Damage: 40
+      Pellets: 1
+      SpreadDegrees: 0
+      Knockback: 0
+      MaxPierce: 0
+      SplashRadius: 0
+      SplashDamage: 0
+      ProjectileSpeed: 40
+      ProjectileRadius: 0.2
+      ProjectileGravity: 0
+      ProjectileLifetime: 5
+      RecoilPitch: 3.2
+      OnHitStatuses: []
+      SalvoRateMultiplier: 3.2
+      SalvoDamageMultiplier: 0.9
+      SalvoMaxRounds: 6
+      FocusFov: 50
+      FocusSpreadMultiplier: 0.15
+      FocusDamageMultiplier: 1.25
+      FocusMoveMultiplier: 0.55
+      FocusRateMultiplier: 0.8

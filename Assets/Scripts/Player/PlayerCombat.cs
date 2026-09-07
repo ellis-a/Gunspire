@@ -60,10 +60,27 @@ namespace WizardGun
 
             ScanForInteractable();
 
-            if (!InputEnabled) return;
+            if (!InputEnabled)
+            {
+                // Feed a released frame rather than just skipping. Focus is a held state, so
+                // stopping here mid-zoom would leave the gun scoped and the camera narrowed
+                // for as long as the boon screen is open.
+                if (Weapon != null)
+                {
+                    Weapon.HandleInput(false, false, false);
+                    ApplyZoom();
+                }
+                return;
+            }
 
             if (Weapon != null)
-                Weapon.HandleInput(Input.GetMouseButton(0), Input.GetKeyDown(KeyCode.R));
+            {
+                bool alt = Input.GetMouseButton(1);
+                Weapon.HandleInput(Input.GetMouseButton(0), alt, Input.GetKeyDown(KeyCode.R));
+
+                if (Input.GetMouseButtonDown(1)) ReportAltFire();
+                ApplyZoom();
+            }
 
             if (Book != null)
             {
@@ -71,7 +88,10 @@ namespace WizardGun
                     if (Input.GetKeyDown(SpellBook.SlotKeys[i])) UseSpellSlot(i);
             }
 
-            if (Input.GetMouseButtonDown(1) || Input.GetKeyDown(KeyCode.V)) TryBash();
+            // Right click is alt fire now, so the bash lives on V alone - it was already
+            // bound there, and sharing a button with a gun's second trigger is worse than
+            // moving it.
+            if (Input.GetKeyDown(KeyCode.V)) TryBash();
 
             if (Input.GetKeyDown(KeyCode.F) && _focus != null && _focus.CanInteract(gameObject))
                 _focus.Interact(gameObject);
@@ -100,6 +120,40 @@ namespace WizardGun
                     break;
                 // A cooldown already reads clearly on the HUD slot, so it stays quiet.
             }
+        }
+
+        /// <summary>
+        /// Says why right click did nothing. Same reasoning as the spell slots: a button that
+        /// silently does nothing reads as a bug, and "this gun has no alt fire" is information
+        /// the player needs when deciding whether to pick a gun up.
+        /// </summary>
+        private void ReportAltFire()
+        {
+            switch (Weapon.EvaluateAlt())
+            {
+                case Weapon.AltOutcome.None:
+                    Notify(Weapon.Definition.DisplayName + " has no alt fire");
+                    break;
+                case Weapon.AltOutcome.Locked:
+                    Notify(Weapon.Alt.Name + " is locked - find a Gunsmith boon");
+                    break;
+                case Weapon.AltOutcome.NoAmmo:
+                    Notify("Not enough ammo for " + Weapon.Alt.Name);
+                    break;
+                case Weapon.AltOutcome.NotEnoughMana:
+                    Notify("Not enough mana");
+                    break;
+                // Cooldown and mid-burst both read clearly on the HUD, so they stay quiet.
+            }
+        }
+
+        /// <summary>Drives the camera from whether the gun is currently focusing.</summary>
+        private void ApplyZoom()
+        {
+            if (Look == null) return;
+
+            AltFireProfile alt = Weapon.Alt;
+            Look.ZoomFov = Weapon.IsFocusing && alt != null ? alt.FocusFov : 0f;
         }
 
         private static void Notify(string message)

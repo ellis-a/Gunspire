@@ -49,6 +49,20 @@ namespace WizardGun
         public bool BlinkDetonates;
         public float BlinkDetonationDamage = 45f;
 
+        /// <summary>
+        /// Highest alt fire unlock tier available this run. A gun whose alt fire declares a
+        /// higher tier keeps it locked, which is what lets a strong gun arrive before its
+        /// strong right click does. Raised by the Gunsmith boon.
+        /// </summary>
+        public int AltFireTier;
+
+        /// <summary>
+        /// The run in progress, or null outside one. Saves every caller reaching through the
+        /// director and null-checking it, and keeps edit-mode tooling from exploding.
+        /// </summary>
+        public static RunState Current =>
+            GameDirector.Instance != null ? GameDirector.Instance.Run : null;
+
         private bool _bound;
 
         public RunState(int seed, int floorCount)

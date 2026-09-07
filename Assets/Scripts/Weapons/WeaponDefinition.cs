@@ -62,14 +62,24 @@ namespace WizardGun
         /// <summary>Status effects every hit applies. Boons append to the runtime copy, not this list.</summary>
         public List<StatusApplication> OnHitStatuses = new List<StatusApplication>();
 
+        [Header("Alt fire")]
+        /// <summary>What right click does. Kind None means this gun has no alt fire.</summary>
+        public AltFireProfile AltFire = new AltFireProfile();
+
         public float SecondsBetweenShots => 60f / Mathf.Max(1f, RoundsPerMinute);
 
         public WeaponDefinition Clone()
         {
             var copy = (WeaponDefinition)MemberwiseClone();
             copy.OnHitStatuses = new List<StatusApplication>(OnHitStatuses);
+
+            // MemberwiseClone copies the reference, so without this every clone of a gun would
+            // share one profile and a boon that tuned an alt fire would tune it on the roster.
+            copy.AltFire = AltFire != null ? AltFire.Clone() : new AltFireProfile();
             return copy;
         }
+
+        public bool HasAltFire => AltFire != null && AltFire.Exists;
 
         /// <summary>
         /// Rounds actually loosed per pull of the trigger: pellets in a shotgun shell, shots
@@ -89,6 +99,18 @@ namespace WizardGun
             return string.Format("{0} {1} dmg x{2}  {3} rpm  mag {4}  {5}  ~{6} dps",
                 DamageTypes.Name(DamageType), Damage.ToString("0.#"), RoundsPerTrigger,
                 RoundsPerMinute.ToString("0"), MagazineSize, shape, dps);
+        }
+
+        /// <summary>
+        /// The alt fire, for pickup prompts. Whether a gun has a second trigger, and whether
+        /// it is available yet, is worth knowing before deciding to swap.
+        /// </summary>
+        public string AltLine(int unlockedTier)
+        {
+            if (!HasAltFire) return "no alt fire";
+
+            string locked = AltFire.UnlockTier > unlockedTier ? " (locked)" : string.Empty;
+            return "RMB " + AltFire.Name + locked + ": " + AltFire.Summary();
         }
     }
 }

@@ -48,3 +48,33 @@ MonoBehaviour:
       Duration: 4
       Stacks: 1
       Magnitude: 0.15
+    AltFire:
+      Kind: 1
+      Name: Underbarrel Grenade
+      Description: Lobs a grenade. Arcs, so lead your throws.
+      UnlockTier: 1
+      Cooldown: 3.2
+      AmmoCost: 3
+      ManaCost: 0
+      Delivery: 1
+      Damage: 20
+      Pellets: 1
+      SpreadDegrees: 0
+      Knockback: 7
+      MaxPierce: 0
+      SplashRadius: 4.6
+      SplashDamage: 46
+      ProjectileSpeed: 30
+      ProjectileRadius: 0.26
+      ProjectileGravity: 16
+      ProjectileLifetime: 5
+      RecoilPitch: 4
+      OnHitStatuses: []
+      SalvoRateMultiplier: 3
+      SalvoDamageMultiplier: 0.85
+      SalvoMaxRounds: 12
+      FocusFov: 50
+      FocusSpreadMultiplier: 0.15
+      FocusDamageMultiplier: 1.25
+      FocusMoveMultiplier: 0.55
+      FocusRateMultiplier: 0.8

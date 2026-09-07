@@ -182,6 +182,46 @@ namespace WizardGun
                     weapon.Definition.Delivery == DeliveryKind.Hitscan ? "hitscan  [R] reload" : "projectile  [R] reload",
                     UIStyles.Right, UIStyles.Muted);
             }
+
+            DrawAltFire(weapon, x, y + 78f, width);
+        }
+
+        /// <summary>
+        /// The right click line. Always drawn, including for guns that have none - "no alt
+        /// fire" is information worth having when deciding whether to swap weapons, and a
+        /// blank space would just look like the HUD forgot.
+        /// </summary>
+        private static void DrawAltFire(Weapon weapon, float x, float y, float width)
+        {
+            AltFireProfile alt = weapon.Alt;
+
+            if (alt == null || !alt.Exists)
+            {
+                UIStyles.Text(new Rect(x, y, width, 16f), "[RMB] no alt fire", UIStyles.Right, UIStyles.Muted);
+                return;
+            }
+
+            if (!weapon.AltUnlocked)
+            {
+                UIStyles.Text(new Rect(x, y, width, 16f), "[RMB] " + alt.Name + "  - LOCKED",
+                    UIStyles.Right, UIStyles.Muted);
+                return;
+            }
+
+            float cooldown = weapon.AltCooldownRemaining;
+            if (cooldown > 0f)
+            {
+                UIStyles.Text(new Rect(x, y, width, 16f),
+                    "[RMB] " + alt.Name + "  " + cooldown.ToString("0.0") + "s",
+                    UIStyles.Right, UIStyles.Muted);
+                return;
+            }
+
+            // Held alt fires say so while active, since nothing else on screen makes it
+            // obvious that the zoom is a weapon state rather than a camera quirk.
+            string label = weapon.IsFocusing ? "[RMB] " + alt.Name + "  ACTIVE" : "[RMB] " + alt.Name;
+            UIStyles.Text(new Rect(x, y, width, 16f), label, UIStyles.Right,
+                weapon.IsFocusing ? UIStyles.AmmoColor : UIStyles.Ink);
         }
 
         // ---------------------------------------------------------------- spells
