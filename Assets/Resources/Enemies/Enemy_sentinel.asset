@@ -1,0 +1,107 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2faa7c9d5f2fc7d46b43ab253041d16e, type: 3}
+  m_Name: Enemy_sentinel
+  m_EditorClassIdentifier: Assembly-CSharp::WizardGun.EnemyAsset
+  Enemy:
+    Id: sentinel
+    DisplayName: Sentinel
+    InStandardRoster: 1
+    Health: 84
+    MoveSpeed: 3.6
+    Radius: 0.55
+    BodyHeight: 2
+    BodyWidth: 1.05
+    PreferredRange: 11
+    MinComfortRange: 6
+    StrafeInterval: 1.8
+    TurnSpeed: 9
+    Flying: 0
+    HoverHeight: 3.2
+    EyeHeight: 0
+    Shape: 0
+    BodyColor: {r: 0.75, g: 0.55, b: 0.2, a: 1}
+    EyeColor: {r: 1, g: 0.8, b: 0.3, a: 1}
+    Crowned: 0
+    Resists: 1
+    Resistance: 0.4
+    WeakTo: 2
+    Vulnerability: 0.3
+    ResistsEverything: 0
+    BroadResistance: 0.18
+    EliteHealthMultiplier: 2.6
+    EliteSpeedMultiplier: 1.08
+    EliteDamageMultiplier: 1.25
+    EliteCooldownMultiplier: 0.8
+    Attacks:
+    - Name: Cinder Slam
+      MinRange: 0
+      MaxRange: 24
+      Cooldown: 4.6
+      InitialDelay: 0.6
+      RequiresLineOfSight: 1
+      Priority: 0
+      DamageType: 1
+      Category: 0
+      Tint: {r: 1, g: 0.48, b: 0.15, a: 1}
+      Sequence:
+      - rid: 5643702087738458133
+      - rid: 5643702087738458134
+      - rid: 5643702087738458135
+  references:
+    version: 2
+    RefIds:
+    - rid: 5643702087738458133
+      type: {class: StatusPayloadEffect, ns: WizardGun, asm: Assembly-CSharp}
+      data:
+        Status: 2
+        Duration: 4
+        Stacks: 2
+        StacksPerLevel: 0
+        Magnitude: 4
+        DurationPerLevel: 0
+    - rid: 5643702087738458134
+      type: {class: RepeatEffect, ns: WizardGun, asm: Assembly-CSharp}
+      data:
+        Times: 3
+        Interval: 0.45
+        AbortIfInterrupted: 1
+        Body:
+        - rid: 5643702087738458136
+        - rid: 5643702087738458137
+        - rid: 5643702087738458138
+    - rid: 5643702087738458135
+      type: {class: WaitEffect, ns: WizardGun, asm: Assembly-CSharp}
+      data:
+        Seconds: 1.6
+        AbortIfInterrupted: 1
+    - rid: 5643702087738458136
+      type: {class: TargetGroundPointEffect, ns: WizardGun, asm: Assembly-CSharp}
+      data:
+        LeadDistance: 3
+        LeadSeconds: 0.35
+    - rid: 5643702087738458137
+      type: {class: TelegraphCircleEffect, ns: WizardGun, asm: Assembly-CSharp}
+      data:
+        Radius: 3.5
+        Duration: 0.9
+        ScaleWithLevel: 0
+        DropToGround: 1
+    - rid: 5643702087738458138
+      type: {class: DelayedBlastEffect, ns: WizardGun, asm: Assembly-CSharp}
+      data:
+        Delay: 0.9
+        Radius: 3.5
+        Damage: 22
+        Knockback: 7
+        MinFraction: 0.5
+        ScaleRadiusWithLevel: 0

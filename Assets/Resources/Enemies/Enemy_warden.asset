@@ -1,0 +1,105 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2faa7c9d5f2fc7d46b43ab253041d16e, type: 3}
+  m_Name: Enemy_warden
+  m_EditorClassIdentifier: Assembly-CSharp::WizardGun.EnemyAsset
+  Enemy:
+    Id: warden
+    DisplayName: Warden
+    InStandardRoster: 1
+    Health: 95
+    MoveSpeed: 3.1
+    Radius: 0.5
+    BodyHeight: 2.2
+    BodyWidth: 0.95
+    PreferredRange: 18
+    MinComfortRange: 12
+    StrafeInterval: 1.8
+    TurnSpeed: 9
+    Flying: 0
+    HoverHeight: 3.2
+    EyeHeight: 0
+    Shape: 0
+    BodyColor: {r: 0.25, g: 0.45, b: 0.7, a: 1}
+    EyeColor: {r: 0.5, g: 0.9, b: 1, a: 1}
+    Crowned: 0
+    Resists: 5
+    Resistance: 0.4
+    WeakTo: 4
+    Vulnerability: 0.3
+    ResistsEverything: 0
+    BroadResistance: 0.18
+    EliteHealthMultiplier: 2.6
+    EliteSpeedMultiplier: 1.08
+    EliteDamageMultiplier: 1.25
+    EliteCooldownMultiplier: 0.8
+    Attacks:
+    - Name: Sweeping Beam
+      MinRange: 6
+      MaxRange: 38
+      Cooldown: 5.5
+      InitialDelay: 0.6
+      RequiresLineOfSight: 1
+      Priority: 0
+      DamageType: 5
+      Category: 0
+      Tint: {r: 0.75, g: 0.8, b: 1, a: 1}
+      Sequence:
+      - rid: 5643702087738458127
+      - rid: 5643702087738458128
+      - rid: 5643702087738458129
+      - rid: 5643702087738458130
+      - rid: 5643702087738458131
+      - rid: 5643702087738458132
+  references:
+    version: 2
+    RefIds:
+    - rid: 5643702087738458127
+      type: {class: AimAtTargetEffect, ns: WizardGun, asm: Assembly-CSharp}
+      data:
+        AimHeight: 0.95
+        Flatten: 1
+    - rid: 5643702087738458128
+      type: {class: TelegraphLineEffect, ns: WizardGun, asm: Assembly-CSharp}
+      data:
+        Length: 40
+        Width: 0.33
+        Duration: 1.1
+    - rid: 5643702087738458129
+      type: {class: WaitEffect, ns: WizardGun, asm: Assembly-CSharp}
+      data:
+        Seconds: 1.1
+        AbortIfInterrupted: 1
+    - rid: 5643702087738458130
+      type: {class: StatusPayloadEffect, ns: WizardGun, asm: Assembly-CSharp}
+      data:
+        Status: 4
+        Duration: 3
+        Stacks: 1
+        StacksPerLevel: 0
+        Magnitude: 0.12
+        DurationPerLevel: 0
+    - rid: 5643702087738458131
+      type: {class: BeamEffect, ns: WizardGun, asm: Assembly-CSharp}
+      data:
+        Duration: 1.4
+        Length: 40
+        Width: 0.55
+        DamagePerTick: 5.5
+        TickInterval: 0.12
+        SweepDegreesPerSecond: 26
+        MaxPitch: 0.25
+    - rid: 5643702087738458132
+      type: {class: WaitEffect, ns: WizardGun, asm: Assembly-CSharp}
+      data:
+        Seconds: 0.9
+        AbortIfInterrupted: 1

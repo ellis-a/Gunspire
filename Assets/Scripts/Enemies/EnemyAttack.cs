@@ -32,6 +32,13 @@ namespace WizardGun
         /// <summary>What happens, in order. Wind-ups and repeats are effects like any other.</summary>
         [SerializeReference] public List<AbilityEffect> Sequence = new List<AbilityEffect>();
 
+        /// <summary>
+        /// Scales every damage number in the sequence. Floor difficulty and the elite bonus
+        /// arrive here rather than being multiplied into the authored values, so what a
+        /// definition says an attack does is what it does on floor one.
+        /// </summary>
+        public float DamageMultiplier = 1f;
+
         private EnemyController _owner;
         private AbilityContext _context;
         private float _timer;
@@ -82,7 +89,11 @@ namespace WizardGun
         private IEnumerator RunSequence()
         {
             _context.TargetTransform = _owner.Target;
-            _context.Begin(DamageType, Category, Tint, level: 1, levelScale: 1f, isSpell: false);
+
+            // levelScale feeds ctx.Power, which every damage-dealing effect already multiplies
+            // by - so one number here scales the whole chain however it is built.
+            _context.Begin(DamageType, Category, Tint, level: 1,
+                levelScale: DamageMultiplier, isSpell: false);
 
             yield return AbilityRunner.RunTimed(Sequence, _context);
 
@@ -92,20 +103,22 @@ namespace WizardGun
 
         // ---------------------------------------------------------------- construction
 
-        /// <summary>Adds a configured attack to an enemy. Used by <see cref="EnemyFactory"/>.</summary>
-        public static EnemyAttack Add(EnemyController enemy, string name, DamageType damageType, Color tint,
-            float minRange, float maxRange, float cooldown, int priority, params AbilityEffect[] sequence)
+        /// <summary>Builds the component from authored data. Used by <see cref="EnemyFactory"/>.</summary>
+        public static EnemyAttack Add(EnemyController enemy, EnemyAttackDefinition def)
         {
             var attack = enemy.gameObject.AddComponent<EnemyAttack>();
-            attack.Name = name;
-            attack.DamageType = damageType;
-            attack.Tint = tint;
-            attack.MinRange = minRange;
-            attack.MaxRange = maxRange;
-            attack.Cooldown = cooldown;
-            attack.Priority = priority;
+            attack.Name = def.Name;
+            attack.DamageType = def.DamageType;
+            attack.Category = def.Category;
+            attack.Tint = def.Tint;
+            attack.MinRange = def.MinRange;
+            attack.MaxRange = def.MaxRange;
+            attack.Cooldown = def.Cooldown;
+            attack.InitialDelay = def.InitialDelay;
+            attack.RequiresLineOfSight = def.RequiresLineOfSight;
+            attack.Priority = def.Priority;
 
-            attack.Sequence = new List<AbilityEffect>(sequence);
+            attack.Sequence = new List<AbilityEffect>(def.Sequence);
             return attack;
         }
     }

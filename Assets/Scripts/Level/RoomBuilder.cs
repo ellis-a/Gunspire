@@ -220,8 +220,14 @@ namespace WizardGun
                         clearance: 1.2f, preferFar: true, avoidPoint: entrance, avoidRadius: 14f))
                     spot = new Vector3(rng.Range(-width * 0.35f, width * 0.35f), 0f, depth * 0.25f);
 
-                EnemyKind kind = rng.Pick(EnemyFactory.StandardRoster);
-                EnemyController enemy = EnemyFactory.Spawn(kind, spot, floor, elite);
+                // Rolled from the roster rather than a fixed enum, so an authored enemy that
+                // opts into the standard roster starts appearing with no code change.
+                List<EnemyDefinition> pool = EnemyLibrary.StandardRoster();
+                if (pool.Count == 0) continue;
+
+                EnemyController enemy = EnemyFactory.Spawn(rng.Pick(pool), spot, floor, elite);
+                if (enemy == null) continue;
+
                 enemy.transform.SetParent(runtime.transform, true);
                 runtime.Register(enemy);
             }
@@ -229,7 +235,9 @@ namespace WizardGun
 
         private static void SpawnBoss(RoomRuntime runtime, int floor)
         {
-            EnemyController boss = EnemyFactory.Spawn(EnemyKind.TowerWarden, new Vector3(0f, 0f, 14f), floor);
+            EnemyController boss = EnemyFactory.Spawn(EnemyLibrary.BossId, new Vector3(0f, 0f, 14f), floor);
+            if (boss == null) return;
+
             boss.transform.SetParent(runtime.transform, true);
             runtime.Register(boss);
         }

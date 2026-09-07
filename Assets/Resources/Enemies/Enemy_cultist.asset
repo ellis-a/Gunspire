@@ -1,0 +1,111 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2faa7c9d5f2fc7d46b43ab253041d16e, type: 3}
+  m_Name: Enemy_cultist
+  m_EditorClassIdentifier: Assembly-CSharp::WizardGun.EnemyAsset
+  Enemy:
+    Id: cultist
+    DisplayName: Cultist
+    InStandardRoster: 1
+    Health: 55
+    MoveSpeed: 4.2
+    Radius: 0.42
+    BodyHeight: 1.8
+    BodyWidth: 0.8
+    PreferredRange: 13
+    MinComfortRange: 8
+    StrafeInterval: 1.8
+    TurnSpeed: 9
+    Flying: 0
+    HoverHeight: 3.2
+    EyeHeight: 0
+    Shape: 0
+    BodyColor: {r: 0.55, g: 0.25, b: 0.55, a: 1}
+    EyeColor: {r: 1, g: 0.5, b: 1, a: 1}
+    Crowned: 0
+    Resists: 5
+    Resistance: 0.4
+    WeakTo: 3
+    Vulnerability: 0.3
+    ResistsEverything: 0
+    BroadResistance: 0.18
+    EliteHealthMultiplier: 2.6
+    EliteSpeedMultiplier: 1.08
+    EliteDamageMultiplier: 1.25
+    EliteCooldownMultiplier: 0.8
+    Attacks:
+    - Name: Arcane Volley
+      MinRange: 0
+      MaxRange: 26
+      Cooldown: 2.6
+      InitialDelay: 0.6
+      RequiresLineOfSight: 1
+      Priority: 0
+      DamageType: 5
+      Category: 0
+      Tint: {r: 0.6, g: 0.45, b: 1, a: 1}
+      Sequence:
+      - rid: 5643702087738458112
+      - rid: 5643702087738458113
+      - rid: 5643702087738458114
+      - rid: 5643702087738458115
+  references:
+    version: 2
+    RefIds:
+    - rid: 5643702087738458112
+      type: {class: TelegraphFlashEffect, ns: WizardGun, asm: Assembly-CSharp}
+      data:
+        Radius: 0.35
+        Duration: 0.55
+        Height: 1.35
+    - rid: 5643702087738458113
+      type: {class: WaitEffect, ns: WizardGun, asm: Assembly-CSharp}
+      data:
+        Seconds: 0.55
+        AbortIfInterrupted: 1
+    - rid: 5643702087738458114
+      type: {class: RepeatEffect, ns: WizardGun, asm: Assembly-CSharp}
+      data:
+        Times: 3
+        Interval: 0.16
+        AbortIfInterrupted: 1
+        Body:
+        - rid: 5643702087738458116
+        - rid: 5643702087738458117
+    - rid: 5643702087738458115
+      type: {class: WaitEffect, ns: WizardGun, asm: Assembly-CSharp}
+      data:
+        Seconds: 0.45
+        AbortIfInterrupted: 1
+    - rid: 5643702087738458116
+      type: {class: AimAtTargetEffect, ns: WizardGun, asm: Assembly-CSharp}
+      data:
+        AimHeight: 0.95
+        Flatten: 0
+    - rid: 5643702087738458117
+      type: {class: SpawnProjectileEffect, ns: WizardGun, asm: Assembly-CSharp}
+      data:
+        Damage: 9
+        Speed: 20
+        Radius: 0.24
+        Lifetime: 6
+        Gravity: 0
+        Knockback: 0
+        Pierce: 0
+        Homing: 0
+        Count: 1
+        ArcSpreadDegrees: 0
+        SpreadDegrees: 1.5
+        SplashRadius: 0
+        SplashDamage: 0
+        ScaleSplashWithLevel: 1
+        OnHit: []
