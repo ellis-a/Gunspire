@@ -43,12 +43,19 @@ namespace WizardGun
 
         public bool IsEmpty => AmmoInMagazine <= 0;
 
-        public void Equip(WeaponDefinition definition)
+        /// <summary>
+        /// Takes up a gun. <paramref name="ammoInMagazine"/> below zero loads a full magazine;
+        /// a swap passes the count the gun was put down with, so trading back and forth at a
+        /// pedestal is not a free reload.
+        /// </summary>
+        public void Equip(WeaponDefinition definition, int ammoInMagazine = -1)
         {
             StopAllRunningRoutines();
 
             Definition = definition;
-            AmmoInMagazine = definition.MagazineSize;
+            AmmoInMagazine = ammoInMagazine < 0
+                ? definition.MagazineSize
+                : Mathf.Clamp(ammoInMagazine, 0, definition.MagazineSize);
             IsReloading = false;
             _cooldown = 0f;
             _altCooldown = 0f;

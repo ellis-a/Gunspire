@@ -257,5 +257,21 @@ namespace WizardGun
             if (Weapon == null || definition == null) return;
             Weapon.Equip(definition);
         }
+
+        /// <summary>
+        /// Takes <paramref name="incoming"/> and hands back whatever was being held, along with
+        /// the rounds left in it. Returns null if there was nothing to give up.
+        /// </summary>
+        public WeaponDefinition SwapWeapon(WeaponDefinition incoming, int incomingAmmo, out int outgoingAmmo)
+        {
+            outgoingAmmo = -1;
+            if (Weapon == null || incoming == null) return null;
+
+            WeaponDefinition outgoing = Weapon.Definition;
+            if (outgoing != null) outgoingAmmo = Weapon.AmmoInMagazine;
+
+            Weapon.Equip(incoming, incomingAmmo);
+            return outgoing;
+        }
     }
 }

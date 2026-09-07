@@ -127,15 +127,48 @@ namespace WizardGun
     }
 
     /// <summary>A gun on a pedestal. Interacting swaps the player weapon for this one.</summary>
+    /// <summary>
+    /// A gun on a plinth. Taking it puts the one you were holding in its place rather than
+    /// consuming the pedestal, so you can try a gun on the enemies in the room and swap back
+    /// if you do not like it. Leaving the room destroys the pedestal, which is what makes the
+    /// decision final - you commit at the door, not at the plinth.
+    /// </summary>
     public class WeaponPickup : MonoBehaviour, IInteractable
     {
         public WeaponDefinition Definition;
 
-        public string Prompt => Definition == null
-            ? null
-            : "Take " + Definition.DisplayName + "  [" + Rarities.Name(Definition.Rarity) + "]  -  "
-              + Definition.StatLine() + "  |  "
-              + Definition.AltLine(RunState.Current != null ? RunState.Current.AltFireTier : 0);
+        /// <summary>Rounds in the gun sitting here. Below zero means a full magazine.</summary>
+        public int Ammo = -1;
+
+        private Renderer _ring;
+        private Renderer _model;
+
+        public string Prompt
+        {
+            get
+            {
+                if (Definition == null) return null;
+
+                string held = HeldName();
+                string verb = string.IsNullOrEmpty(held) ? "Take " : "Swap for ";
+
+                string text = verb + Definition.DisplayName
+                              + "  [" + Rarities.Name(Definition.Rarity) + "]  -  "
+                              + Definition.StatLine() + "  |  "
+                              + Definition.AltLine(RunState.Current != null ? RunState.Current.AltFireTier : 0);
+
+                // Naming what you would be putting down is the whole point of a swap.
+                if (!string.IsNullOrEmpty(held)) text += "   (leaves your " + held + " here)";
+                return text;
+            }
+        }
+
+        private static string HeldName()
+        {
+            PlayerRig rig = PlayerRig.Instance;
+            WeaponDefinition held = rig != null && rig.Weapon != null ? rig.Weapon.Definition : null;
+            return held != null ? held.DisplayName : null;
+        }
 
         public bool CanInteract(GameObject interactor) => Definition != null;
 
@@ -144,9 +177,35 @@ namespace WizardGun
             var rig = interactor.GetComponentInParent<PlayerRig>();
             if (rig == null || Definition == null) return;
 
-            rig.CombatInput.EquipWeapon(Definition);
-            GameDirector.Instance?.Notify("Equipped " + Definition.DisplayName);
-            Destroy(gameObject);
+            string taken = Definition.DisplayName;
+            WeaponDefinition given = rig.CombatInput.SwapWeapon(Definition, Ammo, out int givenAmmo);
+
+            if (given == null)
+            {
+                // Nothing to trade back, so behave the way a plain pickup always did.
+                GameDirector.Instance?.Notify("Equipped " + taken);
+                Destroy(gameObject);
+                return;
+            }
+
+            Definition = given;
+            Ammo = givenAmmo;
+            Refresh();
+
+            GameDirector.Instance?.Notify("Equipped " + taken + " - your " + given.DisplayName
+                                          + " is on the plinth", 2.5f);
+        }
+
+        /// <summary>Repaints the plinth for whatever is now sitting on it.</summary>
+        private void Refresh()
+        {
+            if (Definition == null) return;
+
+            if (_ring != null)
+                _ring.sharedMaterial = MaterialLibrary.Emissive(Rarities.Tint(Definition.Rarity), 3f);
+
+            if (_model != null)
+                _model.sharedMaterial = MaterialLibrary.Emissive(Definition.Tint, 2.5f);
         }
 
         public static WeaponPickup Spawn(Vector3 position, WeaponDefinition definition)
@@ -159,10 +218,10 @@ namespace WizardGun
                 new Vector3(0.9f, 0.35f, 0.9f), MaterialLibrary.Lit(Palette.Trim), collider: true);
 
             // A ring in the rarity colour, so how good the drop is reads from across the room.
-            Build.GroundDisc(root.transform, "RarityRing", new Vector3(0f, 0.72f, 0f), 0.62f,
+            GameObject ring = Build.GroundDisc(root.transform, "RarityRing", new Vector3(0f, 0.72f, 0f), 0.62f,
                 MaterialLibrary.Emissive(Rarities.Tint(definition.Rarity), 3f));
 
-            Build.Cube(root.transform, "Gun", new Vector3(0f, 1.1f, 0f),
+            GameObject model = Build.Cube(root.transform, "Gun", new Vector3(0f, 1.1f, 0f),
                 new Vector3(0.14f, 0.14f, 0.7f), MaterialLibrary.Emissive(definition.Tint, 2.5f), collider: false);
 
             var trigger = root.AddComponent<SphereCollider>();
@@ -172,6 +231,11 @@ namespace WizardGun
 
             var pickup = root.AddComponent<WeaponPickup>();
             pickup.Definition = definition;
+
+            // Held so the plinth can repaint itself when a swap puts a different gun on it.
+            pickup._ring = ring.GetComponent<Renderer>();
+            pickup._model = model.GetComponent<Renderer>();
+
             root.AddComponent<Bobber>();
             return pickup;
         }
