@@ -14,6 +14,15 @@ namespace WizardGun
         [SerializeField] private float gravity = -26f;
         [SerializeField] private float groundAcceleration = 90f;
         [SerializeField] private float airAcceleration = 55f;
+
+        /// <summary>
+        /// Ceiling on the wish speed used in the air, in metres per second. This is the strafe
+        /// jumping dial: it caps how much speed one frame of perfect steering can add, so
+        /// raising it makes chains build faster and lowering it makes them demand tighter
+        /// mouse control. It has no effect on how sharply you can steer, only on how much
+        /// speed steering can create.
+        /// </summary>
+        [SerializeField] private float airWishSpeed = 1.1f;
         [SerializeField] private float friction = 8f;
         [SerializeField] private float stopSpeed = 3f;
         [SerializeField] private float coyoteTime = 0.12f;
@@ -79,14 +88,15 @@ namespace WizardGun
             Vector2 input = (InputEnabled && !frozen) ? ReadMoveInput() : Vector2.zero;
             _wishDirection = WishDirection(input);
 
-            // Shift belongs to MovementController now, since what it does is a run choice.
-            if (InputEnabled && !frozen && Input.GetKeyDown(KeyCode.Space))
+            // Held, not pressed. Chaining hops by re-tapping on the exact landing frame is a
+            // reflex test rather than a skill, and it is the one thing that has to be
+            // effortless for a speed chain to be about steering.
+            if (InputEnabled && !frozen && Input.GetKey(KeyCode.Space))
                 _jumpBufferTimer = jumpBuffer;
 
-            if (_dashTimer > 0f) UpdateDash(dt);
-            else UpdateNormalMovement(_wishDirection, dt);
-
-            _controller.Move(_velocity * dt);
+            // isGrounded reports the result of the last Move, so it is already this frame's
+            // truth. Reading it here rather than after moving means the jump can be resolved
+            // before movement runs, which is what lets the hop frame skip friction.
             IsGrounded = _controller.isGrounded;
 
             if (IsGrounded)
@@ -99,11 +109,16 @@ namespace WizardGun
                 _coyoteTimer -= dt;
             }
 
-            if (_jumpBufferTimer > 0f)
-            {
-                _jumpBufferTimer -= dt;
-                if (_coyoteTimer > 0f) DoJump();
-            }
+            if (_jumpBufferTimer > 0f) _jumpBufferTimer -= dt;
+
+            bool hopping = _jumpBufferTimer > 0f && _coyoteTimer > 0f && _dashTimer <= 0f;
+
+            if (_dashTimer > 0f) UpdateDash(dt);
+            else UpdateNormalMovement(_wishDirection, dt, skipFriction: hopping);
+
+            if (hopping) DoJump();
+
+            _controller.Move(_velocity * dt);
         }
 
         private static Vector2 ReadMoveInput()
@@ -123,14 +138,18 @@ namespace WizardGun
             return dir.sqrMagnitude > 1f ? dir.normalized : dir;
         }
 
-        private void UpdateNormalMovement(Vector3 wishDir, float dt)
+        private void UpdateNormalMovement(Vector3 wishDir, float dt, bool skipFriction = false)
         {
             float wishSpeed = _sheet != null ? _sheet.Get(Attr.MoveSpeed) : 7f;
             Vector3 horizontal = new Vector3(_velocity.x, 0f, _velocity.z);
 
             if (IsGrounded)
             {
-                horizontal = ApplyFriction(horizontal, dt);
+                // A frame spent grounded scrubs about a tenth of your speed, so a chain that
+                // touches down and takes off in the same frame must not pay it. This is the
+                // difference between a hop chain that builds and one that bleeds out.
+                if (!skipFriction) horizontal = ApplyFriction(horizontal, dt);
+
                 horizontal = Accelerate(horizontal, wishDir, wishSpeed, groundAcceleration, dt);
             }
             else if (IsWallClinging)
@@ -147,7 +166,18 @@ namespace WizardGun
             else
             {
                 float airControl = _sheet != null ? _sheet.Get(Attr.AirControl) : 0.4f;
-                horizontal = Accelerate(horizontal, wishDir, wishSpeed, airAcceleration * airControl, dt);
+
+                // The clamp is the whole mechanic, not the acceleration.
+                //
+                // Accelerate measures how much room is left along the wish direction, so a
+                // wish direction perpendicular to your motion always has room and always
+                // gains - which is why turning while strafing builds speed. Clamping the wish
+                // speed is what keeps that gain small enough to be a technique. Without it the
+                // same formula hands out most of a ground stop-and-turn in mid-air, and
+                // strafing does nothing special because you already had total control.
+                float airWish = Mathf.Min(wishSpeed, airWishSpeed);
+                horizontal = Accelerate(horizontal, wishDir, airWish, airAcceleration * airControl, dt);
+
                 _velocity.y += gravity * dt;
             }
 
@@ -178,7 +208,17 @@ namespace WizardGun
             return horizontal * (newSpeed / speed);
         }
 
-        private static Vector3 Accelerate(Vector3 horizontal, Vector3 wishDir, float wishSpeed, float accel, float dt)
+        /// <summary>
+        /// Quake acceleration. Adds speed along the wish direction only up to the room left
+        /// between the wish speed and how fast you are already going *in that direction* -
+        /// which is why a wish direction across your motion always has room, and is the reason
+        /// strafe jumping exists at all.
+        ///
+        /// Internal rather than private so the movement maths can be checked outside Unity.
+        /// It is a pure function and the behaviour it encodes is the one thing here worth
+        /// proving; everything around it needs a play session to judge.
+        /// </summary>
+        internal static Vector3 Accelerate(Vector3 horizontal, Vector3 wishDir, float wishSpeed, float accel, float dt)
         {
             if (wishDir.sqrMagnitude < 0.0001f) return horizontal;
 
