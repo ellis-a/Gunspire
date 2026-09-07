@@ -19,7 +19,7 @@ MonoBehaviour:
     Description: Mark a point in the world. A moment later the light there collapses,
       tearing apart everything inside and withering the survivors.
     ManaCost: 55
-    Cooldown: 22
+    Cooldown: 10
     Rarity: 4
     Type: 0
     DamageType: 4

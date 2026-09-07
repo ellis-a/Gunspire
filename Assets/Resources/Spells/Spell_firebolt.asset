@@ -19,7 +19,7 @@ MonoBehaviour:
     Description: Hurl a bolt of fire that detonates on impact and sets the survivors
       alight.
     ManaCost: 22
-    Cooldown: 3.5
+    Cooldown: 2
     Rarity: 1
     Type: 0
     DamageType: 1

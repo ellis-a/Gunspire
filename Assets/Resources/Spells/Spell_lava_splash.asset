@@ -19,7 +19,7 @@ MonoBehaviour:
     Description: Lob a gobbet of molten rock. It bursts on landing and leaves the
       floor burning, so it denies a doorway as readily as it kills.
     ManaCost: 24
-    Cooldown: 6
+    Cooldown: 3
     Rarity: 0
     Type: 0
     DamageType: 1

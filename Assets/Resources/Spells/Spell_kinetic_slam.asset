@@ -19,7 +19,7 @@ MonoBehaviour:
     Description: A shockwave around you that hurls enemies back and shatters weak
       barriers.
     ManaCost: 24
-    Cooldown: 8
+    Cooldown: 4
     Rarity: 1
     Type: 2
     DamageType: 0

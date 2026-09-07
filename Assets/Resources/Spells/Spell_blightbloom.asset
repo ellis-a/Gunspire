@@ -19,7 +19,7 @@ MonoBehaviour:
     Description: Lob a seed that bursts into a patch of rot. Anything standing in
       it takes nature damage and is blighted, so its healing is swallowed too.
     ManaCost: 32
-    Cooldown: 11
+    Cooldown: 5
     Rarity: 2
     Type: 2
     DamageType: 3

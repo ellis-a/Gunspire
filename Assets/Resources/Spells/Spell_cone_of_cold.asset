@@ -19,7 +19,7 @@ MonoBehaviour:
     Description: A freezing cone that damages and heavily chills everything in front
       of you. Chilled enemies that saturate freeze solid.
     ManaCost: 26
-    Cooldown: 6.5
+    Cooldown: 3
     Rarity: 0
     Type: 2
     DamageType: 2

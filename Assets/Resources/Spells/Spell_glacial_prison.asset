@@ -19,7 +19,7 @@ MonoBehaviour:
     Description: Every enemy around you is frozen solid and takes heavy frost damage.
       Frozen targets shatter for bonus damage when struck.
     ManaCost: 42
-    Cooldown: 18
+    Cooldown: 9
     Rarity: 3
     Type: 2
     DamageType: 2

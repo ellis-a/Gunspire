@@ -18,7 +18,7 @@ MonoBehaviour:
     ShortName: ARC
     Description: An arc that leaps between nearby enemies, shocking each one.
     ManaCost: 30
-    Cooldown: 7
+    Cooldown: 4
     Rarity: 2
     Type: 0
     DamageType: 5

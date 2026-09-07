@@ -19,7 +19,7 @@ MonoBehaviour:
     Description: 'Sheathe yourself in force: take much less damage for a few seconds
       and mend a wound.'
     ManaCost: 28
-    Cooldown: 14
+    Cooldown: 7
     Rarity: 1
     Type: 3
     DamageType: 5
