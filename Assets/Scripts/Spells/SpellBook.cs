@@ -106,6 +106,18 @@ namespace WizardGun
             Bind(spell, slot);
         }
 
+        /// <summary>
+        /// The lowest empty slot, or the last slot if the book is full. Callers that bind
+        /// without asking the player need this so they can name the slot afterwards.
+        /// </summary>
+        public int FirstEmptySlot()
+        {
+            for (int i = 0; i < SlotCount; i++)
+                if (_slots[i] == null) return i;
+
+            return SlotCount - 1;
+        }
+
         /// <summary>Places a spell in a slot. Known at level one if it was not known before.</summary>
         public void Bind(Spell spell, int slot)
         {

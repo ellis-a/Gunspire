@@ -15,12 +15,16 @@ namespace WizardGun
         [SerializeField] private int floorCount = 8;
         [SerializeField] private int boonChoices = 3;
 
+        /// <summary>How many spells the guaranteed first-floor reward offers.</summary>
+        [SerializeField] private int starterSpellChoices = 3;
+
         public GameStateKind State { get; private set; } = GameStateKind.Loading;
         public RunState Run { get; private set; }
         public RoomRuntime CurrentRoom { get; private set; }
         public PlayerRig Player { get; private set; }
 
         public IReadOnlyList<Boon> BoonOffers => _boonOffers;
+        public IReadOnlyList<Spell> SpellOffers => _spellOffers;
         public IReadOnlyList<RoomNode> RoomOffers => _roomOffers;
         public Spell PendingSpell { get; private set; }
 
@@ -28,6 +32,7 @@ namespace WizardGun
         public float NotificationTimer { get; private set; }
 
         private readonly List<Boon> _boonOffers = new List<Boon>();
+        private readonly List<Spell> _spellOffers = new List<Spell>();
         private readonly List<RoomNode> _roomOffers = new List<RoomNode>();
         private GameObject _roomRoot;
         private GameStateKind _stateBeforePause;
@@ -227,10 +232,53 @@ namespace WizardGun
                 return;
             }
 
+            // Loadouts start with no spell, so the first floor's reward is a spell rather than
+            // a boon. Without this a run opens with both slots empty and nothing but a gun
+            // until a shrine happens to turn up, which is a long way to go on one button.
+            if (Run.RoomsCleared == 1 && OfferStarterSpells()) return;
+
             OfferBoons();
         }
 
         // ---------------------------------------------------------------- choices
+
+        /// <summary>
+        /// The guaranteed first spell. Returns false if the roster somehow cannot produce an
+        /// offer, so the caller falls back to the ordinary boon reward rather than swallowing
+        /// the floor's reward entirely.
+        /// </summary>
+        private bool OfferStarterSpells()
+        {
+            _spellOffers.Clear();
+
+            // Rarity is pushed down hard for this one pick. It is the spell the run is built
+            // around and it arrives before any Luck has been earned, so opening on a Legendary
+            // would decide the run before it started.
+            _spellOffers.AddRange(SpellLibrary.OfferDistinct(
+                Run.Rng, Player.Book, Run.Luck, starterSpellChoices, rarityBonus: 0.2f));
+
+            if (_spellOffers.Count == 0) return false;
+
+            SetState(GameStateKind.ChoosingSpell);
+            return true;
+        }
+
+        public void ChooseStarterSpell(int index)
+        {
+            if (State != GameStateKind.ChoosingSpell) return;
+            if (index < 0 || index >= _spellOffers.Count) return;
+
+            Spell spell = _spellOffers[index];
+            _spellOffers.Clear();
+
+            // Straight into the first free slot. Every slot is empty at this point, so a slot
+            // picker would be a screen asking a question with no wrong answer.
+            int slot = Player.Book.FirstEmptySlot();
+            Player.Book.Bind(spell, slot);
+
+            Notify(spell.DisplayName + " bound to " + SpellBook.SlotLabels[slot], 2f);
+            OfferRooms();
+        }
 
         private void OfferBoons()
         {

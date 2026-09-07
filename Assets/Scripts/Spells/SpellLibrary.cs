@@ -85,6 +85,31 @@ namespace WizardGun
             return Rarities.PickOfRarity(rng, pool, s => s.Rarity, rolled);
         }
 
+        /// <summary>
+        /// Rolls several distinct spells at once, for a pick-one-of-N screen. Returns fewer
+        /// than asked for only if the roster genuinely runs out, so a caller that needs a
+        /// guaranteed offer should check the count rather than assume it.
+        /// </summary>
+        public static List<Spell> OfferDistinct(Rng rng, SpellBook book, float luck, int count,
+            float rarityBonus = 1f)
+        {
+            var chosen = new List<Spell>();
+            List<Spell> pool = Offerable(book);
+
+            int guard = 0;
+            while (chosen.Count < count && pool.Count > 0 && guard++ < 200)
+            {
+                Rarity rolled = Rarities.Roll(rng, luck, rarityBonus);
+                Spell pick = Rarities.PickOfRarity(rng, pool, s => s.Rarity, rolled);
+                if (pick == null) break;
+
+                chosen.Add(pick);
+                pool.Remove(pick);
+            }
+
+            return chosen;
+        }
+
         // ---------------------------------------------------------------- roster
 
         /// <summary>The code roster. Also what the editor tool seeds new assets from.</summary>

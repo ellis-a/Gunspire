@@ -23,6 +23,10 @@ namespace WizardGun
                     DrawLoadoutChoice();
                     break;
 
+                case GameStateKind.ChoosingSpell:
+                    DrawStarterSpellChoice();
+                    break;
+
                 case GameStateKind.ChoosingBoon:
                     if (_director.PendingSpell != null) DrawSpellBinding();
                     else DrawBoonChoice();
@@ -203,6 +207,58 @@ namespace WizardGun
 
                 if (GUI.Button(rect, GUIContent.none, GUIStyle.none)) _director.ChooseBoon(i);
                 if (NumberPressed(i)) _director.ChooseBoon(i);
+            }
+        }
+
+        /// <summary>
+        /// The guaranteed first spell. Its own screen rather than the boon one because the
+        /// cards need different things on them - what the spell costs and what it does matters
+        /// more here than rarity, since this is the only spell the player has.
+        /// </summary>
+        private void DrawStarterSpellChoice()
+        {
+            Dim();
+            IReadOnlyList<Spell> offers = _director.SpellOffers;
+
+            UIStyles.Text(new Rect(0f, 70f, Screen.width, 44f), "Choose your first spell",
+                UIStyles.Title, UIStyles.Ink);
+            UIStyles.Text(new Rect(0f, 116f, Screen.width, 22f),
+                "It binds to " + SpellBook.SlotLabels[0] + ". Click a card, or press its number",
+                UIStyles.Center, UIStyles.Muted);
+
+            const float cardWidth = 300f;
+            const float cardHeight = 230f;
+            const float gap = 24f;
+
+            float total = offers.Count * cardWidth + (offers.Count - 1) * gap;
+            float startX = Screen.width * 0.5f - total * 0.5f;
+            float y = Screen.height * 0.5f - cardHeight * 0.5f;
+
+            for (int i = 0; i < offers.Count; i++)
+            {
+                Spell spell = offers[i];
+                var rect = new Rect(startX + i * (cardWidth + gap), y, cardWidth, cardHeight);
+                bool hover = rect.Contains(Event.current.mousePosition);
+
+                UIStyles.Card(rect, spell.Tint, hover);
+
+                UIStyles.Text(new Rect(rect.x + 18f, rect.y + 14f, rect.width - 30f, 22f),
+                    Rarities.Name(spell.Rarity) + "  -  " + spell.Type, UIStyles.Small, spell.Tint);
+                UIStyles.Text(new Rect(rect.x + 18f, rect.y + 40f, rect.width - 30f, 28f),
+                    spell.DisplayName, UIStyles.Heading, UIStyles.Ink);
+
+                UIStyles.Text(new Rect(rect.x + 18f, rect.y + 68f, rect.width - 36f, 18f),
+                    spell.ManaCost.ToString("0") + " mana   "
+                    + spell.Cooldown.ToString("0.#") + "s cooldown",
+                    UIStyles.Small, UIStyles.Accent);
+
+                GUI.Label(new Rect(rect.x + 18f, rect.y + 92f, rect.width - 36f, 110f),
+                    spell.Description, UIStyles.Wrap);
+                UIStyles.Text(new Rect(rect.x + 18f, rect.yMax - 34f, rect.width - 36f, 22f),
+                    "[" + (i + 1) + "]", UIStyles.Small, UIStyles.Muted);
+
+                if (GUI.Button(rect, GUIContent.none, GUIStyle.none)) _director.ChooseStarterSpell(i);
+                if (NumberPressed(i)) _director.ChooseStarterSpell(i);
             }
         }
 

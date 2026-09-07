@@ -83,5 +83,8 @@ namespace WizardGun
     public enum RoomKind { Combat, Elite, Treasure, Shrine, Forge, Boss }
 
     /// <summary>Top level flow of a run.</summary>
-    public enum GameStateKind { Loading, ChoosingLoadout, Playing, ChoosingBoon, ChoosingRoom, Paused, Dead, Victory }
+    public enum GameStateKind
+    {
+        Loading, ChoosingLoadout, Playing, ChoosingBoon, ChoosingSpell, ChoosingRoom, Paused, Dead, Victory
+    }
 }

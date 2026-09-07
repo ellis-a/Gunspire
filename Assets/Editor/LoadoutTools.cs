@@ -94,14 +94,30 @@ namespace WizardGun.EditorTools
                 LoadoutDefinition l = all[i];
                 if (WeaponLibrary.Peek(l.WeaponId) == null)
                     text.AppendLine("PROBLEM: \"" + l.Id + "\" wants unknown gun \"" + l.WeaponId + "\"");
-                if (SpellLibrary.Get(l.SpellId) == null)
+
+                // An empty spell id means a spell-less start, which is now the norm: the first
+                // floor's guaranteed reward is what fills the slot.
+                if (!string.IsNullOrEmpty(l.SpellId) && SpellLibrary.Get(l.SpellId) == null)
                     text.AppendLine("PROBLEM: \"" + l.Id + "\" wants unknown spell \"" + l.SpellId + "\"");
+
                 if (MovementAbilityLibrary.Get(l.MovementAbilityId) == null)
                     text.AppendLine("PROBLEM: \"" + l.Id + "\" wants unknown movement \""
                                     + l.MovementAbilityId + "\"");
-                if (l.TotalStatPoints != 25)
-                    text.AppendLine("note: \"" + l.Id + "\" has " + l.TotalStatPoints
-                                    + " stat points, not 25");
+            }
+
+            // The real invariant is that the classes agree with each other, not that they hit
+            // any particular number - the budget is a design choice and can move.
+            if (all.Count > 1)
+            {
+                int budget = all[0].TotalStatPoints;
+                for (int i = 1; i < all.Count; i++)
+                {
+                    if (all[i].TotalStatPoints == budget) continue;
+
+                    text.AppendLine("PROBLEM: \"" + all[i].Id + "\" has " + all[i].TotalStatPoints
+                                    + " stat points but \"" + all[0].Id + "\" has " + budget
+                                    + "; one class opens ahead of the other");
+                }
             }
 
             Debug.Log(text.ToString());
