@@ -107,13 +107,21 @@ namespace WizardGun
             GameObject beam = Build.Cube(null, "Beam", Vector3.zero, Vector3.one,
                 MaterialLibrary.Emissive(ctx.Tint, 3f), collider: false);
 
+            // The beam owns its own lifetime from the moment it exists. This coroutine runs on
+            // the caster, and killing the caster mid-beam stops the coroutine dead - the code
+            // after the loop never runs - so cleanup cannot live down there.
+            BeamVisual visual = BeamVisual.Attach(beam, ctx.Tint, Duration);
+
             Sfx.PlayAt(SoundLibrary.Beam(ctx.DamageType),
                 ctx.Aim != null ? ctx.Aim.position : ctx.Origin, 0.85f);
 
             float elapsed = 0f;
             float tickTimer = 0f;
 
-            while (elapsed < Duration && ctx.CasterCanAct)
+            // The beam can now retire itself, so never assume it is still there. In practice
+            // its cap sits well past Duration, but a long enough stall lets wall-clock time
+            // outrun accumulated deltaTime, and touching a destroyed transform would throw.
+            while (elapsed < Duration && ctx.CasterCanAct && beam != null)
             {
                 float dt = Time.deltaTime;
                 elapsed += dt;
@@ -129,6 +137,7 @@ namespace WizardGun
                 beam.transform.position = origin + direction * (reach * 0.5f);
                 beam.transform.rotation = Quaternion.LookRotation(direction);
                 beam.transform.localScale = new Vector3(Width, Width, reach);
+                visual.Keep();
 
                 tickTimer -= dt;
                 if (tickTimer <= 0f)
@@ -139,7 +148,7 @@ namespace WizardGun
                 yield return null;
             }
 
-            if (beam != null) FadeAndDie.Attach(beam, 0.15f, ctx.Tint);
+            if (visual != null) visual.Finish();
         }
 
         private void Burn(AbilityContext ctx, Vector3 origin, Vector3 direction, float reach)
@@ -155,6 +164,78 @@ namespace WizardGun
         }
 
         public override string Describe() => "a sweeping beam";
+    }
+
+    /// <summary>
+    /// Keeps a beam alive only while something is actively driving it.
+    ///
+    /// A beam is the one piece of ability geometry whose position is updated every frame by
+    /// the coroutine that made it, rather than being fired and forgotten like a telegraph
+    /// or a blast. That made it the one piece whose cleanup lived in the coroutine, and
+    /// Unity stops a coroutine the moment its GameObject is destroyed - without unwinding
+    /// it, so a finally block would not have run either. Kill a caster mid-beam and the
+    /// beam was orphaned at the scene root with nothing left holding a reference to it.
+    ///
+    /// So the beam watches for its driver going quiet instead of being told what happened.
+    /// It does not need to know whether the caster died, the ability aborted, or the room
+    /// was torn down underneath it.
+    /// </summary>
+    public class BeamVisual : MonoBehaviour
+    {
+        /// <summary>
+        /// How long to wait after the last update before assuming nobody is driving this.
+        /// Comfortably longer than a frame even during a bad hitch, and short enough that
+        /// an orphan is gone before it registers as a stuck laser.
+        /// </summary>
+        public float GraceSeconds = 0.35f;
+
+        public float FadeSeconds = 0.15f;
+        public Color Tint = Color.white;
+
+        /// <summary>
+        /// Hard ceiling, in case something keeps calling Keep forever. Derived from the
+        /// beam's own duration rather than a constant, so a long beam is never truncated.
+        /// </summary>
+        public float MaxLifetime = 5f;
+
+        private float _lastKept;
+        private float _born;
+        private bool _finishing;
+
+        public static BeamVisual Attach(GameObject beam, Color tint, float duration)
+        {
+            var visual = beam.AddComponent<BeamVisual>();
+            visual.Tint = tint;
+            visual.MaxLifetime = duration + visual.GraceSeconds + 1f;
+            return visual;
+        }
+
+        private void Awake()
+        {
+            _born = Time.time;
+            _lastKept = _born;
+        }
+
+        /// <summary>Called every frame by whatever is driving the beam.</summary>
+        public void Keep() => _lastKept = Time.time;
+
+        /// <summary>Normal completion: fade out rather than vanish.</summary>
+        public void Finish()
+        {
+            if (_finishing) return;
+            _finishing = true;
+
+            FadeAndDie.Attach(gameObject, FadeSeconds, Tint);
+            enabled = false;
+        }
+
+        private void Update()
+        {
+            if (_finishing) return;
+
+            if (Time.time - _lastKept > GraceSeconds || Time.time - _born > MaxLifetime)
+                Finish();
+        }
     }
 
     // ================================================================================ aiming
