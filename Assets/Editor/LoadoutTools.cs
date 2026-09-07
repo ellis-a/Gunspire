@@ -12,13 +12,18 @@ namespace WizardGun.EditorTools
     /// </summary>
     public static class LoadoutTools
     {
-        private const string FolderPath = "Assets/Resources";
+        private const string RootFolder = "Assets/Resources";
+        private const string FolderPath = RootFolder + "/Loadouts";
 
         [MenuItem("Wizard with a Gun/Create Starting Loadout Assets")]
         public static void CreateLoadoutAssets()
         {
-            if (!AssetDatabase.IsValidFolder(FolderPath))
+            // Its own folder, alongside Weapons and Spells. Resources.LoadAll searches
+            // recursively, so nesting costs nothing and keeps the root readable.
+            if (!AssetDatabase.IsValidFolder(RootFolder))
                 AssetDatabase.CreateFolder("Assets", "Resources");
+            if (!AssetDatabase.IsValidFolder(FolderPath))
+                AssetDatabase.CreateFolder(RootFolder, "Loadouts");
 
             List<LoadoutDefinition> builtIn = LoadoutLibrary.BuiltIn();
             Object last = null;
@@ -55,8 +60,51 @@ namespace WizardGun.EditorTools
             }
 
             Debug.Log(created > 0
-                ? "Created " + created + " loadout asset(s) in " + FolderPath + "."
+                ? "Created " + created + " loadout asset(s) in " + FolderPath +
+                  ". Edit them in the Inspector; ids matching a built-in replace it."
                 : "All loadout assets already exist in " + FolderPath + "; nothing was overwritten.");
+        }
+
+        /// <summary>
+        /// Prints the loadouts side by side. They are meant to be balanced against each other
+        /// - the same 25 stat points and guns tuned to roughly the same damage - and that is
+        /// only checkable by comparing them, which reading three object initializers is not.
+        /// </summary>
+        [MenuItem("Wizard with a Gun/Log Loadout Table")]
+        public static void LogLoadoutTable()
+        {
+            var text = new System.Text.StringBuilder();
+            text.AppendLine("id            name          STR INT AGI VIT LCK  pts  gun            move    spell");
+
+            IReadOnlyList<LoadoutDefinition> all = LoadoutLibrary.All;
+            for (int i = 0; i < all.Count; i++)
+            {
+                LoadoutDefinition l = all[i];
+                text.AppendLine(string.Format(
+                    "{0,-13} {1,-13} {2,3} {3,3} {4,3} {5,3} {6,3} {7,4}  {8,-14} {9,-7} {10}",
+                    l.Id, l.DisplayName, l.Strength, l.Intellect, l.Agility, l.Vitality, l.Luck,
+                    l.TotalStatPoints, l.WeaponId, l.MovementAbilityId, l.SpellId));
+            }
+
+            // Ids are plain strings, so a typo in the Inspector is a silent fallback to the
+            // first gun or spell in the roster. Say so here rather than at runtime.
+            text.AppendLine();
+            for (int i = 0; i < all.Count; i++)
+            {
+                LoadoutDefinition l = all[i];
+                if (WeaponLibrary.Peek(l.WeaponId) == null)
+                    text.AppendLine("PROBLEM: \"" + l.Id + "\" wants unknown gun \"" + l.WeaponId + "\"");
+                if (SpellLibrary.Get(l.SpellId) == null)
+                    text.AppendLine("PROBLEM: \"" + l.Id + "\" wants unknown spell \"" + l.SpellId + "\"");
+                if (MovementAbilityLibrary.Get(l.MovementAbilityId) == null)
+                    text.AppendLine("PROBLEM: \"" + l.Id + "\" wants unknown movement \""
+                                    + l.MovementAbilityId + "\"");
+                if (l.TotalStatPoints != 25)
+                    text.AppendLine("note: \"" + l.Id + "\" has " + l.TotalStatPoints
+                                    + " stat points, not 25");
+            }
+
+            Debug.Log(text.ToString());
         }
 
         [MenuItem("Wizard with a Gun/Log Valid Ids")]
