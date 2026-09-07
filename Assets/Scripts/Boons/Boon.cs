@@ -25,6 +25,13 @@ namespace WizardGun
 
         public Rarity Rarity = Rarity.Common;
 
+        /// <summary>
+        /// Shown on the draft cards and in the character sheet. Leave empty and the UI draws a
+        /// tinted placeholder. Assign it on the boon asset - a boon built in code cannot
+        /// reference one.
+        /// </summary>
+        public Texture2D Icon;
+
         /// <summary>How many times it can be taken. One means it is a one-off.</summary>
         public int MaxLevel = 3;
 

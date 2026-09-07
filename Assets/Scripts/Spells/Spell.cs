@@ -38,6 +38,13 @@ namespace WizardGun
         /// <summary>Leave clear to take the colour of the damage school.</summary>
         public Color TintOverride = Color.clear;
 
+        /// <summary>
+        /// Shown on the HUD slots, the choice screens and the rune pedestal. Leave empty and
+        /// the UI draws a tinted placeholder. Assign it on the spell asset - a spell built in
+        /// code cannot reference one.
+        /// </summary>
+        public Texture2D Icon;
+
         /// <summary>What actually happens, in order. Aborting any step refunds the cast.</summary>
         [SerializeReference] public List<AbilityEffect> OnCast = new List<AbilityEffect>();
 

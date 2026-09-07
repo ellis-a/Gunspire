@@ -167,6 +167,10 @@ namespace WizardGun
 
             UIStyles.Text(new Rect(x, y, width, 22f), weapon.Definition.DisplayName, UIStyles.Right, UIStyles.Ink);
 
+            // Left of the ammo count, which is the block the eye already goes to.
+            UIStyles.Icon(new Rect(x + width - 200f, y + 24f, 44f, 44f),
+                weapon.Definition.Icon, weapon.Definition.Tint, weapon.Definition.DisplayName);
+
             string ammo = weapon.AmmoInMagazine + " / " + weapon.Definition.MagazineSize;
             UIStyles.Text(new Rect(x, y + 24f, width, 30f), ammo, UIStyles.Right, UIStyles.AmmoColor);
 
@@ -239,13 +243,15 @@ namespace WizardGun
             SpellBook book = player.Book;
             if (book == null) return;
 
-            const float slotWidth = 132f;
-            const float slotHeight = 54f;
+            // Wider and taller than before to make room for the icon without crushing the
+            // three rows of text that sit beside it.
+            const float slotWidth = 154f;
+            const float slotHeight = 58f;
             const float gap = 10f;
 
             float total = SpellBook.SlotCount * slotWidth + (SpellBook.SlotCount - 1) * gap;
             float startX = Screen.width * 0.5f - total * 0.5f;
-            float y = Screen.height - 74f;
+            float y = Screen.height - 78f;
 
             for (int i = 0; i < SpellBook.SlotCount; i++)
             {
@@ -271,19 +277,28 @@ namespace WizardGun
 
                 UIStyles.Outline(rect, ready ? spell.Tint : new Color(1f, 1f, 1f, 0.15f), ready ? 2f : 1f);
 
-                UIStyles.Text(new Rect(rect.x + 8f, rect.y + 4f, 24f, 18f), SpellBook.SlotLabels[i],
+                // Icon on the left, three rows of text beside it. A slot has to read in a
+                // glance mid-fight, so the art carries recognition and the text carries state.
+                var iconRect = new Rect(rect.x + 7f, rect.y + 8f, 42f, 42f);
+                UIStyles.Icon(iconRect, spell.Icon, spell.Tint, spell.ShortName);
+
+                float textX = iconRect.xMax + 8f;
+                float textWidth = rect.xMax - textX - 8f;
+
+                UIStyles.Text(new Rect(textX, rect.y + 5f, 18f, 18f), SpellBook.SlotLabels[i],
                     UIStyles.Label, spell.Tint);
-                UIStyles.Text(new Rect(rect.x + 30f, rect.y + 4f, rect.width - 62f, 18f), spell.DisplayName,
-                    UIStyles.Small, UIStyles.Ink);
 
                 // Level sits top-right, tinted by rarity so a legendary reads at a glance.
-                UIStyles.Text(new Rect(rect.xMax - 34f, rect.y + 4f, 28f, 18f),
+                UIStyles.Text(new Rect(rect.xMax - 32f, rect.y + 5f, 26f, 18f),
                     "L" + book.GetLevel(spell), UIStyles.Right, Rarities.Tint(spell.Rarity));
+
+                UIStyles.Text(new Rect(textX, rect.y + 22f, textWidth, 16f), spell.DisplayName,
+                    UIStyles.Small, UIStyles.Ink);
 
                 string bottom = cooldown > 0f
                     ? book.GetCooldown(i).ToString("0.0") + "s"
                     : Mathf.RoundToInt(spell.ManaCost) + " mana";
-                UIStyles.Text(new Rect(rect.x + 8f, rect.y + 30f, rect.width - 12f, 18f), bottom,
+                UIStyles.Text(new Rect(textX, rect.y + 38f, textWidth, 16f), bottom,
                     UIStyles.Small, affordable ? UIStyles.Muted : UIStyles.Warning);
             }
         }

@@ -66,6 +66,15 @@ namespace WizardGun
         public float SplashRadius = 0f;
         public float SplashDamage = 0f;
 
+        /// <summary>
+        /// Shown on the HUD, the loadout card and the pickup plinth. Leave empty and the UI
+        /// draws a tinted placeholder, so nothing breaks while the art is being made.
+        ///
+        /// Assign it on the weapon asset - a definition built in code has no way to reference
+        /// one, so the built-in roster always leaves this null.
+        /// </summary>
+        public Texture2D Icon;
+
         [Header("Cost and flavour")]
         public float ManaPerShot = 0f;
         public Color Tint = Color.white;

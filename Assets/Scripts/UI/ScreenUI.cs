@@ -122,11 +122,13 @@ namespace WizardGun
             WeaponDefinition gun = WeaponLibrary.Peek(loadout.WeaponId);
             if (gun != null)
             {
-                UIStyles.Text(new Rect(x, y, width, 20f), gun.DisplayName,
+                UIStyles.Icon(new Rect(x, y, 38f, 38f), gun.Icon, gun.Tint, gun.DisplayName);
+
+                UIStyles.Text(new Rect(x + 46f, y, width - 46f, 20f), gun.DisplayName,
                     UIStyles.Small, DamageTypes.Tint(gun.DamageType));
-                y += 18f;
-                UIStyles.Text(new Rect(x, y, width, 18f), gun.StatLine(), UIStyles.Small, UIStyles.Muted);
-                y += 24f;
+                UIStyles.Text(new Rect(x + 46f, y + 18f, width - 46f, 18f), gun.StatLine(),
+                    UIStyles.Small, UIStyles.Muted);
+                y += 44f;
             }
 
             MovementAbility movement = MovementAbilityLibrary.Get(loadout.MovementAbilityId);
@@ -201,9 +203,12 @@ namespace WizardGun
 
                 UIStyles.Card(rect, boon.RarityColor, hover);
 
-                UIStyles.Text(new Rect(rect.x + 18f, rect.y + 14f, rect.width - 30f, 22f),
+                UIStyles.Icon(new Rect(rect.x + 18f, rect.y + 14f, 52f, 52f),
+                    boon.Icon, boon.RarityColor, boon.Name);
+
+                UIStyles.Text(new Rect(rect.x + 80f, rect.y + 14f, rect.width - 92f, 22f),
                     Rarities.Name(boon.Rarity), UIStyles.Small, boon.RarityColor);
-                UIStyles.Text(new Rect(rect.x + 18f, rect.y + 40f, rect.width - 30f, 28f),
+                UIStyles.Text(new Rect(rect.x + 80f, rect.y + 38f, rect.width - 92f, 28f),
                     boon.Name, UIStyles.Heading, UIStyles.Ink);
 
                 // Whether this is a first pick or another level of something you already have.
@@ -252,17 +257,20 @@ namespace WizardGun
 
                 UIStyles.Card(rect, spell.Tint, hover);
 
-                UIStyles.Text(new Rect(rect.x + 18f, rect.y + 14f, rect.width - 30f, 22f),
+                UIStyles.Icon(new Rect(rect.x + 18f, rect.y + 14f, 56f, 56f),
+                    spell.Icon, spell.Tint, spell.ShortName);
+
+                UIStyles.Text(new Rect(rect.x + 84f, rect.y + 14f, rect.width - 96f, 22f),
                     Rarities.Name(spell.Rarity) + "  -  " + spell.Type, UIStyles.Small, spell.Tint);
-                UIStyles.Text(new Rect(rect.x + 18f, rect.y + 40f, rect.width - 30f, 28f),
+                UIStyles.Text(new Rect(rect.x + 84f, rect.y + 38f, rect.width - 96f, 28f),
                     spell.DisplayName, UIStyles.Heading, UIStyles.Ink);
 
-                UIStyles.Text(new Rect(rect.x + 18f, rect.y + 68f, rect.width - 36f, 18f),
+                UIStyles.Text(new Rect(rect.x + 18f, rect.y + 78f, rect.width - 36f, 18f),
                     spell.ManaCost.ToString("0") + " mana   "
                     + spell.Cooldown.ToString("0.#") + "s cooldown",
                     UIStyles.Small, UIStyles.Accent);
 
-                GUI.Label(new Rect(rect.x + 18f, rect.y + 92f, rect.width - 36f, 110f),
+                GUI.Label(new Rect(rect.x + 18f, rect.y + 100f, rect.width - 36f, 100f),
                     spell.Description, UIStyles.Wrap);
                 UIStyles.Text(new Rect(rect.x + 18f, rect.yMax - 34f, rect.width - 36f, 22f),
                     "[" + (i + 1) + "]", UIStyles.Small, UIStyles.Muted);
@@ -323,13 +331,20 @@ namespace WizardGun
             Spell spell = _director.PendingSpell;
             PlayerRig player = _director.Player;
 
-            UIStyles.Text(new Rect(0f, 90f, Screen.width, 44f), spell.DisplayName, UIStyles.Title, spell.Tint);
-            UIStyles.Text(new Rect(0f, 130f, Screen.width, 20f),
+            // Icon above the title rather than beside it: this screen is centred, and the
+            // buttons below are fixed to the middle of the screen, so the header has to stay
+            // narrow rather than spreading sideways.
+            UIStyles.Icon(new Rect(Screen.width * 0.5f - 34f, 46f, 68f, 68f),
+                spell.Icon, spell.Tint, spell.ShortName);
+
+            UIStyles.Text(new Rect(0f, 120f, Screen.width, 44f), spell.DisplayName, UIStyles.Title, spell.Tint);
+            UIStyles.Text(new Rect(0f, 160f, Screen.width, 20f),
                 Rarities.Name(spell.Rarity) + "   -   " + spell.Type + "   -   "
                 + DamageTypes.Name(spell.DamageType), UIStyles.Center, Rarities.Tint(spell.Rarity));
-            GUI.Label(new Rect(Screen.width * 0.5f - 280f, 152f, 560f, 60f), spell.Description, UIStyles.Wrap);
 
-            UIStyles.Text(new Rect(0f, 210f, Screen.width, 22f), "Bind it to a slot", UIStyles.Center, UIStyles.Muted);
+            GUI.Label(new Rect(Screen.width * 0.5f - 280f, 186f, 560f, 60f), spell.Description, UIStyles.Wrap);
+
+            UIStyles.Text(new Rect(0f, 244f, Screen.width, 22f), "Bind it to a slot", UIStyles.Center, UIStyles.Muted);
 
             const float buttonWidth = 240f;
             const float buttonHeight = 90f;
@@ -510,11 +525,16 @@ namespace WizardGun
                         RunState.TakenBoon taken = run.TakenBoons[i];
                         string name = taken.Boon.Name + (taken.Boon.MaxLevel > 1 ? "  " + taken.Level : "");
 
-                        UIStyles.Text(new Rect(rect.x + 20f, y, 200f, 20f), name,
+                        // Small here, because this is a scanning list rather than a card - the
+                        // icon is a bullet point that happens to be recognisable.
+                        UIStyles.Icon(new Rect(rect.x + 20f, y + 1f, 18f, 18f),
+                            taken.Boon.Icon, taken.Boon.RarityColor, taken.Boon.Name);
+
+                        UIStyles.Text(new Rect(rect.x + 44f, y, 180f, 20f), name,
                             UIStyles.Small, taken.Boon.RarityColor);
-                        UIStyles.Text(new Rect(rect.x + 224f, y, rect.width - 244f, 20f),
+                        UIStyles.Text(new Rect(rect.x + 228f, y, rect.width - 248f, 20f),
                             taken.Boon.Description, UIStyles.Small, UIStyles.Muted);
-                        y += 20f;
+                        y += 22f;
                         if (y > rect.yMax - 30f) break;
                     }
                 }

@@ -115,6 +115,57 @@ namespace WizardGun
             Outline(rect, highlighted ? accent : new Color(1f, 1f, 1f, 0.12f), highlighted ? 2f : 1f);
         }
 
+        /// <summary>
+        /// Draws a content icon, or a placeholder if none has been assigned yet.
+        ///
+        /// The placeholder is deliberately a tinted plate with initials rather than nothing:
+        /// an empty square reads as a broken image, whereas this reads as a slot waiting for
+        /// art, and it keeps every screen laid out the same whether the icons exist or not.
+        ///
+        /// Icons are Texture2D rather than Sprite on purpose. This is a 3D project, so an
+        /// imported PNG is a texture unless its import type is changed by hand; a Sprite field
+        /// would refuse every icon until that was done to each file.
+        /// </summary>
+        public static void Icon(Rect rect, Texture2D icon, Color tint, string fallbackLabel = null)
+        {
+            if (icon != null)
+            {
+                Color previous = GUI.color;
+                GUI.color = Color.white;
+
+                // ScaleToFit so a non-square icon is letterboxed rather than stretched.
+                GUI.DrawTexture(rect, icon, ScaleMode.ScaleToFit);
+                GUI.color = previous;
+                return;
+            }
+
+            Fill(rect, new Color(tint.r, tint.g, tint.b, 0.16f));
+            Outline(rect, new Color(tint.r, tint.g, tint.b, 0.55f));
+
+            string initials = Initials(fallbackLabel);
+            if (!string.IsNullOrEmpty(initials)) Text(rect, initials, Center, tint);
+        }
+
+        /// <summary>Up to two letters from a name, for the placeholder plate.</summary>
+        private static string Initials(string name)
+        {
+            if (string.IsNullOrEmpty(name)) return null;
+
+            string text = "";
+            bool atWordStart = true;
+
+            for (int i = 0; i < name.Length && text.Length < 2; i++)
+            {
+                char c = name[i];
+                if (c == ' ' || c == '-' || c == '_') { atWordStart = true; continue; }
+
+                if (atWordStart) text += char.ToUpperInvariant(c);
+                atWordStart = false;
+            }
+
+            return text;
+        }
+
         public static bool Button(Rect rect, string label, Color accent, bool enabled = true)
         {
             bool hover = rect.Contains(Event.current.mousePosition);
