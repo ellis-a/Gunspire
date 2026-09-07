@@ -1,0 +1,36 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 68fa3f1d514b1bc49ab86965246e01b4, type: 3}
+  m_Name: Boon_warded_flesh
+  m_EditorClassIdentifier: Assembly-CSharp::WizardGun.BoonAsset
+  Boon:
+    Id: warded_flesh
+    Name: Warded Flesh
+    Description: +12% resistance to every damage school.
+    Rarity: 3
+    MaxLevel: 3
+    Effects:
+    - rid: 5643702087564918837
+    Requirement:
+      rid: -2
+  references:
+    version: 2
+    RefIds:
+    - rid: -2
+      type: {class: , ns: , asm: }
+    - rid: 5643702087564918837
+      type: {class: ModifyResistanceEffect, ns: WizardGun, asm: Assembly-CSharp}
+      data:
+        MinLevel: 1
+        School: 1
+        Amount: 0.12
+        AllElemental: 1

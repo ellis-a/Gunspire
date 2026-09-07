@@ -1,0 +1,37 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 68fa3f1d514b1bc49ab86965246e01b4, type: 3}
+  m_Name: Boon_siphon
+  m_EditorClassIdentifier: Assembly-CSharp::WizardGun.BoonAsset
+  Boon:
+    Id: siphon
+    Name: Siphon
+    Description: Kills restore 12 mana.
+    Rarity: 1
+    MaxLevel: 4
+    Effects:
+    - rid: 5643702087564918799
+    Requirement:
+      rid: -2
+  references:
+    version: 2
+    RefIds:
+    - rid: -2
+      type: {class: , ns: , asm: }
+    - rid: 5643702087564918799
+      type: {class: OnKillEffect, ns: WizardGun, asm: Assembly-CSharp}
+      data:
+        MinLevel: 1
+        Mana: 12
+        Health: 0
+        CooldownReduction: 0
+        GrantsHaste: 0

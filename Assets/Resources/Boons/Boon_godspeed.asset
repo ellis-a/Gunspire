@@ -1,0 +1,52 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 68fa3f1d514b1bc49ab86965246e01b4, type: 3}
+  m_Name: Boon_godspeed
+  m_EditorClassIdentifier: Assembly-CSharp::WizardGun.BoonAsset
+  Boon:
+    Id: godspeed
+    Name: Godspeed
+    Description: +30% movement speed, +2 dash charges, and dashes recover far faster.
+    Rarity: 4
+    MaxLevel: 2
+    Effects:
+    - rid: 5643702087564918842
+    - rid: 5643702087564918843
+    - rid: 5643702087564918844
+    Requirement:
+      rid: -2
+  references:
+    version: 2
+    RefIds:
+    - rid: -2
+      type: {class: , ns: , asm: }
+    - rid: 5643702087564918842
+      type: {class: ModifyAttributeEffect, ns: WizardGun, asm: Assembly-CSharp}
+      data:
+        MinLevel: 1
+        Attribute: 4
+        Mode: 1
+        Amount: 0.3
+    - rid: 5643702087564918843
+      type: {class: ModifyAttributeEffect, ns: WizardGun, asm: Assembly-CSharp}
+      data:
+        MinLevel: 1
+        Attribute: 7
+        Mode: 0
+        Amount: 2
+    - rid: 5643702087564918844
+      type: {class: ModifyAttributeEffect, ns: WizardGun, asm: Assembly-CSharp}
+      data:
+        MinLevel: 1
+        Attribute: 8
+        Mode: 1
+        Amount: 0.25
