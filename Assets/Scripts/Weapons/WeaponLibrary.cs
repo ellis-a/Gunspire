@@ -365,6 +365,64 @@ namespace WizardGun
                     OnHitStatuses = { StatusLibrary.Chill(3f, 1) }
                 },
 
+                // ---- the two starter guns with no alt fire. Both plain Normal damage: they
+                // are the openings for classes built around a stat rather than a school ----
+
+                new WeaponDefinition
+                {
+                    Id = "rocket_launcher",
+                    DisplayName = "Rocket Launcher",
+                    Flavor = "Points, fires, and asks nothing else of you.",
+                    Rarity = Rarity.Common,
+                    Delivery = DeliveryKind.Projectile,
+                    Mode = FireMode.Semi,
+                    DamageType = DamageType.Normal,
+                    Damage = 20f,
+                    RoundsPerMinute = 65f,
+                    MagazineSize = 4,
+                    ReloadTime = 2.2f,
+                    SpreadDegrees = 0.5f,
+                    MovingSpreadDegrees = 1.2f,
+                    RecoilPitch = 5f,
+                    RecoilYaw = 0.4f,
+
+                    // Flat, unlike the Knell's lob: no gravity, so it goes where you point it.
+                    ProjectileSpeed = 44f,
+                    ProjectileRadius = 0.28f,
+                    ProjectileGravity = 0f,
+                    ProjectileLifetime = 5f,
+                    SplashRadius = 4.4f,
+                    SplashDamage = 46f,
+                    Knockback = 8f,
+                    Tint = DamageTypes.Tint(DamageType.Normal)
+                },
+
+                new WeaponDefinition
+                {
+                    Id = "minigun",
+                    DisplayName = "Minigun",
+                    Flavor = "Takes a moment to get going. Then it does not stop.",
+                    Rarity = Rarity.Common,
+                    Delivery = DeliveryKind.Hitscan,
+                    Mode = FireMode.Auto,
+                    DamageType = DamageType.Normal,
+                    Damage = 5f,
+                    RoundsPerMinute = 900f,
+                    MagazineSize = 90,
+                    ReloadTime = 3f,
+
+                    // The trade: it hoses a room but cannot pick anything out of it.
+                    SpreadDegrees = 5.5f,
+                    MovingSpreadDegrees = 7.5f,
+                    RecoilPitch = 0.22f,
+                    RecoilYaw = 0.5f,
+                    Range = 90f,
+
+                    SpinUpSeconds = 0.7f,
+                    SpinDownMultiplier = 1.6f,
+                    Tint = DamageTypes.Tint(DamageType.Normal)
+                },
+
                 new WeaponDefinition
                 {
                     Id = "knell",

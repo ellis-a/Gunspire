@@ -176,6 +176,14 @@ namespace WizardGun
                 UIStyles.Bar(bar, weapon.ReloadProgress, UIStyles.AmmoColor, new Color(0.2f, 0.16f, 0.05f, 0.8f));
                 UIStyles.Text(new Rect(x, y + 70f, width, 16f), "reloading", UIStyles.Right, UIStyles.Muted);
             }
+            else if (weapon.HasSpinUp && !weapon.IsSpunUp)
+            {
+                // Holding a trigger and getting nothing reads as a jam unless the wind-up is
+                // visible, so it borrows the reload bar rather than inventing a second one.
+                var bar = new Rect(x + width - 150f, y + 60f, 150f, 8f);
+                UIStyles.Bar(bar, weapon.SpinProgress, UIStyles.Accent, new Color(0.2f, 0.16f, 0.05f, 0.8f));
+                UIStyles.Text(new Rect(x, y + 70f, width, 16f), "winding up", UIStyles.Right, UIStyles.Muted);
+            }
             else
             {
                 UIStyles.Text(new Rect(x, y + 60f, width, 16f),

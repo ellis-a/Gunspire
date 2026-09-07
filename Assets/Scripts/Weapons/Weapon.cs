@@ -54,6 +54,8 @@ namespace WizardGun
             _altCooldown = 0f;
             IsFocusing = false;
             _altWasDown = false;
+            _spin = 0f;
+            _spinSoundPlayed = false;
             _fireClip = SoundLibrary.ForWeapon(definition);
 
             BuildModel();
@@ -113,8 +115,10 @@ namespace WizardGun
             if (pressedThisFrame && IsReloading && OwnerTeam == Team.Player)
                 Sfx.PlayFlat(SoundLibrary.Get(SoundLibrary.DryFireId));
 
+            UpdateSpin(triggerDown);
+
             bool wantsToShoot = Definition.Mode == FireMode.Auto ? triggerDown : pressedThisFrame;
-            if (wantsToShoot) TryFire();
+            if (wantsToShoot && IsSpunUp) TryFire();
         }
 
         public void TryFire()
@@ -147,6 +151,50 @@ namespace WizardGun
             {
                 FireOnce();
             }
+        }
+
+        // ---------------------------------------------------------------- wind-up
+
+        private float _spin;
+        private bool _spinSoundPlayed;
+
+        /// <summary>0 to 1. Always 1 for a gun with no wind-up, so callers need no special case.</summary>
+        public float SpinProgress =>
+            Definition == null || Definition.SpinUpSeconds <= 0f
+                ? 1f
+                : Mathf.Clamp01(_spin / Definition.SpinUpSeconds);
+
+        public bool HasSpinUp => Definition != null && Definition.SpinUpSeconds > 0f;
+        public bool IsSpunUp => SpinProgress >= 1f;
+
+        /// <summary>
+        /// Winds the barrels up while the trigger is held and back down when it is not.
+        /// Reloading resets it, because the reload animation is the barrels stopping.
+        /// </summary>
+        private void UpdateSpin(bool triggerDown)
+        {
+            if (!HasSpinUp)
+            {
+                _spin = 0f;
+                return;
+            }
+
+            bool winding = triggerDown && !IsReloading && AmmoInMagazine > 0;
+
+            if (winding)
+            {
+                if (_spin <= 0f && !_spinSoundPlayed && OwnerTeam == Team.Player)
+                {
+                    Sfx.PlayFlat(SoundLibrary.Get(SoundLibrary.SpinUpId), 0.8f, pitchVariance: 0.02f);
+                    _spinSoundPlayed = true;
+                }
+
+                _spin = Mathf.Min(_spin + Time.deltaTime, Definition.SpinUpSeconds);
+                return;
+            }
+
+            _spin = Mathf.Max(0f, _spin - Time.deltaTime * Mathf.Max(0.1f, Definition.SpinDownMultiplier));
+            if (_spin <= 0f) _spinSoundPlayed = false;
         }
 
         // ---------------------------------------------------------------- alt fire

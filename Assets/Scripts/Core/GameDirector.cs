@@ -18,6 +18,12 @@ namespace WizardGun
         /// <summary>How many spells the guaranteed first-floor reward offers.</summary>
         [SerializeField] private int starterSpellChoices = 3;
 
+        /// <summary>
+        /// How many classes the opening screen offers out of the whole roster. Fewer than the
+        /// roster is the point: which two you are choosing between is itself a roll.
+        /// </summary>
+        [SerializeField] private int loadoutChoices = 2;
+
         public GameStateKind State { get; private set; } = GameStateKind.Loading;
         public RunState Run { get; private set; }
         public RoomRuntime CurrentRoom { get; private set; }
@@ -33,6 +39,7 @@ namespace WizardGun
 
         private readonly List<Boon> _boonOffers = new List<Boon>();
         private readonly List<Spell> _spellOffers = new List<Spell>();
+        private readonly List<LoadoutDefinition> _loadoutOffers = new List<LoadoutDefinition>();
         private readonly List<RoomNode> _roomOffers = new List<RoomNode>();
         private GameObject _roomRoot;
         private GameStateKind _stateBeforePause;
@@ -63,19 +70,26 @@ namespace WizardGun
         public void ShowLoadoutSelect()
         {
             ClearRoom();
+
+            // Rolled once here rather than read live, because OnGUI redraws every frame and a
+            // roster sampled during drawing would reshuffle the cards under the cursor.
+            var roster = new List<LoadoutDefinition>(LoadoutLibrary.All);
+
+            _loadoutOffers.Clear();
+            _loadoutOffers.AddRange(
+                new Rng(Random.Range(0, int.MaxValue)).TakeDistinct(roster, loadoutChoices));
+
             SetState(GameStateKind.ChoosingLoadout);
         }
 
-        public IReadOnlyList<LoadoutDefinition> LoadoutOffers => LoadoutLibrary.All;
+        public IReadOnlyList<LoadoutDefinition> LoadoutOffers => _loadoutOffers;
 
         public void ChooseLoadout(int index)
         {
             if (State != GameStateKind.ChoosingLoadout) return;
+            if (index < 0 || index >= _loadoutOffers.Count) return;
 
-            IReadOnlyList<LoadoutDefinition> offers = LoadoutLibrary.All;
-            if (index < 0 || index >= offers.Count) return;
-
-            StartingLoadout.Select(offers[index]);
+            StartingLoadout.Select(_loadoutOffers[index]);
             StartRun(Random.Range(0, int.MaxValue));
         }
 

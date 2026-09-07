@@ -97,7 +97,7 @@ namespace WizardGun
             }
 
             UIStyles.Text(new Rect(0f, Screen.height - 56f, Screen.width, 20f),
-                "WASD move   SPACE jump   SHIFT dash   LMB fire   RMB bash   R reload   Q/E spells   F interact",
+                "WASD move   SPACE jump   SHIFT dash   LMB fire   RMB alt fire   V bash   R reload   Q/E spells   F interact",
                 UIStyles.Center, UIStyles.Muted);
         }
 
@@ -150,13 +150,23 @@ namespace WizardGun
                 y += 20f;
             }
 
-            // Say plainly that the other slot starts empty, rather than leaving a silent gap.
+            // Say plainly what fills the empty slots, rather than leaving a silent gap. With
+            // no starting spell both are empty, and the first one is filled by the guaranteed
+            // reward for clearing the first floor - which the card has to promise, or a
+            // spell-less opening looks like the class is missing something.
+            bool first = true;
             for (int i = 0; i < SpellBook.SlotCount; i++)
             {
-                if (i == slot) continue;
+                if (spell != null && i == slot) continue;
+
                 UIStyles.Text(new Rect(x, y, 46f, 18f), SpellBook.SlotLabels[i], UIStyles.Small, UIStyles.Muted);
                 UIStyles.Text(new Rect(x + 48f, y, width - 48f, 18f),
-                    "empty - found at a Rune Shrine", UIStyles.Small, UIStyles.Muted);
+                    first && spell == null
+                        ? "chosen after the first floor"
+                        : "empty - found at a Rune Shrine",
+                    UIStyles.Small, UIStyles.Muted);
+
+                first = false;
                 y += 20f;
             }
 
@@ -363,7 +373,7 @@ namespace WizardGun
             if (UIStyles.Button(restart, "Abandon run", UIStyles.Warning)) _director.Restart();
 
             UIStyles.Text(new Rect(0f, Screen.height - 66f, Screen.width, 20f),
-                "WASD move   SPACE jump   SHIFT dash   LMB fire   RMB bash   R reload   Q/E spells   F interact",
+                "WASD move   SPACE jump   SHIFT dash   LMB fire   RMB alt fire   V bash   R reload   Q/E spells   F interact",
                 UIStyles.Center, UIStyles.Muted);
         }
 

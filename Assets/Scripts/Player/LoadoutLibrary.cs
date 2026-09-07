@@ -60,6 +60,29 @@ namespace WizardGun
         {
             return new List<LoadoutDefinition>
             {
+                new LoadoutDefinition
+                {
+                    Id = "fortune_hunter",
+                    DisplayName = "Fortune Hunter",
+                    Description = "Rides its luck. Rarer boons, rarer guns, and a rocket launcher " +
+                                  "that asks nothing of your aim.",
+                    Strength = 3, Intellect = 3, Agility = 3, Vitality = 3, Luck = 4,
+                    WeaponId = "rocket_launcher",
+                    MovementAbilityId = "dash",
+                    SpellId = string.Empty
+                },
+
+                new LoadoutDefinition
+                {
+                    Id = "juggernaut",
+                    DisplayName = "Juggernaut",
+                    Description = "Soaks what the others dodge. The minigun takes a moment to " +
+                                  "spin up, so you have to commit to standing there.",
+                    Strength = 3, Intellect = 3, Agility = 3, Vitality = 4, Luck = 3,
+                    WeaponId = "minigun",
+                    MovementAbilityId = "dash",
+                    SpellId = string.Empty
+                }
             };
         }
     }

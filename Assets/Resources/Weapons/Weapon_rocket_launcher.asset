@@ -1,0 +1,78 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 48821f08f7c573342a9dd749bc0fa5b3, type: 3}
+  m_Name: Weapon_rocket_launcher
+  m_EditorClassIdentifier: Assembly-CSharp::WizardGun.WeaponAsset
+  Definition:
+    Id: rocket_launcher
+    DisplayName: Rocket Launcher
+    Flavor: Points, fires, and asks nothing else of you.
+    Rarity: 0
+    Delivery: 1
+    Mode: 0
+    DamageType: 0
+    Damage: 20
+    PelletsPerShot: 1
+    Knockback: 8
+    RoundsPerMinute: 65
+    MagazineSize: 4
+    ReloadTime: 2.2
+    BurstCount: 1
+    BurstInterval: 0.06
+    SpinUpSeconds: 0
+    SpinDownMultiplier: 1.6
+    SpreadDegrees: 0.5
+    MovingSpreadDegrees: 1.2
+    RecoilPitch: 5
+    RecoilYaw: 0.4
+    Range: 120
+    MaxPierce: 0
+    ProjectileSpeed: 44
+    ProjectileRadius: 0.28
+    ProjectileGravity: 0
+    ProjectileLifetime: 5
+    ProjectileHoming: 0
+    SplashRadius: 4.4
+    SplashDamage: 46
+    ManaPerShot: 0
+    Tint: {r: 1, g: 0.92, b: 0.7, a: 1}
+    OnHitStatuses: []
+    AltFire:
+      Kind: 0
+      Name: Alt Fire
+      Description: 
+      UnlockTier: 0
+      Cooldown: 1.2
+      AmmoCost: 1
+      ManaCost: 0
+      Delivery: 1
+      Damage: 40
+      Pellets: 1
+      SpreadDegrees: 0
+      Knockback: 0
+      MaxPierce: 0
+      SplashRadius: 0
+      SplashDamage: 0
+      ProjectileSpeed: 40
+      ProjectileRadius: 0.2
+      ProjectileGravity: 0
+      ProjectileLifetime: 5
+      RecoilPitch: 3.2
+      OnHitStatuses: []
+      SalvoRateMultiplier: 3
+      SalvoDamageMultiplier: 0.85
+      SalvoMaxRounds: 12
+      FocusFov: 50
+      FocusSpreadMultiplier: 0.15
+      FocusDamageMultiplier: 1.25
+      FocusMoveMultiplier: 0.55
+      FocusRateMultiplier: 0.8

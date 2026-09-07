@@ -25,6 +25,7 @@ namespace WizardGun
         public const string ImpactId = "impact";
         public const string HitConfirmId = "hit_confirm";
         public const string DryFireId = "gun_dry";
+        public const string SpinUpId = "gun_spin";
 
         private static readonly Dictionary<string, AudioClip> Cache = new Dictionary<string, AudioClip>();
         private static Dictionary<string, AudioClip> _overrides;
@@ -271,6 +272,26 @@ namespace WizardGun
                         Crack = 0.12f,
                         Drive = 1.1f,
                         Volume = 0.30f
+                    };
+
+                // Barrels winding up. The only rising sound in the game: BodyEndHz above
+                // BodyHz sweeps upward, which is what reads as a motor getting going.
+                case SpinUpId:
+                    return new SoundRecipe
+                    {
+                        Duration = 0.6f,
+                        BodyHz = 70f,
+                        BodyEndHz = 260f,
+                        NoiseMix = 0.45f,
+                        Brightness = 0.35f,
+
+                        // Below 1 the envelope holds rather than snapping away. It still
+                        // decays - the synth has no attack - but slowly enough that the
+                        // rising pitch is what the ear follows.
+                        Decay = 0.45f,
+                        Crack = 0.1f,
+                        Drive = 1.3f,
+                        Volume = 0.4f
                     };
 
                 // Mechanical, no pitched layer at all: the sound of nothing happening.

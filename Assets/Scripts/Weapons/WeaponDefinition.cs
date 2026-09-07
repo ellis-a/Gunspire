@@ -34,6 +34,17 @@ namespace WizardGun
         public int BurstCount = 1;
         public float BurstInterval = 0.06f;
 
+        [Header("Wind-up")]
+        /// <summary>
+        /// Seconds of held trigger before the first shot. Zero fires immediately, which is
+        /// every gun but the minigun. The barrels keep spinning briefly after you let go, so
+        /// short bursts do not pay the full cost twice.
+        /// </summary>
+        public float SpinUpSeconds = 0f;
+
+        /// <summary>How much faster the spin unwinds than it wound up.</summary>
+        public float SpinDownMultiplier = 1.6f;
+
         [Header("Accuracy")]
         public float SpreadDegrees = 0.8f;
         public float MovingSpreadDegrees = 1.6f;
