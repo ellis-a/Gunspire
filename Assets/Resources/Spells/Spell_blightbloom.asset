@@ -27,6 +27,7 @@ MonoBehaviour:
     GrowthPerLevel: 0.22
     LevelUpNote: and a wider, longer-lived patch
     TintOverride: {r: 0, g: 0, b: 0, a: 0}
+    Icon: {fileID: 2800000, guid: fbc61a45f94e1044db0ea68ae113be21, type: 3}
     OnCast:
     - rid: 5643702077732683799
     - rid: 5643702077732683800

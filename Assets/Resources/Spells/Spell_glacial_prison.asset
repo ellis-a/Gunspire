@@ -27,6 +27,7 @@ MonoBehaviour:
     GrowthPerLevel: 0.22
     LevelUpNote: and a longer freeze
     TintOverride: {r: 0, g: 0, b: 0, a: 0}
+    Icon: {fileID: 2800000, guid: 751f0d767187a7146a1110dc382e6957, type: 3}
     OnCast:
     - rid: 5643702077732683805
     - rid: 5643702077732683806

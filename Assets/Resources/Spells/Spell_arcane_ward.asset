@@ -27,6 +27,7 @@ MonoBehaviour:
     GrowthPerLevel: 0.22
     LevelUpNote: and a longer ward
     TintOverride: {r: 0.75, g: 0.8, b: 1, a: 1}
+    Icon: {fileID: 2800000, guid: f11e05f7b5b267340982c91c1af1f2ad, type: 3}
     OnCast:
     - rid: 5643702077732683796
     - rid: 5643702077732683797

@@ -27,6 +27,7 @@ MonoBehaviour:
     GrowthPerLevel: 0.22
     LevelUpNote: and more chill per hit
     TintOverride: {r: 0, g: 0, b: 0, a: 0}
+    Icon: {fileID: 2800000, guid: f1ed034252964c64b90dffe42b050e32, type: 3}
     OnCast:
     - rid: 5643702077732683782
     - rid: 5643702077732683783

@@ -27,6 +27,7 @@ MonoBehaviour:
     GrowthPerLevel: 0.22
     LevelUpNote: and a wider, longer-lasting pool
     TintOverride: {r: 0, g: 0, b: 0, a: 0}
+    Icon: {fileID: 2800000, guid: 4fd26796400b1714b9ce37c45cbf0d62, type: 3}
     OnCast:
     - rid: 5643702077732683776
     - rid: 5643702077732683777
