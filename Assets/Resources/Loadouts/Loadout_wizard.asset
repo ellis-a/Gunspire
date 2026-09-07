@@ -10,20 +10,19 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: c13e835ccff8ac64baeb611612fcf70e, type: 3}
-  m_Name: Loadout_ice_wizard
+  m_Name: Loadout_wizard
   m_EditorClassIdentifier: Assembly-CSharp::WizardGun.StartingLoadoutAsset
   Loadout:
-    Id: ice_wizard
-    DisplayName: Ice Wizard
-    Description: Freeze them where they stand and shoot them at your leisure. Frozen
-      targets shatter, and a shotgun answers whatever is left.
-    Strength: 4
-    Intellect: 7
-    Agility: 4
-    Vitality: 7
+    Id: wizard
+    DisplayName: Wizard
+    Description: Blast your foes away with a shotgun.
+    Strength: 3
+    Intellect: 4
+    Agility: 3
+    Vitality: 3
     Luck: 3
-    WeaponId: hailmaker
+    WeaponId: shotgun
     MovementAbilityId: dash
-    SpellId: cone_of_cold
-    SpellSlot: 1
+    SpellId: 
+    SpellSlot: 0
     TintOverride: {r: 0, g: 0, b: 0, a: 0}

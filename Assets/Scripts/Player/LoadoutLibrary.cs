@@ -60,41 +60,6 @@ namespace WizardGun
         {
             return new List<LoadoutDefinition>
             {
-                new LoadoutDefinition
-                {
-                    Id = "pyromancer",
-                    DisplayName = "Pyromancer",
-                    Description = "Set the room alight and keep moving. Burning stacks reward " +
-                                  "spraying widely, and Lava Splash turns a doorway into a wall of fire.",
-                    Strength = 4, Intellect = 8, Agility = 6, Vitality = 4, Luck = 3,
-                    WeaponId = "emberspit",
-                    MovementAbilityId = "dash",
-                    SpellId = "lava_splash"
-                },
-
-                new LoadoutDefinition
-                {
-                    Id = "ice_wizard",
-                    DisplayName = "Ice Wizard",
-                    Description = "Freeze them where they stand and shoot them at your leisure. " +
-                                  "Frozen targets shatter, and a shotgun answers whatever is left.",
-                    Strength = 4, Intellect = 7, Agility = 4, Vitality = 7, Luck = 3,
-                    WeaponId = "hailmaker",
-                    MovementAbilityId = "dash",
-                    SpellId = "cone_of_cold"
-                },
-
-                new LoadoutDefinition
-                {
-                    Id = "warlock",
-                    DisplayName = "Warlock",
-                    Description = "Deny the ground and let rot do the work. Heavy on splash, " +
-                                  "light on precision, and everything you touch stops healing itself.",
-                    Strength = 6, Intellect = 6, Agility = 4, Vitality = 5, Luck = 4,
-                    WeaponId = "knell",
-                    MovementAbilityId = "dash",
-                    SpellId = "blightbloom"
-                }
             };
         }
     }

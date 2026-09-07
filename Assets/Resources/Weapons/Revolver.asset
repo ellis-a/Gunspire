@@ -1,0 +1,76 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 48821f08f7c573342a9dd749bc0fa5b3, type: 3}
+  m_Name: Revolver
+  m_EditorClassIdentifier: Assembly-CSharp::WizardGun.WeaponAsset
+  Definition:
+    Id: revolver
+    DisplayName: Revolver
+    Flavor: 
+    Rarity: 0
+    Delivery: 0
+    Mode: 0
+    DamageType: 0
+    Damage: 14
+    PelletsPerShot: 1
+    Knockback: 0
+    RoundsPerMinute: 320
+    MagazineSize: 6
+    ReloadTime: 2
+    BurstCount: 1
+    BurstInterval: 0.06
+    SpreadDegrees: 0.4
+    MovingSpreadDegrees: 1.1
+    RecoilPitch: 1.3
+    RecoilYaw: 0.3
+    Range: 140
+    MaxPierce: 0
+    ProjectileSpeed: 45
+    ProjectileRadius: 0.14
+    ProjectileGravity: 0
+    ProjectileLifetime: 4
+    ProjectileHoming: 0
+    SplashRadius: 0
+    SplashDamage: 0
+    ManaPerShot: 0
+    Tint: {r: 1, g: 1, b: 1, a: 1}
+    OnHitStatuses: []
+    AltFire:
+      Kind: 2
+      Name: Fan the Hammer
+      Description: Empties the cylinder as fast as the hammer will fall.
+      UnlockTier: 0
+      Cooldown: 2.6
+      AmmoCost: 1
+      ManaCost: 0
+      Delivery: 1
+      Damage: 40
+      Pellets: 1
+      SpreadDegrees: 0
+      Knockback: 0
+      MaxPierce: 0
+      SplashRadius: 0
+      SplashDamage: 0
+      ProjectileSpeed: 40
+      ProjectileRadius: 0.2
+      ProjectileGravity: 0
+      ProjectileLifetime: 5
+      RecoilPitch: 3.2
+      OnHitStatuses: []
+      SalvoRateMultiplier: 4.5
+      SalvoDamageMultiplier: 0.8
+      SalvoMaxRounds: 12
+      FocusFov: 50
+      FocusSpreadMultiplier: 0.15
+      FocusDamageMultiplier: 1.25
+      FocusMoveMultiplier: 0.55
+      FocusRateMultiplier: 0.8

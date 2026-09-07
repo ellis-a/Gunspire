@@ -15,15 +15,14 @@ MonoBehaviour:
   Loadout:
     Id: warlock
     DisplayName: Warlock
-    Description: Deny the ground and let rot do the work. Heavy on splash, light
-      on precision, and everything you touch stops healing itself.
-    Strength: 6
-    Intellect: 6
+    Description: Shred your enemies with a rapid fire SMG.
+    Strength: 3
+    Intellect: 3
     Agility: 4
-    Vitality: 5
-    Luck: 4
-    WeaponId: knell
+    Vitality: 3
+    Luck: 3
+    WeaponId: smg
     MovementAbilityId: dash
-    SpellId: blightbloom
-    SpellSlot: 1
+    SpellId: 
+    SpellSlot: 0
     TintOverride: {r: 0, g: 0, b: 0, a: 0}

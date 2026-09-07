@@ -1,0 +1,80 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 48821f08f7c573342a9dd749bc0fa5b3, type: 3}
+  m_Name: Shotgun
+  m_EditorClassIdentifier: Assembly-CSharp::WizardGun.WeaponAsset
+  Definition:
+    Id: shotgun
+    DisplayName: Shotgun
+    Flavor: 
+    Rarity: 0
+    Delivery: 0
+    Mode: 0
+    DamageType: 0
+    Damage: 4
+    PelletsPerShot: 12
+    Knockback: 1
+    RoundsPerMinute: 95
+    MagazineSize: 6
+    ReloadTime: 1.8
+    BurstCount: 1
+    BurstInterval: 0.06
+    SpreadDegrees: 6.5
+    MovingSpreadDegrees: 8
+    RecoilPitch: 4
+    RecoilYaw: 0.6
+    Range: 42
+    MaxPierce: 0
+    ProjectileSpeed: 45
+    ProjectileRadius: 0.14
+    ProjectileGravity: 0
+    ProjectileLifetime: 4
+    ProjectileHoming: 0
+    SplashRadius: 0
+    SplashDamage: 0
+    ManaPerShot: 0
+    Tint: {r: 1, g: 1, b: 1, a: 1}
+    OnHitStatuses:
+    - Id: 3
+      Duration: 6
+      Stacks: 1
+      Magnitude: 2.5
+    AltFire:
+      Kind: 0
+      Name: Both Barrels
+      Description: Dumps every shell in the tube.
+      UnlockTier: 1
+      Cooldown: 4
+      AmmoCost: 1
+      ManaCost: 0
+      Delivery: 1
+      Damage: 40
+      Pellets: 1
+      SpreadDegrees: 0
+      Knockback: 0
+      MaxPierce: 0
+      SplashRadius: 0
+      SplashDamage: 0
+      ProjectileSpeed: 40
+      ProjectileRadius: 0.2
+      ProjectileGravity: 0
+      ProjectileLifetime: 5
+      RecoilPitch: 3.2
+      OnHitStatuses: []
+      SalvoRateMultiplier: 3.2
+      SalvoDamageMultiplier: 0.9
+      SalvoMaxRounds: 6
+      FocusFov: 50
+      FocusSpreadMultiplier: 0.15
+      FocusDamageMultiplier: 1.25
+      FocusMoveMultiplier: 0.55
+      FocusRateMultiplier: 0.8
