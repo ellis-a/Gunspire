@@ -27,17 +27,13 @@ you actually did.
 
 ```
 "E:/Program Files/Unity/Hub/Editor/6000.5.7f1/Editor/Unity.exe" -batchmode -quit -nographics \
-  -projectPath "E:/Projects/Wizard with a Gun" \
+  -projectPath "E:/Projects/Gunspire" \
   -executeMethod Gunspire.EditorTools.EnemyTools.VerifyRoster \
   -logFile /path/to/log
 ```
 
 Exit code 0 and no `error CS` in the log means it compiled. Any menu item can be driven this
 way, which is how the rosters get checked without opening the editor.
-
-The folder is still named after the old title. The game was renamed to Gunspire, but the
-directory, the git remote and the repository name were left alone - renaming those is a
-separate job with its own consequences, so the path above is deliberately not `Gunspire`.
 
 **Check whether Unity is already open first.** It holds a project lock and batch mode will
 refuse. `Get-Process -Name Unity` is the reliable check - a stale `Temp/UnityLockfile` with no
