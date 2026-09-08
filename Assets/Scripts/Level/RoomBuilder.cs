@@ -17,10 +17,7 @@ namespace Gunspire
         }
 
         /// <summary>
-        /// Step one of the maze work: layouts only. A maze room deliberately spawns nothing to
-        /// fight, because enemies cannot path through concave geometry yet - they beeline and
-        /// slide along walls, which is enough for the convex pillars of a rectangular room and
-        /// nothing at all in a maze. Set this false to get the old combat rooms back.
+        /// Whether combat floors are mazes. Set false to get the old rectangular rooms back.
         /// </summary>
         public static bool MazeLayouts = true;
 
@@ -33,9 +30,8 @@ namespace Gunspire
         }
 
         /// <summary>
-        /// A maze floor: shell only for now. The exit sits in the chamber furthest from the
-        /// entrance by path length, so finding it means walking the maze rather than crossing
-        /// a room, which is the thing worth judging before any content goes in.
+        /// A maze floor. The exit sits in the chamber furthest from the entrance by path
+        /// length, so finding it means walking the maze rather than crossing a room.
         /// </summary>
         private static RoomRuntime GenerateMaze(RoomNode node, Rng rng)
         {
@@ -47,13 +43,57 @@ namespace Gunspire
 
             MazeBuilder.BuildShell(root.transform, maze, node, rng);
 
+            // Probed now rather than in Start, so enemy placement can ask it for free ground on
+            // the same frame the geometry appears.
+            var field = root.AddComponent<NavField>();
+            field.Build(maze.FootprintWidth, maze.FootprintDepth);
+
             runtime.PlayerSpawn = maze.CellCentre(maze.Start) + Vector3.up * 0.2f;
             runtime.PlayerFacing = Quaternion.LookRotation(maze.ExitDirection(maze.Start), Vector3.up);
 
             runtime.Portal = ExitPortal.Spawn(maze.CellCentre(maze.Exit), Quaternion.identity);
             runtime.Portal.transform.SetParent(root.transform, true);
 
+            SpawnMazeEnemies(runtime, maze, field, node, rng);
+
             return runtime;
+        }
+
+        /// <summary>
+        /// Scatters the floor's enemies across its chambers rather than massing them in one.
+        ///
+        /// Embrasure chambers are included deliberately: something shooting at you through a
+        /// slot you cannot walk through is the whole reason that room exists, and the flow
+        /// field will route it the long way round to reach you.
+        /// </summary>
+        private static void SpawnMazeEnemies(RoomRuntime runtime, MazeLayout maze, NavField field,
+            RoomNode node, Rng rng)
+        {
+            List<EnemyDefinition> pool = EnemyLibrary.StandardRoster();
+            if (pool.Count == 0) return;
+
+            // Far enough in that the floor does not open with a fight already on top of you.
+            var candidates = new List<Vector2Int>();
+            foreach (Vector2Int cell in maze.Chambers())
+                if (maze.Distance(cell.x, cell.y) >= 2) candidates.Add(cell);
+
+            if (candidates.Count == 0) return;
+
+            int count = Mathf.Min(12, 5 + node.Floor);
+
+            for (int i = 0; i < count; i++)
+            {
+                Vector2Int cell = rng.Pick(candidates);
+                if (!field.TryFindSpot(rng, maze.CellCentre(cell), maze.CellSize * 0.35f,
+                        out Vector3 spot))
+                    continue;
+
+                EnemyController enemy = EnemyFactory.Spawn(rng.Pick(pool), spot, node.Floor, elite: false);
+                if (enemy == null) continue;
+
+                enemy.transform.SetParent(runtime.transform, true);
+                runtime.Register(enemy);
+            }
         }
 
         private static RoomRuntime GenerateRectangle(RoomNode node, Rng rng)

@@ -694,6 +694,21 @@ namespace Gunspire
         /// </summary>
         private bool TryEmbrasure(Vector2Int cell, List<Vector2Int> alreadySplit, out bool alongX)
         {
+            // Never next to another embrasure. Two of them side by side share the doorway
+            // between them, so that doorway is the only way out of a lane on each side - and
+            // those two lanes then lead nowhere but into each other. The maze as a whole stays
+            // connected, which is why checking only the maze misses it entirely.
+            for (int i = 0; i < Directions.Length; i++)
+            {
+                Vector2Int neighbour = cell + Directions[i];
+                for (int s = 0; s < alreadySplit.Count; s++)
+                {
+                    if (alreadySplit[s] != neighbour) continue;
+                    alongX = true;
+                    return false;
+                }
+            }
+
             bool east = EastEdge(cell.x, cell.y) != EdgeState.Solid;
             bool west = EastEdge(cell.x - 1, cell.y) != EdgeState.Solid;
             bool north = NorthEdge(cell.x, cell.y) != EdgeState.Solid;

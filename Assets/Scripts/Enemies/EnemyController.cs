@@ -234,11 +234,21 @@ namespace Gunspire
                     _strafeSign = -_strafeSign;
                 }
 
-                if (distance > PreferredRange) desired += forward;
-                else if (distance < MinComfortRange) desired -= forward;
-                else desired += right * _strafeSign * 0.9f;
+                if (TryNavigate(out Vector3 route))
+                {
+                    // No way to walk straight at the target, so the only job is getting there.
+                    // Holding range or strafing along a route would just scrape the walls.
+                    desired += route;
+                }
+                else
+                {
+                    if (distance > PreferredRange) desired += forward;
+                    else if (distance < MinComfortRange) desired -= forward;
+                    else desired += right * _strafeSign * 0.9f;
 
-                desired += right * (_strafeSign * 0.35f);
+                    desired += right * (_strafeSign * 0.35f);
+                }
+
                 desired += Separation();
                 desired = AvoidWalls(desired);
 
@@ -283,6 +293,27 @@ namespace Gunspire
 
             float wantedRise = Mathf.Clamp(error * 4f, -7f, 7f);
             _velocity.y = Mathf.MoveTowards(_velocity.y, wantedRise, ClimbAcceleration * dt);
+        }
+
+        /// <summary>
+        /// Asks the flow field which way to go, and returns false when walking straight at the
+        /// target is fine - which is the common case, and keeps open-room behaviour exactly as
+        /// it was before there was any pathfinding at all.
+        ///
+        /// Fliers never path. They cross walls, ledges and embrasures that stop everything on
+        /// the ground, and that difference is most of what makes them worth having.
+        /// </summary>
+        private bool TryNavigate(out Vector3 direction)
+        {
+            direction = Vector3.zero;
+            if (Flying || Target == null) return false;
+
+            NavField field = NavField.Current;
+            if (field == null || !field.IsBuilt) return false;
+            if (field.IsClearLine(transform.position, Target.position)) return false;
+
+            direction = field.FlowDirection(transform.position);
+            return direction.sqrMagnitude > 0.001f;
         }
 
         /// <summary>Used by lunges and knockback.</summary>
