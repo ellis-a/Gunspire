@@ -2,7 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace WizardGun
+namespace Gunspire
 {
     /// <summary>
     /// One attack an enemy can perform. This component owns only the *usage rules* - range

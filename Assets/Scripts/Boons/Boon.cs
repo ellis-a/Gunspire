@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace WizardGun
+namespace Gunspire
 {
     /// <summary>
     /// One upgrade offered between rooms. Boons write into <see cref="RunState"/> or straight

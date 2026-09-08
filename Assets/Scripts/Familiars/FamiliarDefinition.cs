@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace WizardGun
+namespace Gunspire
 {
     /// <summary>
     /// A stat change a familiar grants its owner while it is alive.

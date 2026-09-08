@@ -1,16 +1,16 @@
 using UnityEngine;
 
-namespace WizardGun
+namespace Gunspire
 {
     /// <summary>
     /// An authored familiar. Create these via
-    /// <c>Wizard with a Gun -> Create Familiar Assets</c>, which writes one per built-in into
+    /// <c>Gunspire -> Create Familiar Assets</c>, which writes one per built-in into
     /// <c>Assets/Resources/Familiars</c> where <see cref="FamiliarLibrary"/> can find them.
     ///
     /// A new familiar needs a boon to grant it - see GrantFamiliarEffect - since nothing hands
     /// them out on its own.
     /// </summary>
-    [CreateAssetMenu(fileName = "Familiar", menuName = "Wizard with a Gun/Familiar")]
+    [CreateAssetMenu(fileName = "Familiar", menuName = "Gunspire/Familiar")]
     public class FamiliarAsset : ScriptableObject
     {
         public FamiliarDefinition Familiar = new FamiliarDefinition();

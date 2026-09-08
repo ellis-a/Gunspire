@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace WizardGun
+namespace Gunspire
 {
     /// <summary>Procedural meshes for shapes Unity has no primitive for.</summary>
     public static class MeshFactory

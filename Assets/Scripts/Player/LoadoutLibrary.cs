@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace WizardGun
+namespace Gunspire
 {
     /// <summary>
     /// The loadouts offered on the opening screen.

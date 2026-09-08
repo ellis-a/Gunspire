@@ -11,7 +11,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 2faa7c9d5f2fc7d46b43ab253041d16e, type: 3}
   m_Name: Enemy_tower_warden
-  m_EditorClassIdentifier: Assembly-CSharp::WizardGun.EnemyAsset
+  m_EditorClassIdentifier: Assembly-CSharp::Gunspire.EnemyAsset
   Enemy:
     Id: tower_warden
     DisplayName: Tower Warden
@@ -112,23 +112,23 @@ MonoBehaviour:
     version: 2
     RefIds:
     - rid: 5643702087738458165
-      type: {class: TelegraphFlashEffect, ns: WizardGun, asm: Assembly-CSharp}
+      type: {class: TelegraphFlashEffect, ns: Gunspire, asm: Assembly-CSharp}
       data:
         Radius: 0.6
         Duration: 0.6
         Height: 2.4
     - rid: 5643702087738458166
-      type: {class: WaitEffect, ns: WizardGun, asm: Assembly-CSharp}
+      type: {class: WaitEffect, ns: Gunspire, asm: Assembly-CSharp}
       data:
         Seconds: 0.6
         AbortIfInterrupted: 1
     - rid: 5643702087738458167
-      type: {class: AimAtTargetEffect, ns: WizardGun, asm: Assembly-CSharp}
+      type: {class: AimAtTargetEffect, ns: Gunspire, asm: Assembly-CSharp}
       data:
         AimHeight: 0.95
         Flatten: 0
     - rid: 5643702087738458168
-      type: {class: SpawnProjectileEffect, ns: WizardGun, asm: Assembly-CSharp}
+      type: {class: SpawnProjectileEffect, ns: Gunspire, asm: Assembly-CSharp}
       data:
         Damage: 12
         Speed: 22
@@ -146,28 +146,28 @@ MonoBehaviour:
         ScaleSplashWithLevel: 1
         OnHit: []
     - rid: 5643702087738458169
-      type: {class: WaitEffect, ns: WizardGun, asm: Assembly-CSharp}
+      type: {class: WaitEffect, ns: Gunspire, asm: Assembly-CSharp}
       data:
         Seconds: 0.5
         AbortIfInterrupted: 1
     - rid: 5643702087738458170
-      type: {class: AimAtTargetEffect, ns: WizardGun, asm: Assembly-CSharp}
+      type: {class: AimAtTargetEffect, ns: Gunspire, asm: Assembly-CSharp}
       data:
         AimHeight: 0.95
         Flatten: 1
     - rid: 5643702087738458171
-      type: {class: TelegraphLineEffect, ns: WizardGun, asm: Assembly-CSharp}
+      type: {class: TelegraphLineEffect, ns: Gunspire, asm: Assembly-CSharp}
       data:
         Length: 40
         Width: 0.5
         Duration: 1.1
     - rid: 5643702087738458172
-      type: {class: WaitEffect, ns: WizardGun, asm: Assembly-CSharp}
+      type: {class: WaitEffect, ns: Gunspire, asm: Assembly-CSharp}
       data:
         Seconds: 1.1
         AbortIfInterrupted: 1
     - rid: 5643702087738458173
-      type: {class: BeamEffect, ns: WizardGun, asm: Assembly-CSharp}
+      type: {class: BeamEffect, ns: Gunspire, asm: Assembly-CSharp}
       data:
         Duration: 2.4
         Length: 40
@@ -177,12 +177,12 @@ MonoBehaviour:
         SweepDegreesPerSecond: 30
         MaxPitch: 0.25
     - rid: 5643702087738458174
-      type: {class: WaitEffect, ns: WizardGun, asm: Assembly-CSharp}
+      type: {class: WaitEffect, ns: Gunspire, asm: Assembly-CSharp}
       data:
         Seconds: 0.9
         AbortIfInterrupted: 1
     - rid: 5643702087738458175
-      type: {class: StatusPayloadEffect, ns: WizardGun, asm: Assembly-CSharp}
+      type: {class: StatusPayloadEffect, ns: Gunspire, asm: Assembly-CSharp}
       data:
         Status: 2
         Duration: 5
@@ -191,7 +191,7 @@ MonoBehaviour:
         Magnitude: 5
         DurationPerLevel: 0
     - rid: 5643702087738458176
-      type: {class: RepeatEffect, ns: WizardGun, asm: Assembly-CSharp}
+      type: {class: RepeatEffect, ns: Gunspire, asm: Assembly-CSharp}
       data:
         Times: 5
         Interval: 0.4
@@ -201,28 +201,28 @@ MonoBehaviour:
         - rid: 5643702087738458187
         - rid: 5643702087738458188
     - rid: 5643702087738458177
-      type: {class: WaitEffect, ns: WizardGun, asm: Assembly-CSharp}
+      type: {class: WaitEffect, ns: Gunspire, asm: Assembly-CSharp}
       data:
         Seconds: 1.4
         AbortIfInterrupted: 1
     - rid: 5643702087738458178
-      type: {class: AimAtTargetEffect, ns: WizardGun, asm: Assembly-CSharp}
+      type: {class: AimAtTargetEffect, ns: Gunspire, asm: Assembly-CSharp}
       data:
         AimHeight: 0.95
         Flatten: 1
     - rid: 5643702087738458179
-      type: {class: TelegraphConeEffect, ns: WizardGun, asm: Assembly-CSharp}
+      type: {class: TelegraphConeEffect, ns: Gunspire, asm: Assembly-CSharp}
       data:
         Range: 14
         HalfAngle: 40
         Duration: 0.85
     - rid: 5643702087738458180
-      type: {class: WaitEffect, ns: WizardGun, asm: Assembly-CSharp}
+      type: {class: WaitEffect, ns: Gunspire, asm: Assembly-CSharp}
       data:
         Seconds: 0.85
         AbortIfInterrupted: 1
     - rid: 5643702087738458181
-      type: {class: StatusPayloadEffect, ns: WizardGun, asm: Assembly-CSharp}
+      type: {class: StatusPayloadEffect, ns: Gunspire, asm: Assembly-CSharp}
       data:
         Status: 3
         Duration: 8
@@ -231,14 +231,14 @@ MonoBehaviour:
         Magnitude: 4
         DurationPerLevel: 0
     - rid: 5643702087738458182
-      type: {class: SelectConeEffect, ns: WizardGun, asm: Assembly-CSharp}
+      type: {class: SelectConeEffect, ns: Gunspire, asm: Assembly-CSharp}
       data:
         Range: 14
         HalfAngle: 40
         RequireLineOfSight: 0
         ScaleRangeWithLevel: 0
     - rid: 5643702087738458183
-      type: {class: DealDamageEffect, ns: WizardGun, asm: Assembly-CSharp}
+      type: {class: DealDamageEffect, ns: Gunspire, asm: Assembly-CSharp}
       data:
         Amount: 30
         CanCrit: 0
@@ -249,7 +249,7 @@ MonoBehaviour:
         UseSmashPower: 0
         OnlyOncePerCast: 0
     - rid: 5643702087738458184
-      type: {class: VfxConeEffect, ns: WizardGun, asm: Assembly-CSharp}
+      type: {class: VfxConeEffect, ns: Gunspire, asm: Assembly-CSharp}
       data:
         Range: 14
         HalfAngle: 40
@@ -257,24 +257,24 @@ MonoBehaviour:
         Lifetime: 0.3
         ScaleWithLevel: 0
     - rid: 5643702087738458185
-      type: {class: WaitEffect, ns: WizardGun, asm: Assembly-CSharp}
+      type: {class: WaitEffect, ns: Gunspire, asm: Assembly-CSharp}
       data:
         Seconds: 0.8
         AbortIfInterrupted: 1
     - rid: 5643702087738458186
-      type: {class: TargetGroundPointEffect, ns: WizardGun, asm: Assembly-CSharp}
+      type: {class: TargetGroundPointEffect, ns: Gunspire, asm: Assembly-CSharp}
       data:
         LeadDistance: 4
         LeadSeconds: 0.35
     - rid: 5643702087738458187
-      type: {class: TelegraphCircleEffect, ns: WizardGun, asm: Assembly-CSharp}
+      type: {class: TelegraphCircleEffect, ns: Gunspire, asm: Assembly-CSharp}
       data:
         Radius: 4.2
         Duration: 0.9
         ScaleWithLevel: 0
         DropToGround: 1
     - rid: 5643702087738458188
-      type: {class: DelayedBlastEffect, ns: WizardGun, asm: Assembly-CSharp}
+      type: {class: DelayedBlastEffect, ns: Gunspire, asm: Assembly-CSharp}
       data:
         Delay: 0.9
         Radius: 4.2

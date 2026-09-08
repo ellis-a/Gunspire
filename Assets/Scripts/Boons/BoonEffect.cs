@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace WizardGun
+namespace Gunspire
 {
     /// <summary>
     /// One thing a boon does when it is taken. Same idea as <see cref="AbilityEffect"/>, and

@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace WizardGun
+namespace Gunspire
 {
     /// <summary>
     /// Parameters for one synthesised sound. A gunshot is a pitched thump that falls in

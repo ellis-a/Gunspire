@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace WizardGun
+namespace Gunspire
 {
     /// <summary>
     /// Physics layers. These are assigned by index at runtime so the project needs no

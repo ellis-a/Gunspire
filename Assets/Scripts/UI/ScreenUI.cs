@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace WizardGun
+namespace Gunspire
 {
     /// <summary>
     /// Full-screen interfaces: the boon draft, the room choice, spell binding, the character
@@ -69,7 +69,7 @@ namespace WizardGun
             Dim(0.94f);
             IReadOnlyList<LoadoutDefinition> offers = _director.LoadoutOffers;
 
-            UIStyles.Text(new Rect(0f, 60f, Screen.width, 48f), "Wizard with a Gun",
+            UIStyles.Text(new Rect(0f, 60f, Screen.width, 48f), "Gunspire",
                 UIStyles.Title, UIStyles.Ink);
             UIStyles.Text(new Rect(0f, 110f, Screen.width, 22f),
                 "Choose how you climb. Click a card, or press its number.",

@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace WizardGun
+namespace Gunspire
 {
     /// <summary>
     /// Every effect a boon can have. Deliberately one class per idea rather than one class

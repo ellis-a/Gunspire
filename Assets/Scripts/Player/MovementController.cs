@@ -1,7 +1,7 @@
 using System;
 using UnityEngine;
 
-namespace WizardGun
+namespace Gunspire
 {
     /// <summary>
     /// Owns the Shift slot: one <see cref="MovementAbility"/>, its cooldown, and the on/off

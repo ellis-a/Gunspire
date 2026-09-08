@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace WizardGun
+namespace Gunspire
 {
     /// <summary>
     /// Assembles an enemy GameObject from an <see cref="EnemyDefinition"/>. The roster itself

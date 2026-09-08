@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
 
-namespace WizardGun.EditorTools
+namespace Gunspire.EditorTools
 {
     /// <summary>
     /// Which content still needs art.
@@ -14,7 +14,7 @@ namespace WizardGun.EditorTools
     /// </summary>
     public static class IconTools
     {
-        [MenuItem("Wizard with a Gun/Log Missing Icons")]
+        [MenuItem("Gunspire/Log Missing Icons")]
         public static void LogMissingIcons()
         {
             var text = new System.Text.StringBuilder();

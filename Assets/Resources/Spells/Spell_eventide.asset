@@ -11,7 +11,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 742cfdfb30a993f448892174ad3ab0e9, type: 3}
   m_Name: Spell_eventide
-  m_EditorClassIdentifier: Assembly-CSharp::WizardGun.SpellAsset
+  m_EditorClassIdentifier: Assembly-CSharp::Gunspire.SpellAsset
   Definition:
     Id: eventide
     DisplayName: Eventide
@@ -38,18 +38,18 @@ MonoBehaviour:
     version: 2
     RefIds:
     - rid: 5643702077732683810
-      type: {class: AimPointEffect, ns: WizardGun, asm: Assembly-CSharp}
+      type: {class: AimPointEffect, ns: Gunspire, asm: Assembly-CSharp}
       data:
         Range: 60
     - rid: 5643702077732683811
-      type: {class: TelegraphCircleEffect, ns: WizardGun, asm: Assembly-CSharp}
+      type: {class: TelegraphCircleEffect, ns: Gunspire, asm: Assembly-CSharp}
       data:
         Radius: 9
         Duration: 0.9
         ScaleWithLevel: 1
         DropToGround: 1
     - rid: 5643702077732683812
-      type: {class: StatusPayloadEffect, ns: WizardGun, asm: Assembly-CSharp}
+      type: {class: StatusPayloadEffect, ns: Gunspire, asm: Assembly-CSharp}
       data:
         Status: 5
         Duration: 6
@@ -58,7 +58,7 @@ MonoBehaviour:
         Magnitude: 0.15
         DurationPerLevel: 0
     - rid: 5643702077732683813
-      type: {class: StatusPayloadEffect, ns: WizardGun, asm: Assembly-CSharp}
+      type: {class: StatusPayloadEffect, ns: Gunspire, asm: Assembly-CSharp}
       data:
         Status: 3
         Duration: 6
@@ -67,7 +67,7 @@ MonoBehaviour:
         Magnitude: 4
         DurationPerLevel: 0
     - rid: 5643702077732683814
-      type: {class: DelayedBlastEffect, ns: WizardGun, asm: Assembly-CSharp}
+      type: {class: DelayedBlastEffect, ns: Gunspire, asm: Assembly-CSharp}
       data:
         Delay: 0.9
         Radius: 9

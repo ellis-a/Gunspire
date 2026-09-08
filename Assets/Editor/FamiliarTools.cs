@@ -3,14 +3,14 @@ using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
 
-namespace WizardGun.EditorTools
+namespace Gunspire.EditorTools
 {
     public static class FamiliarTools
     {
         private const string RootFolder = "Assets/Resources";
         private const string FolderPath = RootFolder + "/Familiars";
 
-        [MenuItem("Wizard with a Gun/Create Familiar Assets")]
+        [MenuItem("Gunspire/Create Familiar Assets")]
         public static void CreateFamiliarAssets()
         {
             if (!AssetDatabase.IsValidFolder(RootFolder))
@@ -65,7 +65,7 @@ namespace WizardGun.EditorTools
         /// so a familiar with no granting boon is content that can never appear in a run, and
         /// a boon pointing at a missing familiar is a pick that does nothing.
         /// </summary>
-        [MenuItem("Wizard with a Gun/Log Familiar Table")]
+        [MenuItem("Gunspire/Log Familiar Table")]
         public static void LogFamiliarTable()
         {
             var text = new System.Text.StringBuilder();

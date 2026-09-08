@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace WizardGun
+namespace Gunspire
 {
     /// <summary>
     /// Shared IMGUI look. The whole interface is immediate-mode so the project needs no

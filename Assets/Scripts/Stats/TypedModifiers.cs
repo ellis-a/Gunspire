@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 
-namespace WizardGun
+namespace Gunspire
 {
     /// <summary>A modifier keyed by an arbitrary category, such as a damage school or a spell type.</summary>
     public class TypedModifier<TKey>

@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace WizardGun
+namespace Gunspire
 {
     /// <summary>
     /// One playable opening: a stat spread, a gun and a pair of spells. Plain data, so the

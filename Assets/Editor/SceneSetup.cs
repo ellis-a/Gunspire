@@ -3,7 +3,7 @@ using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
 
-namespace WizardGun.EditorTools
+namespace Gunspire.EditorTools
 {
     /// <summary>
     /// Convenience menu for creating a play scene. The game bootstraps itself in any scene,
@@ -13,7 +13,7 @@ namespace WizardGun.EditorTools
     {
         private const string ScenePath = "Assets/Scenes/Tower.unity";
 
-        [MenuItem("Wizard with a Gun/Create Play Scene")]
+        [MenuItem("Gunspire/Create Play Scene")]
         public static void CreatePlayScene()
         {
             if (!AssetDatabase.IsValidFolder("Assets/Scenes"))
@@ -21,7 +21,7 @@ namespace WizardGun.EditorTools
 
             var scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
 
-            var boot = new GameObject("[Wizard with a Gun]");
+            var boot = new GameObject("[Gunspire]");
             boot.AddComponent<GameBootstrap>();
 
             EditorSceneManager.SaveScene(scene, ScenePath);
@@ -30,7 +30,7 @@ namespace WizardGun.EditorTools
             Debug.Log("Created " + ScenePath + ". Press Play.");
         }
 
-        [MenuItem("Wizard with a Gun/Add Bootstrap To Current Scene")]
+        [MenuItem("Gunspire/Add Bootstrap To Current Scene")]
         public static void AddBootstrap()
         {
             if (Object.FindAnyObjectByType<GameBootstrap>() != null)
@@ -39,7 +39,7 @@ namespace WizardGun.EditorTools
                 return;
             }
 
-            var boot = new GameObject("[Wizard with a Gun]");
+            var boot = new GameObject("[Gunspire]");
             boot.AddComponent<GameBootstrap>();
             Undo.RegisterCreatedObjectUndo(boot, "Add Wizard bootstrap");
             EditorSceneManager.MarkSceneDirty(boot.scene);

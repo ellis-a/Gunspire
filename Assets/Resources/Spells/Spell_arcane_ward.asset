@@ -11,7 +11,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 742cfdfb30a993f448892174ad3ab0e9, type: 3}
   m_Name: Spell_arcane_ward
-  m_EditorClassIdentifier: Assembly-CSharp::WizardGun.SpellAsset
+  m_EditorClassIdentifier: Assembly-CSharp::Gunspire.SpellAsset
   Definition:
     Id: arcane_ward
     DisplayName: Arcane Ward
@@ -36,7 +36,7 @@ MonoBehaviour:
     version: 2
     RefIds:
     - rid: 5643702077732683796
-      type: {class: SelfStatusEffect, ns: WizardGun, asm: Assembly-CSharp}
+      type: {class: SelfStatusEffect, ns: Gunspire, asm: Assembly-CSharp}
       data:
         Status: 7
         Duration: 5
@@ -44,13 +44,13 @@ MonoBehaviour:
         Stacks: 2
         Magnitude: 0.18
     - rid: 5643702077732683797
-      type: {class: HealSelfEffect, ns: WizardGun, asm: Assembly-CSharp}
+      type: {class: HealSelfEffect, ns: Gunspire, asm: Assembly-CSharp}
       data:
         FractionOfMax: 0.12
         Flat: 0
         ScaleWithPower: 1
     - rid: 5643702077732683798
-      type: {class: VfxSphereEffect, ns: WizardGun, asm: Assembly-CSharp}
+      type: {class: VfxSphereEffect, ns: Gunspire, asm: Assembly-CSharp}
       data:
         Diameter: 2.4
         Alpha: 0.22

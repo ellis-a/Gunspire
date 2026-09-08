@@ -1,4 +1,4 @@
-# Wizard with a Gun
+# Gunspire
 
 A single-player FPS roguelike in Unity. You are a wizard with a sidearm, fighting up through
 an enemy wizard's tower. Every enemy attack is something you can move out of the way of, so
@@ -23,7 +23,7 @@ supports it; if you ever see `InvalidOperationException` from `Input.GetKey`, ch
    and copy `Assets/` into it — the project has no other dependencies.)
 2. Press **Play** in any scene, including an empty one, and pick a loadout. `GameBootstrap` spawns itself via
    `[RuntimeInitializeOnLoadMethod]` and builds the game.
-3. Optional: **Wizard with a Gun → Create Play Scene** makes a saved scene for build settings.
+3. Optional: **Gunspire → Create Play Scene** makes a saved scene for build settings.
 
 ## Controls
 

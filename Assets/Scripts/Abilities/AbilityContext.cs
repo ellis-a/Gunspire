@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace WizardGun
+namespace Gunspire
 {
     /// <summary>
     /// The scratchpad a chain of <see cref="AbilityEffect"/>s reads from and writes to.

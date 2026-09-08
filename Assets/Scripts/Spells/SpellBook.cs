@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace WizardGun
+namespace Gunspire
 {
     /// <summary>Result of trying to use a spell slot, so the HUD can say why nothing happened.</summary>
     public enum CastOutcome

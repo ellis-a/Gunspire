@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace WizardGun
+namespace Gunspire
 {
     /// <summary>
     /// What an <see cref="AbilityAttack"/> needs from whatever is using it.

@@ -1,4 +1,4 @@
-namespace WizardGun
+namespace Gunspire
 {
     /// <summary>Who an entity fights for. Damage is only applied across teams.</summary>
     public enum Team { Player, Enemy, Neutral }

@@ -11,7 +11,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: cf3f71eaef511144985c147b1a3c0095, type: 3}
   m_Name: Familiar_wisp
-  m_EditorClassIdentifier: Assembly-CSharp::WizardGun.FamiliarAsset
+  m_EditorClassIdentifier: Assembly-CSharp::Gunspire.FamiliarAsset
   Familiar:
     Id: wisp
     DisplayName: Arcane Wisp
@@ -45,12 +45,12 @@ MonoBehaviour:
     version: 2
     RefIds:
     - rid: 5643702088038612992
-      type: {class: AimAtTargetEffect, ns: WizardGun, asm: Assembly-CSharp}
+      type: {class: AimAtTargetEffect, ns: Gunspire, asm: Assembly-CSharp}
       data:
         AimHeight: 0.95
         Flatten: 0
     - rid: 5643702088038612993
-      type: {class: SpawnProjectileEffect, ns: WizardGun, asm: Assembly-CSharp}
+      type: {class: SpawnProjectileEffect, ns: Gunspire, asm: Assembly-CSharp}
       data:
         Damage: 11
         Speed: 34

@@ -11,7 +11,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 742cfdfb30a993f448892174ad3ab0e9, type: 3}
   m_Name: Spell_fel_empowerment
-  m_EditorClassIdentifier: Assembly-CSharp::WizardGun.SpellAsset
+  m_EditorClassIdentifier: Assembly-CSharp::Gunspire.SpellAsset
   Definition:
     Id: fel_empowerment
     DisplayName: Fel Empowerment
@@ -35,13 +35,13 @@ MonoBehaviour:
     version: 2
     RefIds:
     - rid: 5643702088049623040
-      type: {class: EmpowerFamiliarsEffect, ns: WizardGun, asm: Assembly-CSharp}
+      type: {class: EmpowerFamiliarsEffect, ns: Gunspire, asm: Assembly-CSharp}
       data:
         DamageMultiplier: 1.8
         Duration: 10
         HealthCostPerAttack: 4
     - rid: 5643702088049623041
-      type: {class: VfxSphereEffect, ns: WizardGun, asm: Assembly-CSharp}
+      type: {class: VfxSphereEffect, ns: Gunspire, asm: Assembly-CSharp}
       data:
         Diameter: 2.2
         Alpha: 0.3

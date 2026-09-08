@@ -1,7 +1,7 @@
 using System;
 using UnityEngine;
 
-namespace WizardGun
+namespace Gunspire
 {
     /// <summary>
     /// Metadata for each damage school: what it is called, what colour it reads as, and

@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace WizardGun
+namespace Gunspire
 {
     /// <summary>
     /// The in-play HUD: vitals, ammo, spell slots, active effects, and the prompts that tell

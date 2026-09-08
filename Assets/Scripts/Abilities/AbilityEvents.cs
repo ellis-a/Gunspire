@@ -1,7 +1,7 @@
 using System;
 using UnityEngine;
 
-namespace WizardGun
+namespace Gunspire
 {
     /// <summary>
     /// Global hook fired whenever the player successfully uses an ability, spell or movement.

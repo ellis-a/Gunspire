@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
 
-namespace WizardGun.EditorTools
+namespace Gunspire.EditorTools
 {
     /// <summary>
     /// Writes the built-in spells out as assets. The effect chain is a SerializeReference list,
@@ -14,7 +14,7 @@ namespace WizardGun.EditorTools
         private const string RootFolder = "Assets/Resources";
         private const string FolderPath = RootFolder + "/Spells";
 
-        [MenuItem("Wizard with a Gun/Create Spell Assets")]
+        [MenuItem("Gunspire/Create Spell Assets")]
         public static void CreateSpellAssets()
         {
             if (!AssetDatabase.IsValidFolder(RootFolder))
@@ -63,7 +63,7 @@ namespace WizardGun.EditorTools
         }
 
         /// <summary>Prints the roster with its effect chains, which is how you read a spell at a glance.</summary>
-        [MenuItem("Wizard with a Gun/Log Spell Table")]
+        [MenuItem("Gunspire/Log Spell Table")]
         public static void LogSpellTable()
         {
             var text = new System.Text.StringBuilder();

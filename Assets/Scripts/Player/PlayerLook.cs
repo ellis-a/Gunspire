@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace WizardGun
+namespace Gunspire
 {
     /// <summary>
     /// Mouse look. Yaw turns the body so movement follows the crosshair; pitch stays on the

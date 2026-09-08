@@ -1,9 +1,9 @@
 using UnityEngine;
 
-namespace WizardGun
+namespace Gunspire
 {
     /// <summary>
-    /// An authored spell. Create these via <c>Wizard with a Gun -> Create Spell Assets</c>,
+    /// An authored spell. Create these via <c>Gunspire -> Create Spell Assets</c>,
     /// which writes one per built-in into <c>Assets/Resources/Spells</c> where
     /// <see cref="SpellLibrary"/> can find them.
     ///
@@ -14,7 +14,7 @@ namespace WizardGun
     /// The effect chain is a <c>[SerializeReference]</c> list, so the Inspector gives you a
     /// type picker and every effect in the game is available from it.
     /// </summary>
-    [CreateAssetMenu(fileName = "Spell", menuName = "Wizard with a Gun/Spell")]
+    [CreateAssetMenu(fileName = "Spell", menuName = "Gunspire/Spell")]
     public class SpellAsset : ScriptableObject
     {
         public Spell Definition = new Spell();

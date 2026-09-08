@@ -1,9 +1,9 @@
 using UnityEngine;
 
-namespace WizardGun
+namespace Gunspire
 {
     /// <summary>
-    /// An authored boon. Create these via <c>Wizard with a Gun -> Create Boon Assets</c>, which
+    /// An authored boon. Create these via <c>Gunspire -> Create Boon Assets</c>, which
     /// writes one per built-in into <c>Assets/Resources/Boons</c> where
     /// <see cref="BoonLibrary"/> can find them.
     ///
@@ -14,7 +14,7 @@ namespace WizardGun
     /// The Effects list takes any <see cref="BoonEffect"/>, so the Inspector's type picker is
     /// the full menu of what a boon can do - which means a new boon usually needs no C# at all.
     /// </summary>
-    [CreateAssetMenu(fileName = "Boon", menuName = "Wizard with a Gun/Boon")]
+    [CreateAssetMenu(fileName = "Boon", menuName = "Gunspire/Boon")]
     public class BoonAsset : ScriptableObject
     {
         public Boon Boon = new Boon();

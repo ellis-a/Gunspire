@@ -1,7 +1,7 @@
 using System;
 using UnityEngine;
 
-namespace WizardGun
+namespace Gunspire
 {
     /// <summary>Spell resource. Regenerates continuously, with a short pause after casting.</summary>
     [DisallowMultipleComponent]

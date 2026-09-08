@@ -11,7 +11,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 742cfdfb30a993f448892174ad3ab0e9, type: 3}
   m_Name: Spell_kinetic_slam
-  m_EditorClassIdentifier: Assembly-CSharp::WizardGun.SpellAsset
+  m_EditorClassIdentifier: Assembly-CSharp::Gunspire.SpellAsset
   Definition:
     Id: kinetic_slam
     DisplayName: Kinetic Slam
@@ -37,14 +37,14 @@ MonoBehaviour:
     version: 2
     RefIds:
     - rid: 5643702077732683792
-      type: {class: SelectSphereEffect, ns: WizardGun, asm: Assembly-CSharp}
+      type: {class: SelectSphereEffect, ns: Gunspire, asm: Assembly-CSharp}
       data:
         Radius: 6.5
         AroundPoint: 0
         ScaleRadiusWithLevel: 1
         RequireLineOfSight: 0
     - rid: 5643702077732683793
-      type: {class: StatusPayloadEffect, ns: WizardGun, asm: Assembly-CSharp}
+      type: {class: StatusPayloadEffect, ns: Gunspire, asm: Assembly-CSharp}
       data:
         Status: 5
         Duration: 4
@@ -53,7 +53,7 @@ MonoBehaviour:
         Magnitude: 0.15
         DurationPerLevel: 0
     - rid: 5643702077732683794
-      type: {class: DealDamageEffect, ns: WizardGun, asm: Assembly-CSharp}
+      type: {class: DealDamageEffect, ns: Gunspire, asm: Assembly-CSharp}
       data:
         Amount: 22
         CanCrit: 0
@@ -64,7 +64,7 @@ MonoBehaviour:
         UseSmashPower: 1
         OnlyOncePerCast: 0
     - rid: 5643702077732683795
-      type: {class: VfxGroundRingEffect, ns: WizardGun, asm: Assembly-CSharp}
+      type: {class: VfxGroundRingEffect, ns: Gunspire, asm: Assembly-CSharp}
       data:
         Radius: 6.5
         Alpha: 0.35

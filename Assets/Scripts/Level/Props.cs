@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace WizardGun
+namespace Gunspire
 {
     /// <summary>
     /// Breakable scenery. Reinforced pieces need enough Strength behind the blow, which is

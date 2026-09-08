@@ -2,7 +2,7 @@
 using UnityEditor;
 using UnityEngine;
 
-namespace WizardGun.EditorTools
+namespace Gunspire.EditorTools
 {
     /// <summary>
     /// Gun and impact sounds are synthesised from weapon stats rather than authored, so there
@@ -11,7 +11,7 @@ namespace WizardGun.EditorTools
     /// </summary>
     public static class AudioTools
     {
-        [MenuItem("Wizard with a Gun/Log Sound Table")]
+        [MenuItem("Gunspire/Log Sound Table")]
         public static void LogSoundTable()
         {
             var text = new System.Text.StringBuilder();
@@ -37,7 +37,7 @@ namespace WizardGun.EditorTools
             Debug.Log(text.ToString());
         }
 
-        [MenuItem("Wizard with a Gun/Reload Sounds")]
+        [MenuItem("Gunspire/Reload Sounds")]
         public static void ReloadSounds()
         {
             SoundLibrary.Reload();

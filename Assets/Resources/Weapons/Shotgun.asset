@@ -11,7 +11,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 48821f08f7c573342a9dd749bc0fa5b3, type: 3}
   m_Name: Shotgun
-  m_EditorClassIdentifier: Assembly-CSharp::WizardGun.WeaponAsset
+  m_EditorClassIdentifier: Assembly-CSharp::Gunspire.WeaponAsset
   Definition:
     Id: shotgun
     DisplayName: Shotgun

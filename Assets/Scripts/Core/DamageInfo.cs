@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace WizardGun
+namespace Gunspire
 {
     /// <summary>A request to apply a status effect, carried along with damage.</summary>
     [System.Serializable]

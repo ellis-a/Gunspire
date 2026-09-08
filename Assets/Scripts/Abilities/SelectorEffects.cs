@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace WizardGun
+namespace Gunspire
 {
     /// <summary>
     /// Effects that decide *what* an ability affects. They write <see cref="AbilityContext.Targets"/>

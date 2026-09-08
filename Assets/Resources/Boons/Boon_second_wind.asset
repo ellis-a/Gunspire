@@ -11,7 +11,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 68fa3f1d514b1bc49ab86965246e01b4, type: 3}
   m_Name: Boon_second_wind
-  m_EditorClassIdentifier: Assembly-CSharp::WizardGun.BoonAsset
+  m_EditorClassIdentifier: Assembly-CSharp::Gunspire.BoonAsset
   Boon:
     Id: second_wind
     Name: Second Wind
@@ -29,12 +29,12 @@ MonoBehaviour:
     - rid: -2
       type: {class: , ns: , asm: }
     - rid: 5643702087564918803
-      type: {class: ModifyStatEffect, ns: WizardGun, asm: Assembly-CSharp}
+      type: {class: ModifyStatEffect, ns: Gunspire, asm: Assembly-CSharp}
       data:
         MinLevel: 1
         Stat: 3
         Points: 2
     - rid: 5643702087564918804
-      type: {class: FullHealEffect, ns: WizardGun, asm: Assembly-CSharp}
+      type: {class: FullHealEffect, ns: Gunspire, asm: Assembly-CSharp}
       data:
         MinLevel: 1

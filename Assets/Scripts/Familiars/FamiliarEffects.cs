@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace WizardGun
+namespace Gunspire
 {
     /// <summary>
     /// Heals whoever summoned the caster. Distinct from HealSelfEffect: a familiar healing

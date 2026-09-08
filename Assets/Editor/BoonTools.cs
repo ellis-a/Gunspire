@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
 
-namespace WizardGun.EditorTools
+namespace Gunspire.EditorTools
 {
     /// <summary>
     /// Writes the built-in boons out as assets so they can be tuned in the Inspector without a
@@ -15,7 +15,7 @@ namespace WizardGun.EditorTools
         private const string RootFolder = "Assets/Resources";
         private const string FolderPath = RootFolder + "/Boons";
 
-        [MenuItem("Wizard with a Gun/Create Boon Assets")]
+        [MenuItem("Gunspire/Create Boon Assets")]
         public static void CreateBoonAssets()
         {
             if (!AssetDatabase.IsValidFolder(RootFolder))
@@ -69,7 +69,7 @@ namespace WizardGun.EditorTools
         /// this is here to catch - the description is what the player reads, and nothing else
         /// in the game ever checks it against the effects.
         /// </summary>
-        [MenuItem("Wizard with a Gun/Log Boon Table")]
+        [MenuItem("Gunspire/Log Boon Table")]
         public static void LogBoonTable()
         {
             var text = new System.Text.StringBuilder();

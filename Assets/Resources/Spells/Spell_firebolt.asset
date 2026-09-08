@@ -11,7 +11,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 742cfdfb30a993f448892174ad3ab0e9, type: 3}
   m_Name: Spell_firebolt
-  m_EditorClassIdentifier: Assembly-CSharp::WizardGun.SpellAsset
+  m_EditorClassIdentifier: Assembly-CSharp::Gunspire.SpellAsset
   Definition:
     Id: firebolt
     DisplayName: Firebolt
@@ -35,7 +35,7 @@ MonoBehaviour:
     version: 2
     RefIds:
     - rid: 5643702077732683787
-      type: {class: StatusPayloadEffect, ns: WizardGun, asm: Assembly-CSharp}
+      type: {class: StatusPayloadEffect, ns: Gunspire, asm: Assembly-CSharp}
       data:
         Status: 2
         Duration: 5
@@ -44,7 +44,7 @@ MonoBehaviour:
         Magnitude: 5
         DurationPerLevel: 0
     - rid: 5643702077732683788
-      type: {class: SpawnProjectileEffect, ns: WizardGun, asm: Assembly-CSharp}
+      type: {class: SpawnProjectileEffect, ns: Gunspire, asm: Assembly-CSharp}
       data:
         Damage: 0
         Speed: 42
@@ -65,14 +65,14 @@ MonoBehaviour:
         - rid: 5643702077732683790
         - rid: 5643702077732683791
     - rid: 5643702077732683789
-      type: {class: SelectSphereEffect, ns: WizardGun, asm: Assembly-CSharp}
+      type: {class: SelectSphereEffect, ns: Gunspire, asm: Assembly-CSharp}
       data:
         Radius: 3.2
         AroundPoint: 1
         ScaleRadiusWithLevel: 1
         RequireLineOfSight: 0
     - rid: 5643702077732683790
-      type: {class: DealDamageEffect, ns: WizardGun, asm: Assembly-CSharp}
+      type: {class: DealDamageEffect, ns: Gunspire, asm: Assembly-CSharp}
       data:
         Amount: 30
         CanCrit: 0
@@ -83,7 +83,7 @@ MonoBehaviour:
         UseSmashPower: 0
         OnlyOncePerCast: 0
     - rid: 5643702077732683791
-      type: {class: VfxSphereEffect, ns: WizardGun, asm: Assembly-CSharp}
+      type: {class: VfxSphereEffect, ns: Gunspire, asm: Assembly-CSharp}
       data:
         Diameter: 1.6
         Alpha: 0.5

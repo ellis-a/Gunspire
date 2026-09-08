@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace WizardGun
+namespace Gunspire
 {
     /// <summary>
     /// Shared damage plumbing: crit rolls, outgoing multipliers, applying a hit to whatever

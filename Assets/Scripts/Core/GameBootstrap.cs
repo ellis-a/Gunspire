@@ -1,7 +1,7 @@
 using UnityEngine;
 using UnityEngine.Rendering;
 
-namespace WizardGun
+namespace Gunspire
 {
     /// <summary>
     /// Builds the whole game at runtime. Drop this on an object in any scene, or just press
@@ -27,7 +27,7 @@ namespace WizardGun
             if (FindAnyObjectByType<GameBootstrap>() != null) return;
             if (FindAnyObjectByType<GameDirector>() != null) return;
 
-            var go = new GameObject("[Wizard with a Gun]");
+            var go = new GameObject("[Gunspire]");
             go.AddComponent<GameBootstrap>();
         }
 

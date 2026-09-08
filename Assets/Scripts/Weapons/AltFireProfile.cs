@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace WizardGun
+namespace Gunspire
 {
     /// <summary>
     /// The right-click behaviour of one gun. A gun with <see cref="AltFireKind.None"/> has no

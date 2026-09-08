@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
 
-namespace WizardGun.EditorTools
+namespace Gunspire.EditorTools
 {
     /// <summary>
     /// Enemies are assembled at runtime with no prefab, so there is nothing to open and look
@@ -15,7 +15,7 @@ namespace WizardGun.EditorTools
         private const string RootFolder = "Assets/Resources";
         private const string FolderPath = RootFolder + "/Enemies";
 
-        [MenuItem("Wizard with a Gun/Create Enemy Assets")]
+        [MenuItem("Gunspire/Create Enemy Assets")]
         public static void CreateEnemyAssets()
         {
             if (!AssetDatabase.IsValidFolder(RootFolder))
@@ -63,7 +63,7 @@ namespace WizardGun.EditorTools
                 : "All enemy assets already exist in " + FolderPath + "; nothing was overwritten.");
         }
 
-        [MenuItem("Wizard with a Gun/Log Enemy Table")]
+        [MenuItem("Gunspire/Log Enemy Table")]
         public static void LogEnemyTable()
         {
             var text = new System.Text.StringBuilder();
@@ -104,7 +104,7 @@ namespace WizardGun.EditorTools
         /// Building each one also exercises the attack chains, which is where a malformed
         /// [SerializeReference] entry would surface as a null effect rather than an error.
         /// </summary>
-        [MenuItem("Wizard with a Gun/Verify Enemy Roster")]
+        [MenuItem("Gunspire/Verify Enemy Roster")]
         public static void VerifyRoster()
         {
             var text = new System.Text.StringBuilder();

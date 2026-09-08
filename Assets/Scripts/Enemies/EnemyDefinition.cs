@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace WizardGun
+namespace Gunspire
 {
     /// <summary>How the body is assembled from primitives. Add a case to EnemyFactory to add one.</summary>
     public enum BodyShape { Humanoid, Eyeball }

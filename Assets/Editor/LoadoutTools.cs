@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
 
-namespace WizardGun.EditorTools
+namespace Gunspire.EditorTools
 {
     /// <summary>
     /// Writes the built-in loadouts out as assets so they can be edited in the Inspector.
@@ -15,7 +15,7 @@ namespace WizardGun.EditorTools
         private const string RootFolder = "Assets/Resources";
         private const string FolderPath = RootFolder + "/Loadouts";
 
-        [MenuItem("Wizard with a Gun/Create Starting Loadout Assets")]
+        [MenuItem("Gunspire/Create Starting Loadout Assets")]
         public static void CreateLoadoutAssets()
         {
             // Its own folder, alongside Weapons and Spells. Resources.LoadAll searches
@@ -70,7 +70,7 @@ namespace WizardGun.EditorTools
         /// - the same 25 stat points and guns tuned to roughly the same damage - and that is
         /// only checkable by comparing them, which reading three object initializers is not.
         /// </summary>
-        [MenuItem("Wizard with a Gun/Log Loadout Table")]
+        [MenuItem("Gunspire/Log Loadout Table")]
         public static void LogLoadoutTable()
         {
             var text = new System.Text.StringBuilder();
@@ -123,7 +123,7 @@ namespace WizardGun.EditorTools
             Debug.Log(text.ToString());
         }
 
-        [MenuItem("Wizard with a Gun/Log Valid Ids")]
+        [MenuItem("Gunspire/Log Valid Ids")]
         public static void LogValidIds()
         {
             string guns = "";

@@ -11,7 +11,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: cf3f71eaef511144985c147b1a3c0095, type: 3}
   m_Name: Familiar_mender
-  m_EditorClassIdentifier: Assembly-CSharp::WizardGun.FamiliarAsset
+  m_EditorClassIdentifier: Assembly-CSharp::Gunspire.FamiliarAsset
   Familiar:
     Id: mender
     DisplayName: Mender
@@ -46,12 +46,12 @@ MonoBehaviour:
     version: 2
     RefIds:
     - rid: 5643702088038612994
-      type: {class: HealOwnerEffect, ns: WizardGun, asm: Assembly-CSharp}
+      type: {class: HealOwnerEffect, ns: Gunspire, asm: Assembly-CSharp}
       data:
         Amount: 14
         ScaleWithPower: 1
     - rid: 5643702088038612995
-      type: {class: VfxOnOwnerEffect, ns: WizardGun, asm: Assembly-CSharp}
+      type: {class: VfxOnOwnerEffect, ns: Gunspire, asm: Assembly-CSharp}
       data:
         Diameter: 1.4
         Lifetime: 0.4

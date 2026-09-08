@@ -11,7 +11,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 68fa3f1d514b1bc49ab86965246e01b4, type: 3}
   m_Name: Boon_bloodfeast
-  m_EditorClassIdentifier: Assembly-CSharp::WizardGun.BoonAsset
+  m_EditorClassIdentifier: Assembly-CSharp::Gunspire.BoonAsset
   Boon:
     Id: bloodfeast
     Name: Bloodfeast
@@ -28,7 +28,7 @@ MonoBehaviour:
     - rid: -2
       type: {class: , ns: , asm: }
     - rid: 5643702087564918800
-      type: {class: OnKillEffect, ns: WizardGun, asm: Assembly-CSharp}
+      type: {class: OnKillEffect, ns: Gunspire, asm: Assembly-CSharp}
       data:
         MinLevel: 1
         Mana: 0

@@ -1,4 +1,4 @@
-namespace WizardGun
+namespace Gunspire
 {
     /// <summary>
     /// A single additive-or-multiplicative change to a derived <see cref="Attr"/>.

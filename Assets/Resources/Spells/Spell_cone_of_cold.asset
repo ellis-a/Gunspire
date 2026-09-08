@@ -11,7 +11,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 742cfdfb30a993f448892174ad3ab0e9, type: 3}
   m_Name: Spell_cone_of_cold
-  m_EditorClassIdentifier: Assembly-CSharp::WizardGun.SpellAsset
+  m_EditorClassIdentifier: Assembly-CSharp::Gunspire.SpellAsset
   Definition:
     Id: cone_of_cold
     DisplayName: Cone of Cold
@@ -38,14 +38,14 @@ MonoBehaviour:
     version: 2
     RefIds:
     - rid: 5643702077732683782
-      type: {class: SelectConeEffect, ns: WizardGun, asm: Assembly-CSharp}
+      type: {class: SelectConeEffect, ns: Gunspire, asm: Assembly-CSharp}
       data:
         Range: 13
         HalfAngle: 34
         RequireLineOfSight: 1
         ScaleRangeWithLevel: 0
     - rid: 5643702077732683783
-      type: {class: StatusPayloadEffect, ns: WizardGun, asm: Assembly-CSharp}
+      type: {class: StatusPayloadEffect, ns: Gunspire, asm: Assembly-CSharp}
       data:
         Status: 0
         Duration: 4.5
@@ -54,7 +54,7 @@ MonoBehaviour:
         Magnitude: 0.11
         DurationPerLevel: 0
     - rid: 5643702077732683784
-      type: {class: DealDamageEffect, ns: WizardGun, asm: Assembly-CSharp}
+      type: {class: DealDamageEffect, ns: Gunspire, asm: Assembly-CSharp}
       data:
         Amount: 17
         CanCrit: 0
@@ -65,7 +65,7 @@ MonoBehaviour:
         UseSmashPower: 0
         OnlyOncePerCast: 0
     - rid: 5643702077732683785
-      type: {class: VfxConeEffect, ns: WizardGun, asm: Assembly-CSharp}
+      type: {class: VfxConeEffect, ns: Gunspire, asm: Assembly-CSharp}
       data:
         Range: 13
         HalfAngle: 34
@@ -73,7 +73,7 @@ MonoBehaviour:
         Lifetime: 0.4
         ScaleWithLevel: 0
     - rid: 5643702077732683786
-      type: {class: VfxShardsEffect, ns: WizardGun, asm: Assembly-CSharp}
+      type: {class: VfxShardsEffect, ns: Gunspire, asm: Assembly-CSharp}
       data:
         Count: 10
         Range: 13

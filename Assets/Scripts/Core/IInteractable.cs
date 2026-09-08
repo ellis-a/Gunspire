@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace WizardGun
+namespace Gunspire
 {
     /// <summary>Something the player can walk up to and press the interact key on.</summary>
     public interface IInteractable

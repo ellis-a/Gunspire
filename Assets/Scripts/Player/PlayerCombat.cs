@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace WizardGun
+namespace Gunspire
 {
     /// <summary>
     /// Reads the combat half of the player input and drives the gun, the spell slots,
@@ -36,8 +36,8 @@ namespace WizardGun
 
         // Qualified because this class also has a field called Health, and an unqualified
         // Health.AnyDamaged reads as the field rather than the type.
-        private void OnEnable() => WizardGun.Health.AnyDamaged += OnAnythingDamaged;
-        private void OnDisable() => WizardGun.Health.AnyDamaged -= OnAnythingDamaged;
+        private void OnEnable() => Gunspire.Health.AnyDamaged += OnAnythingDamaged;
+        private void OnDisable() => Gunspire.Health.AnyDamaged -= OnAnythingDamaged;
 
         /// <summary>
         /// The hitmarker. Combat.SpawnImpact already covers where a shot *landed*, but that
@@ -45,7 +45,7 @@ namespace WizardGun
         /// you hit was alive. Guns, spells and the bash all route through Health, so one
         /// subscription covers every way the player can deal damage.
         /// </summary>
-        private void OnAnythingDamaged(WizardGun.Health victim, DamageInfo info, float amount)
+        private void OnAnythingDamaged(Gunspire.Health victim, DamageInfo info, float amount)
         {
             if (info.Source != gameObject || victim == null) return;
             if (victim.gameObject == gameObject) return;

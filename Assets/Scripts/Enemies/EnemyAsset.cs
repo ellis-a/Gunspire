@@ -1,9 +1,9 @@
 using UnityEngine;
 
-namespace WizardGun
+namespace Gunspire
 {
     /// <summary>
-    /// An authored enemy. Create these via <c>Wizard with a Gun -> Create Enemy Assets</c>,
+    /// An authored enemy. Create these via <c>Gunspire -> Create Enemy Assets</c>,
     /// which writes one per built-in into <c>Assets/Resources/Enemies</c> where
     /// <see cref="EnemyLibrary"/> can find them.
     ///
@@ -15,7 +15,7 @@ namespace WizardGun
     /// spells are built from, so a whole new enemy can be assembled without writing C# as long
     /// as the existing effects cover what it should do.
     /// </summary>
-    [CreateAssetMenu(fileName = "Enemy", menuName = "Wizard with a Gun/Enemy")]
+    [CreateAssetMenu(fileName = "Enemy", menuName = "Gunspire/Enemy")]
     public class EnemyAsset : ScriptableObject
     {
         public EnemyDefinition Enemy = new EnemyDefinition();

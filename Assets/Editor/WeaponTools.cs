@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
 
-namespace WizardGun.EditorTools
+namespace Gunspire.EditorTools
 {
     /// <summary>
     /// Writes the built-in guns out as assets so they can be tuned in the Inspector without a
@@ -15,7 +15,7 @@ namespace WizardGun.EditorTools
         private const string RootFolder = "Assets/Resources";
         private const string FolderPath = RootFolder + "/Weapons";
 
-        [MenuItem("Wizard with a Gun/Create Weapon Assets")]
+        [MenuItem("Gunspire/Create Weapon Assets")]
         public static void CreateWeaponAssets()
         {
             if (!AssetDatabase.IsValidFolder(RootFolder))
@@ -75,7 +75,7 @@ namespace WizardGun.EditorTools
         /// Only touches assets whose alt fire is still empty, so running it twice is safe and
         /// an alt fire edited in the Inspector is never overwritten.
         /// </summary>
-        [MenuItem("Wizard with a Gun/Sync Alt Fires To Assets")]
+        [MenuItem("Gunspire/Sync Alt Fires To Assets")]
         public static void SyncAltFires()
         {
             List<WeaponDefinition> code = WeaponLibrary.BuiltIn();
@@ -120,7 +120,7 @@ namespace WizardGun.EditorTools
         /// Prints the roster as a table. Balancing a gun means comparing it with the others,
         /// which is hard to do reading object initializers one at a time.
         /// </summary>
-        [MenuItem("Wizard with a Gun/Log Weapon Balance Table")]
+        [MenuItem("Gunspire/Log Weapon Balance Table")]
         public static void LogBalanceTable()
         {
             var text = new System.Text.StringBuilder();

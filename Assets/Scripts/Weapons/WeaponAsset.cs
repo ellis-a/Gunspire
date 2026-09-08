@@ -1,9 +1,9 @@
 using UnityEngine;
 
-namespace WizardGun
+namespace Gunspire
 {
     /// <summary>
-    /// An authored gun. Create these via <c>Wizard with a Gun -> Create Weapon Assets</c>,
+    /// An authored gun. Create these via <c>Gunspire -> Create Weapon Assets</c>,
     /// which writes one per built-in into <c>Assets/Resources/Weapons</c> where
     /// <see cref="WeaponLibrary"/> can find them.
     ///
@@ -12,7 +12,7 @@ namespace WizardGun
     /// no assets at all the game runs on the code roster, so a fresh clone needs nothing
     /// authored, and deleting the assets is the way back to defaults.
     /// </summary>
-    [CreateAssetMenu(fileName = "Weapon", menuName = "Wizard with a Gun/Weapon")]
+    [CreateAssetMenu(fileName = "Weapon", menuName = "Gunspire/Weapon")]
     public class WeaponAsset : ScriptableObject
     {
         public WeaponDefinition Definition = new WeaponDefinition();

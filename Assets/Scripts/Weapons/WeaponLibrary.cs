@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace WizardGun
+namespace Gunspire
 {
     /// <summary>
     /// The gun roster. The starting weapon is named by <see cref="StartingLoadout.WeaponId"/>
