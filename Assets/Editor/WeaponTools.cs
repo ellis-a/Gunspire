@@ -15,6 +15,78 @@ namespace Gunspire.EditorTools
         private const string RootFolder = "Assets/Resources";
         private const string FolderPath = RootFolder + "/Weapons";
 
+        /// <summary>
+        /// A shot cone has to be the same shape whichever way the player is facing. It was not:
+        /// spread was applied by rotating about the world axes, so a shot down world X was
+        /// rotated about its own direction and the cone collapsed to a horizontal line.
+        ///
+        /// Measured rather than eyeballed because the failure was invisible from three of the
+        /// four compass points, which is exactly how it survived being played.
+        /// </summary>
+        [MenuItem("Gunspire/Verify Shot Spread")]
+        public static void VerifySpread()
+        {
+            const int samples = 4000;
+            const float degrees = 7f;
+            const int bearings = 12;
+
+            var report = new System.Text.StringBuilder();
+            report.AppendLine("Shot spread at " + degrees + " degrees, "
+                              + samples + " samples per facing");
+            report.AppendLine("  bearing   sideways   vertical   ratio");
+
+            float worstRatio = 1f;
+            string worstAt = "";
+
+            for (int b = 0; b < bearings; b++)
+            {
+                float yaw = b * (360f / bearings);
+
+                // A pitched facing as well, because straight up is the one direction with no
+                // horizontal axis to build the cone from.
+                float pitch = b % 3 == 0 ? 0f : (b % 3 == 1 ? 35f : -60f);
+                Vector3 forward = Quaternion.Euler(pitch, yaw, 0f) * Vector3.forward;
+
+                Vector3 right = Vector3.Cross(Vector3.up, forward);
+                if (right.sqrMagnitude < 0.0001f) right = Vector3.right;
+                right.Normalize();
+                Vector3 up = Vector3.Cross(forward, right);
+
+                float sideways = 0f, vertical = 0f;
+
+                for (int i = 0; i < samples; i++)
+                {
+                    Vector3 shot = Weapon.ApplySpread(forward, degrees);
+                    sideways += Mathf.Abs(Vector3.Dot(shot, right));
+                    vertical += Mathf.Abs(Vector3.Dot(shot, up));
+                }
+
+                sideways /= samples;
+                vertical /= samples;
+                float ratio = sideways > 0.0001f ? vertical / sideways : 0f;
+
+                if (ratio < worstRatio) { worstRatio = ratio; worstAt = "yaw " + yaw + " pitch " + pitch; }
+
+                report.AppendLine("  " + yaw.ToString("000") + "/" + pitch.ToString("+00;-00")
+                                  + "     " + sideways.ToString("0.0000")
+                                  + "     " + vertical.ToString("0.0000")
+                                  + "     " + ratio.ToString("0.000"));
+            }
+
+            // A round cone spreads as far up and down as it does side to side. Anything under
+            // 0.85 is the cone flattening out, not sampling noise.
+            if (worstRatio < 0.85f)
+            {
+                report.Append("  FLAT: worst vertical/sideways ratio " + worstRatio.ToString("0.000")
+                              + " at " + worstAt);
+                Debug.LogError(report.ToString());
+                return;
+            }
+
+            report.Append("  round at every facing, worst ratio " + worstRatio.ToString("0.000"));
+            Debug.Log(report.ToString());
+        }
+
         [MenuItem("Gunspire/Create Weapon Assets")]
         public static void CreateWeaponAssets()
         {

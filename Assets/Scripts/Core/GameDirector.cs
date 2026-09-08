@@ -211,7 +211,7 @@ namespace Gunspire
 
             // Drop the player at the room entrance, facing into the arena.
             Player.Motor.Teleport(CurrentRoom.PlayerSpawn + Vector3.up * 0.5f, preserveVelocity: false);
-            Player.transform.rotation = Quaternion.identity;
+            Player.transform.rotation = CurrentRoom.PlayerFacing;
 
             Player.Weapon.RefillMagazine();
             Player.Motor.RefillDashes();

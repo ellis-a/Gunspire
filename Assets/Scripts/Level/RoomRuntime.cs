@@ -12,6 +12,9 @@ namespace Gunspire
     {
         public RoomKind Kind;
         public Vector3 PlayerSpawn;
+
+        /// <summary>Which way the player looks on arrival. A maze entrance can be on any side.</summary>
+        public Quaternion PlayerFacing = Quaternion.identity;
         public ExitPortal Portal;
 
         private readonly List<EnemyController> _enemies = new List<EnemyController>();

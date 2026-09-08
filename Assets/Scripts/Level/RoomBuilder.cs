@@ -16,9 +16,48 @@ namespace Gunspire
             public float Radius;
         }
 
+        /// <summary>
+        /// Step one of the maze work: layouts only. A maze room deliberately spawns nothing to
+        /// fight, because enemies cannot path through concave geometry yet - they beeline and
+        /// slide along walls, which is enough for the convex pillars of a rectangular room and
+        /// nothing at all in a maze. Set this false to get the old combat rooms back.
+        /// </summary>
+        public static bool MazeLayouts = true;
+
+        private static bool UsesMaze(RoomKind kind) => MazeLayouts && kind == RoomKind.Combat;
+
         public static RoomRuntime Generate(RoomNode node)
         {
             var rng = new Rng(node.Seed);
+            return UsesMaze(node.Kind) ? GenerateMaze(node, rng) : GenerateRectangle(node, rng);
+        }
+
+        /// <summary>
+        /// A maze floor: shell only for now. The exit sits in the chamber furthest from the
+        /// entrance by path length, so finding it means walking the maze rather than crossing
+        /// a room, which is the thing worth judging before any content goes in.
+        /// </summary>
+        private static RoomRuntime GenerateMaze(RoomNode node, Rng rng)
+        {
+            var maze = new MazeLayout(MazeSettings.For(node.Kind), rng);
+
+            var root = new GameObject("Maze_" + node.Kind + "_F" + node.Floor);
+            var runtime = root.AddComponent<RoomRuntime>();
+            runtime.Kind = node.Kind;
+
+            MazeBuilder.BuildShell(root.transform, maze, node, rng);
+
+            runtime.PlayerSpawn = maze.CellCentre(maze.Start) + Vector3.up * 0.2f;
+            runtime.PlayerFacing = Quaternion.LookRotation(maze.ExitDirection(maze.Start), Vector3.up);
+
+            runtime.Portal = ExitPortal.Spawn(maze.CellCentre(maze.Exit), Quaternion.identity);
+            runtime.Portal.transform.SetParent(root.transform, true);
+
+            return runtime;
+        }
+
+        private static RoomRuntime GenerateRectangle(RoomNode node, Rng rng)
+        {
             Vector2 size = SizeFor(node.Kind);
             float width = size.x;
             float depth = size.y;
