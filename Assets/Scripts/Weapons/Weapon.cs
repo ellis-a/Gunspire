@@ -336,11 +336,29 @@ namespace Gunspire
             return spread;
         }
 
-        private static Vector3 ApplySpread(Vector3 forward, float degrees)
+        /// <summary>
+        /// Scatters a shot inside a cone around <paramref name="forward"/>.
+        ///
+        /// The axes have to come from the shot, not from the world. Quaternion.Euler turns
+        /// about the world axes, so a shot travelling down world X was being rotated about its
+        /// own direction - which does nothing at all, and collapsed the cone into a flat
+        /// horizontal line for anyone facing that way.
+        /// </summary>
+        public static Vector3 ApplySpread(Vector3 forward, float degrees)
         {
             if (degrees <= 0.001f) return forward;
+
+            Vector3 right = Vector3.Cross(Vector3.up, forward);
+
+            // Straight up or straight down leaves no horizontal axis to work from, so any
+            // perpendicular will do - the cone is symmetric about the barrel either way.
+            if (right.sqrMagnitude < 0.0001f) right = Vector3.right;
+            right.Normalize();
+
+            Vector3 up = Vector3.Cross(forward, right);
+
             Vector2 offset = Random.insideUnitCircle * degrees;
-            return Quaternion.Euler(offset.y, offset.x, 0f) * forward;
+            return Quaternion.AngleAxis(offset.x, up) * Quaternion.AngleAxis(offset.y, right) * forward;
         }
 
         // ---------------------------------------------------------------- delivery
