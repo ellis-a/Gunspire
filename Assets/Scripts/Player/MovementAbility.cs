@@ -54,8 +54,12 @@ namespace Gunspire
         /// <summary>Drops the moment the caster moves. Pairs with <see cref="Invulnerable"/>.</summary>
         public bool BreakOnMovement;
 
-        /// <summary>Lets the caster cling to and run along walls.</summary>
-        public bool WallCling;
+        /// <summary>
+        /// Fires a line at whatever the caster is looking at and hauls them to the first
+        /// surface it hits, then reorients gravity to point into that surface. See
+        /// <see cref="PlayerMotor.BeginWallZip"/> for how the reorientation itself works.
+        /// </summary>
+        public bool WallZip;
 
         public bool IsSustained => Mode == MovementMode.Sustained;
 

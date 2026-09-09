@@ -22,7 +22,7 @@ namespace Gunspire
         /// How many classes the opening screen offers out of the whole roster. Fewer than the
         /// roster is the point: which two you are choosing between is itself a roll.
         /// </summary>
-        [SerializeField] private int loadoutChoices = 2;
+        [SerializeField] private int loadoutChoices = 3;
 
         public GameStateKind State { get; private set; } = GameStateKind.Loading;
         public RunState Run { get; private set; }

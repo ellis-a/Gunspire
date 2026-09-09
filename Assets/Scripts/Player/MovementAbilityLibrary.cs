@@ -126,13 +126,13 @@ namespace Gunspire
                     Id = "spider_legs",
                     DisplayName = "Spider Legs",
                     ShortName = "SPDR",
-                    Description = "Slower than a sprint, but walls stop being walls. Cling to them, " +
-                                  "run along them, and take the route nothing else can.",
+                    Description = "Fires a line at whatever you are looking at and hauls you to " +
+                                  "it. Stick, and that surface becomes your new floor - jump and " +
+                                  "gravity pulls you straight back down onto it, not away.",
                     Mode = MovementMode.Sustained,
                     Rarity = Rarity.Rare,
                     ManaPerSecond = 11f,
-                    MoveSpeedBonus = 0.22f,
-                    WallCling = true,
+                    WallZip = true,
                     Tint = new Color(0.55f, 0.9f, 0.5f)
                 }
             };

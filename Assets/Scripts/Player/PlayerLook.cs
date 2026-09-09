@@ -56,7 +56,10 @@ namespace Gunspire
             float mx = Input.GetAxisRaw("Mouse X") * scale;
             float my = Input.GetAxisRaw("Mouse Y") * scale;
 
-            transform.Rotate(Vector3.up, mx, Space.World);
+            // The current up axis rather than a hardcoded world one, so turning still happens
+            // level relative to whatever surface Spider Legs has the player standing on -
+            // world up ordinarily, a wall's outward normal while attached to one.
+            transform.Rotate(transform.up, mx, Space.World);
             _pitch = Mathf.Clamp(_pitch - my, -pitchLimit, pitchLimit);
         }
 

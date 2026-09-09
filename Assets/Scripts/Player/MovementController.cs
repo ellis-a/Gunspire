@@ -152,7 +152,13 @@ namespace Gunspire
             if (Current.MoveSpeedBonus != 0f && Sheet != null)
                 _speedModifier = Sheet.AddPercent(Attr.MoveSpeed, Current.MoveSpeedBonus, this);
 
-            if (Current.WallCling && Motor != null) Motor.WallClingEnabled = true;
+            if (Current.WallZip && Motor != null)
+            {
+                // The camera's exact look direction, pitch included, so aiming up at a ledge
+                // or down at a floor zips there just as readily as a wall dead ahead.
+                Vector3 direction = Context != null && Context.Aim != null ? Context.Aim.forward : transform.forward;
+                Motor.BeginWallZip(direction);
+            }
 
             Changed?.Invoke();
             return true;
@@ -181,6 +187,12 @@ namespace Gunspire
             if (Current.Invulnerable && Health != null)
                 Health.InvulnerabilityTimer = Mathf.Max(Health.InvulnerabilityTimer, 0.2f);
 
+            // The motor lets go on its own when the zip finds no wall, or the player walks off
+            // the edge of one with nothing to land on - either way there is nothing left for
+            // this ability to be doing, so it should end rather than sit active and idle.
+            if (Current.WallZip && Motor != null && Motor.ZipState == PlayerMotor.WallZipState.Off)
+                return false;
+
             return true;
         }
 
@@ -196,7 +208,9 @@ namespace Gunspire
                 _speedModifier = null;
             }
 
-            if (Motor != null) Motor.WallClingEnabled = false;
+            // Unconditional and harmless for abilities that never touched it - EndWallZip is a
+            // no-op unless the motor is actually mid-zip or attached to something.
+            if (Motor != null) Motor.EndWallZip();
             Changed?.Invoke();
         }
 

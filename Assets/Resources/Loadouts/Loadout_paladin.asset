@@ -22,7 +22,7 @@ MonoBehaviour:
     Vitality: 3
     Luck: 3
     WeaponId: revolver
-    MovementAbilityId: dash
+    MovementAbilityId: sprint
     SpellId: 
     SpellSlot: 0
     TintOverride: {r: 0, g: 0, b: 0, a: 0}
