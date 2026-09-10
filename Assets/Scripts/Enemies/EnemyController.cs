@@ -47,6 +47,26 @@ namespace Gunspire
         /// </summary>
         public float EyeHeight = 1.35f;
 
+        [Header("Perception")]
+        public IdleActivity Idle = IdleActivity.Stand;
+        public float SightRange = 22f;
+        public float SightHalfAngle = 60f;
+        public float HearingRange = 16f;
+
+        [Header("Idling")]
+        [SerializeField] private float wanderRadius = 7f;
+        [SerializeField] private float patrolRadius = 11f;
+        [SerializeField] private float idlePauseSeconds = 2.2f;
+        [SerializeField] private float idleSpeedFraction = 0.45f;
+        [SerializeField] private float arriveDistance = 1.2f;
+
+        /// <summary>
+        /// Has something switched this on? Nothing switches it back off - once a room knows you
+        /// are in it, it stays that way, which keeps a fight from resetting because you found a
+        /// corner to stand in.
+        /// </summary>
+        public bool IsAlerted { get; private set; }
+
         public Health Health { get; private set; }
         public CharacterSheet Sheet { get; private set; }
         public StatusController Status { get; private set; }
@@ -64,6 +84,12 @@ namespace Gunspire
         private int _strafeSign = 1;
         private float _retargetTimer;
         private float _bobPhase;
+
+        private Vector3 _home;
+        private Vector3 _idleDestination;
+        private float _idlePause;
+        private readonly List<Vector3> _patrol = new List<Vector3>();
+        private int _patrolIndex;
 
         public bool IsAttacking
         {
@@ -100,28 +126,50 @@ namespace Gunspire
             for (int i = 0; i < _attacks.Count; i++) _attacks[i].Initialise(this);
 
             if (Health != null) Health.Damaged += OnDamaged;
-            AcquireTarget();
+
+            _home = transform.position;
+            _idleDestination = _home;
+            BuildPatrolRoute();
+
+            Noise.Heard += OnNoise;
+
+            // A hunter never idles. Everything else waits to be given a reason.
+            if (Idle == IdleActivity.Hunt) Alert();
         }
 
         private void OnDestroy()
         {
             if (Health != null) Health.Damaged -= OnDamaged;
+            Noise.Heard -= OnNoise;
         }
 
         private void OnDamaged(DamageInfo info, float amount)
         {
             if (info.Knockback.sqrMagnitude > 0.01f)
                 _externalVelocity += info.Knockback;
+
+            // Being hit is the one signal that never needs checking against a range.
+            Alert();
         }
 
         private void Update()
         {
             if (Health != null && !Health.IsAlive) return;
 
+            bool impaired = Status != null && Status.IsControlImpaired;
+
+            if (!IsAlerted)
+            {
+                if (!impaired && CanSeePlayer()) Alert();
+                else
+                {
+                    UpdateIdle(Time.deltaTime, impaired);
+                    return;
+                }
+            }
+
             _retargetTimer -= Time.deltaTime;
             if (Target == null || _retargetTimer <= 0f) AcquireTarget();
-
-            bool impaired = Status != null && Status.IsControlImpaired;
 
             if (!impaired)
             {
@@ -130,6 +178,78 @@ namespace Gunspire
             }
 
             Move(impaired);
+        }
+
+        // ---------------------------------------------------------------- perception
+
+        /// <summary>Switches from idling to fighting. Deliberately one-way.</summary>
+        public void Alert()
+        {
+            if (IsAlerted) return;
+            IsAlerted = true;
+            AcquireTarget();
+        }
+
+        /// <summary>
+        /// A cone in front, out to the sight range, with a wall check. Fliers included - looking
+        /// down from above is still looking.
+        /// </summary>
+        private bool CanSeePlayer()
+        {
+            PlayerRig player = PlayerRig.Instance;
+            if (player == null || player.Health == null || !player.Health.IsAlive) return false;
+
+            Vector3 to = player.transform.position - transform.position;
+            if (to.sqrMagnitude > SightRange * SightRange) return false;
+
+            // Measured flat, so standing directly above or below something does not slip out of
+            // its cone on a technicality.
+            Vector3 flatTo = Flat(to);
+            if (flatTo.sqrMagnitude < 0.01f) return true;
+            if (Vector3.Angle(Flat(transform.forward), flatTo) > SightHalfAngle) return false;
+
+            Transform previous = Target;
+            Target = player.transform;
+            bool visible = HasLineOfSight();
+            if (!IsAlerted) Target = previous;
+
+            return visible;
+        }
+
+        /// <summary>
+        /// Loudness scales this listener's own hearing range rather than being a distance, so
+        /// one gun is heard further by a sharp-eared enemy than a dull one without the gun
+        /// having to know anything about who is listening.
+        /// </summary>
+        private void OnNoise(Vector3 position, float loudness)
+        {
+            if (IsAlerted || this == null) return;
+            if (Health != null && !Health.IsAlive) return;
+
+            if (TravelDistanceTo(position) <= HearingRange * loudness) Alert();
+        }
+
+        /// <summary>
+        /// How far a sound actually has to travel to get here - around walls, not through them.
+        ///
+        /// The navigation flow field is a breadth-first sweep outward from the player through
+        /// walkable space, so the step count already sitting in this enemy's own cell is exactly
+        /// that distance. It only answers for the player's position, though, so a noise made
+        /// anywhere else falls back to a straight line.
+        /// </summary>
+        private float TravelDistanceTo(Vector3 point)
+        {
+            NavField field = NavField.Current;
+            PlayerRig player = PlayerRig.Instance;
+
+            if (field != null && field.IsBuilt && player != null
+                && (point - player.transform.position).sqrMagnitude < 4f)
+            {
+                int steps = field.StepsAt(transform.position);
+                if (steps >= 0) return steps * NavField.CellSize;
+            }
+
+            return Vector3.Distance(transform.position, point);
         }
 
         private void AcquireTarget()
@@ -256,7 +376,17 @@ namespace Gunspire
                 if (IsAttacking) desired *= MoveSpeedWhileAttacking;
             }
 
-            float speed = Sheet != null ? Sheet.Get(Attr.MoveSpeed) : 4.5f;
+            ApplyMotion(desired, dt, 1f);
+        }
+
+        /// <summary>
+        /// Turns a wish direction into actual movement. Shared by fighting and idling so a
+        /// wandering enemy falls, hovers, separates and slides along walls exactly as a
+        /// chasing one does - only slower, and towards somewhere else.
+        /// </summary>
+        private void ApplyMotion(Vector3 desired, float dt, float speedFraction)
+        {
+            float speed = (Sheet != null ? Sheet.Get(Attr.MoveSpeed) : 4.5f) * speedFraction;
             Vector3 wanted = desired * speed;
 
             Vector3 horizontal = new Vector3(_velocity.x, 0f, _velocity.z);
@@ -271,6 +401,96 @@ namespace Gunspire
             _externalVelocity = Vector3.MoveTowards(_externalVelocity, Vector3.zero, 18f * dt);
 
             _controller.Move((_velocity + _externalVelocity) * dt);
+        }
+
+        // ---------------------------------------------------------------- idling
+
+        /// <summary>
+        /// What it does while it has not noticed anything. Standing still is not the same as
+        /// doing nothing: gravity, hover and knockback still have to be integrated, or a
+        /// standing enemy floats where it spawned and shrugs off being shot.
+        /// </summary>
+        private void UpdateIdle(float dt, bool impaired)
+        {
+            Vector3 desired = Vector3.zero;
+
+            if (!impaired && Idle != IdleActivity.Stand)
+            {
+                if (_idlePause > 0f)
+                {
+                    _idlePause -= dt;
+                }
+                else
+                {
+                    Vector3 toSpot = Flat(_idleDestination) - Flat(transform.position);
+
+                    if (toSpot.magnitude <= arriveDistance) ChooseIdleDestination();
+                    else
+                    {
+                        desired = AvoidWalls(toSpot.normalized) + Separation();
+                        if (desired.sqrMagnitude > 1f) desired.Normalize();
+                    }
+                }
+
+                FaceMovement(desired, dt);
+            }
+
+            ApplyMotion(desired, dt, idleSpeedFraction);
+        }
+
+        private void ChooseIdleDestination()
+        {
+            _idlePause = idlePauseSeconds * Random.Range(0.6f, 1.5f);
+
+            if (Idle == IdleActivity.Patrol && _patrol.Count > 0)
+            {
+                _patrolIndex = (_patrolIndex + 1) % _patrol.Count;
+                _idleDestination = _patrol[_patrolIndex];
+                return;
+            }
+
+            _idleDestination = PickSpotNear(_home, wanderRadius);
+        }
+
+        /// <summary>
+        /// A round of points fixed at spawn, so a patrol is a route rather than a wander with
+        /// extra steps - you can learn it and time your way past it.
+        /// </summary>
+        private void BuildPatrolRoute()
+        {
+            _patrol.Clear();
+            if (Idle != IdleActivity.Patrol) return;
+
+            for (int i = 0; i < 3; i++) _patrol.Add(PickSpotNear(_home, patrolRadius));
+            _idleDestination = _patrol[0];
+        }
+
+        /// <summary>
+        /// Somewhere reachable near a point. Asks the navigation grid where the floor actually
+        /// is when there is one, so a wanderer does not spend its life walking into a wall it
+        /// picked a destination inside of.
+        /// </summary>
+        private Vector3 PickSpotNear(Vector3 origin, float radius)
+        {
+            NavField field = NavField.Current;
+
+            if (field != null && field.IsBuilt)
+            {
+                var rng = new Rng(Random.Range(int.MinValue, int.MaxValue));
+                if (field.TryFindSpot(rng, origin, radius, out Vector3 spot)) return spot;
+            }
+
+            Vector2 offset = Random.insideUnitCircle * radius;
+            return origin + new Vector3(offset.x, 0f, offset.y);
+        }
+
+        /// <summary>Looks where it is going, rather than staring at a player it has not seen.</summary>
+        private void FaceMovement(Vector3 desired, float dt)
+        {
+            if (desired.sqrMagnitude < 0.01f) return;
+
+            Quaternion wanted = Quaternion.LookRotation(Flat(desired).normalized, Vector3.up);
+            transform.rotation = Quaternion.Slerp(transform.rotation, wanted, TurnSpeed * dt);
         }
 
         /// <summary>

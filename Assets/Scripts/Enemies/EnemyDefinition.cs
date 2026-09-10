@@ -77,6 +77,21 @@ namespace Gunspire
         public float StrafeInterval = 1.8f;
         public float TurnSpeed = 9f;
 
+        [Header("Perception")]
+        /// <summary>What it does until it notices you. Standing is the default for everything.</summary>
+        public IdleActivity Idle = IdleActivity.Stand;
+
+        /// <summary>
+        /// How far it can see, in a cone it is facing. Zero takes the default, which is what
+        /// every enemy asset written before it could see deserialises to - blind enemies would
+        /// otherwise never activate at all, and the room would simply never end.
+        /// </summary>
+        public float SightRange;
+        public float SightHalfAngle;
+
+        /// <summary>How far a noise carries to this enemy, measured around walls rather than through.</summary>
+        public float HearingRange;
+
         [Header("Flight")]
         public bool Flying;
         public float HoverHeight = 3.2f;
@@ -116,6 +131,16 @@ namespace Gunspire
 
         /// <summary>Eye height, falling back to something reasonable for the body.</summary>
         public float ResolvedEyeHeight => EyeHeight > 0f ? EyeHeight : BodyHeight * 0.75f;
+
+        public float ResolvedSightRange => SightRange > 0f ? SightRange : 22f;
+        public float ResolvedSightHalfAngle => SightHalfAngle > 0f ? SightHalfAngle : 60f;
+
+        /// <summary>
+        /// Deliberately shorter than sight. Hearing is the sense that catches you sneaking up
+        /// behind something, so it wants to be a smaller circle than the cone it cannot see
+        /// behind itself with, or facing would stop mattering.
+        /// </summary>
+        public float ResolvedHearingRange => HearingRange > 0f ? HearingRange : 16f;
 
         public EnemyDefinition Clone()
         {

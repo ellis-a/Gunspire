@@ -25,6 +25,10 @@ MonoBehaviour:
     MinComfortRange: 0
     StrafeInterval: 2.6
     TurnSpeed: 9
+    Idle: 3
+    SightRange: 14
+    SightHalfAngle: 45
+    HearingRange: 30
     Flying: 0
     HoverHeight: 3.2
     EyeHeight: 0
@@ -120,4 +124,6 @@ MonoBehaviour:
         FalloffRadius: 6
         MinFraction: 0.4
         UseSmashPower: 0
+        PerStatPoint: 0
+        ScaleStat: 0
         OnlyOncePerCast: 1

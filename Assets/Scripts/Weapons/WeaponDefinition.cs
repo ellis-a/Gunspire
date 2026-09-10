@@ -47,6 +47,13 @@ namespace Gunspire
 
         [Header("Accuracy")]
         public float SpreadDegrees = 0.8f;
+
+        /// <summary>
+        /// How loud a shot is to something listening, as a multiple of the listener's hearing
+        /// range. One is "audible as far as anything can hear"; a silenced weapon would sit well
+        /// under it, a cannon over. Nothing here knows who is listening or how well.
+        /// </summary>
+        public float NoiseMultiplier = 1f;
         public float MovingSpreadDegrees = 1.6f;
         public float RecoilPitch = 1.2f;
         public float RecoilYaw = 0.25f;

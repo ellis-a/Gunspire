@@ -25,6 +25,10 @@ MonoBehaviour:
     MinComfortRange: 7
     StrafeInterval: 1.8
     TurnSpeed: 9
+    Idle: 3
+    SightRange: 22
+    SightHalfAngle: 60
+    HearingRange: 16
     Flying: 0
     HoverHeight: 3.2
     EyeHeight: 0
@@ -157,6 +161,8 @@ MonoBehaviour:
         FalloffRadius: 6
         MinFraction: 0.4
         UseSmashPower: 0
+        PerStatPoint: 0
+        ScaleStat: 0
         OnlyOncePerCast: 0
     - rid: 5643702087738458150
       type: {class: VfxConeEffect, ns: Gunspire, asm: Assembly-CSharp}

@@ -22,6 +22,12 @@ namespace Gunspire
         public float ManaCost = 20f;
         public float Cooldown = 6f;
 
+        /// <summary>
+        /// How far casting this carries to something listening, as a multiple of the listener's
+        /// hearing range. Same scale as a gun's. A quiet utility spell belongs well under one.
+        /// </summary>
+        public float NoiseMultiplier = 1f;
+
         public Rarity Rarity = Rarity.Common;
         public SpellType Type = SpellType.Attack;
         public DamageType DamageType = DamageType.Astral;
@@ -121,7 +127,17 @@ namespace Gunspire
             ctx.BeginCast(this, level);
 
             bool cast = AbilityRunner.Run(OnCast, ctx);
-            if (cast) AbilityEvents.RaiseCast(Id, ctx, ctx.Point);
+            if (cast)
+            {
+                AbilityEvents.RaiseCast(Id, ctx, ctx.Point);
+
+                // Only the player gives themselves away by casting. Treated as one at a time,
+                // rather than reading zero as silent, so a spell asset written before this
+                // existed is heard rather than mysteriously not.
+                if (ctx.Team == Team.Player && ctx.Caster != null)
+                    Noise.Emit(ctx.Caster.transform.position,
+                        NoiseMultiplier > 0f ? NoiseMultiplier : 1f);
+            }
 
             ctx.EndCast();
             return cast;

@@ -96,6 +96,7 @@ namespace Gunspire
             {
                 Id = "cultist",
                 DisplayName = "Cultist",
+                Idle = IdleActivity.Patrol,
                 Health = 55f, MoveSpeed = 4.2f, Radius = 0.42f, BodyHeight = 1.8f, BodyWidth = 0.8f,
                 PreferredRange = 13f, MinComfortRange = 8f,
                 BodyColor = Palette.EnemyRanged, EyeColor = new Color(1f, 0.5f, 1f),
@@ -136,6 +137,11 @@ namespace Gunspire
             {
                 Id = "hound",
                 DisplayName = "Hound",
+
+                // Half blind and all nose: walks its round and catches you by sound long before
+                // it catches you by sight.
+                Idle = IdleActivity.Patrol,
+                SightRange = 14f, SightHalfAngle = 45f, HearingRange = 30f,
                 Health = 46f, MoveSpeed = 6.9f, Radius = 0.4f, BodyHeight = 1.2f, BodyWidth = 0.75f,
                 PreferredRange = 1.6f, MinComfortRange = 0f, StrafeInterval = 2.6f,
                 BodyColor = Palette.EnemyMelee, EyeColor = new Color(1f, 0.4f, 0.2f),
@@ -177,6 +183,11 @@ namespace Gunspire
             {
                 Id = "warden",
                 DisplayName = "Warden",
+
+                // Posted, not roaming. Sees a long way down the line it is facing and very
+                // little to either side, so flanking one is the answer to it.
+                Idle = IdleActivity.Stand,
+                SightRange = 30f, SightHalfAngle = 35f, HearingRange = 12f,
                 Health = 95f, MoveSpeed = 3.1f, Radius = 0.5f, BodyHeight = 2.2f, BodyWidth = 0.95f,
                 PreferredRange = 18f, MinComfortRange = 12f,
                 BodyColor = Palette.EnemyBeam, EyeColor = new Color(0.5f, 0.9f, 1f),
@@ -213,6 +224,7 @@ namespace Gunspire
             {
                 Id = "sentinel",
                 DisplayName = "Sentinel",
+                Idle = IdleActivity.Stand,
                 Health = 84f, MoveSpeed = 3.6f, Radius = 0.55f, BodyHeight = 2.0f, BodyWidth = 1.05f,
                 PreferredRange = 11f, MinComfortRange = 6f,
                 BodyColor = Palette.EnemyCaster, EyeColor = new Color(1f, 0.8f, 0.3f),
@@ -259,6 +271,7 @@ namespace Gunspire
             {
                 Id = "frostcaller",
                 DisplayName = "Frostcaller",
+                Idle = IdleActivity.Patrol,
                 Health = 68f, MoveSpeed = 4.6f, Radius = 0.45f, BodyHeight = 1.9f, BodyWidth = 0.85f,
                 PreferredRange = 12f, MinComfortRange = 7f,
                 BodyColor = body, EyeColor = Palette.Ice,
@@ -324,6 +337,11 @@ namespace Gunspire
             {
                 Id = "gazer",
                 DisplayName = "Gazer",
+
+                // It is an eye. Almost all-round vision at range and nothing to hear with, so
+                // there is no sneaking past one - only staying out of the room.
+                Idle = IdleActivity.Wander,
+                SightRange = 34f, SightHalfAngle = 140f, HearingRange = 4f,
 
                 // Fragile. It is the only thing in the roster the melee bash cannot reach, so
                 // its answer to being shot has to be dying quickly rather than soaking.
@@ -398,6 +416,9 @@ namespace Gunspire
             {
                 Id = BossId,
                 DisplayName = "Tower Warden",
+
+                // A boss does not wait to be noticed.
+                Idle = IdleActivity.Hunt,
                 InStandardRoster = false,
                 Health = 620f, MoveSpeed = 4.0f, Radius = 0.9f, BodyHeight = 3.2f, BodyWidth = 1.6f,
                 PreferredRange = 14f, MinComfortRange = 8f, StrafeInterval = 2.2f,

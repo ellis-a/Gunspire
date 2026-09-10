@@ -33,6 +33,25 @@ namespace Gunspire
     /// </summary>
     public enum SpellSlot { Cast, Movement, Melee }
 
+    /// <summary>
+    /// What an enemy does before it has noticed the player. Once something activates it, this
+    /// stops mattering - nothing goes back to idling.
+    /// </summary>
+    public enum IdleActivity
+    {
+        /// <summary>Holds its ground, watching whatever direction it was placed facing.</summary>
+        Stand,
+
+        /// <summary>Drifts to nearby spots at random, which makes a room look inhabited.</summary>
+        Wander,
+
+        /// <summary>Never idles at all - comes for you from the moment the floor loads.</summary>
+        Hunt,
+
+        /// <summary>Walks a fixed round of points picked when it spawned, and keeps to it.</summary>
+        Patrol
+    }
+
     /// <summary>The character sheet's core attributes. Everything else is derived from these.</summary>
     public enum StatType { Strength, Intellect, Agility, Vitality, Luck }
 

@@ -90,6 +90,11 @@ namespace Gunspire
             enemy.HoverHeight = def.HoverHeight;
             enemy.EyeHeight = def.ResolvedEyeHeight;
 
+            enemy.Idle = def.Idle;
+            enemy.SightRange = def.ResolvedSightRange;
+            enemy.SightHalfAngle = def.ResolvedSightHalfAngle;
+            enemy.HearingRange = def.ResolvedHearingRange;
+
             return enemy;
         }
 

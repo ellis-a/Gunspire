@@ -25,6 +25,10 @@ MonoBehaviour:
     MinComfortRange: 12
     StrafeInterval: 1.8
     TurnSpeed: 9
+    Idle: 0
+    SightRange: 30
+    SightHalfAngle: 35
+    HearingRange: 12
     Flying: 0
     HoverHeight: 3.2
     EyeHeight: 0

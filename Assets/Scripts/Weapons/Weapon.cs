@@ -484,10 +484,18 @@ namespace Gunspire
         /// </summary>
         private void PlayFireSound()
         {
+            Vector3 where = Muzzle != null ? Muzzle.position : transform.position;
+
+            // Only the player gives themselves away. An enemy firing does not need to alert
+            // the room it is already fighting in, and would otherwise wake every other enemy
+            // in earshot the moment one of them noticed anything.
+            if (OwnerTeam == Team.Player && Definition != null)
+                Noise.Emit(where, Definition.NoiseMultiplier);
+
             if (_fireClip == null) return;
 
             if (OwnerTeam == Team.Player) Sfx.PlayFlat(_fireClip);
-            else Sfx.PlayAt(_fireClip, Muzzle != null ? Muzzle.position : transform.position);
+            else Sfx.PlayAt(_fireClip, where);
         }
 
         private void MuzzleFlash()

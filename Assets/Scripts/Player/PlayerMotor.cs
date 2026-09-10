@@ -57,6 +57,18 @@ namespace Gunspire
         /// <summary>How fast the view rolls over when a surface becomes the new floor.</summary>
         [SerializeField] private float reorientDegreesPerSecond = 540f;
 
+        [Header("Footsteps")]
+        /// <summary>Metres between footfalls. Distance rather than time, so running is noisier.</summary>
+        [SerializeField] private float strideLength = 2.4f;
+
+        /// <summary>
+        /// Well under a gunshot on purpose: walking should let something hear you only once you
+        /// are much closer than firing would. Sneaking past is the point.
+        /// </summary>
+        [SerializeField] private float footstepLoudness = 0.35f;
+
+        private float _stride;
+
         /// <summary>Whether Spider Legs is off, mid-flight to a surface, or stuck to one.</summary>
         public enum WallZipState { Off, Zipping, Attached }
 
@@ -187,6 +199,27 @@ namespace Gunspire
             _surfaceContact = false;
             _controller.Move(_velocity * dt);
             if (_zipHit) AttachToWall(_zipHitNormal);
+
+            TickFootsteps(dt);
+        }
+
+        /// <summary>
+        /// Emits a footstep every stride's worth of ground covered. Only on a surface - falling
+        /// and zipping are silent, and there is no reason a wall should be quieter than a floor.
+        /// </summary>
+        private void TickFootsteps(float dt)
+        {
+            if (!IsGrounded || ZipState == WallZipState.Zipping)
+            {
+                _stride = 0f;
+                return;
+            }
+
+            _stride += HorizontalSpeed * dt;
+            if (_stride < strideLength) return;
+
+            _stride = 0f;
+            Noise.Emit(transform.position, footstepLoudness);
         }
 
         /// <summary>
