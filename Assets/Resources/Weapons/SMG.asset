@@ -17,7 +17,7 @@ MonoBehaviour:
     DisplayName: SMG
     Flavor: 
     Rarity: 0
-    Delivery: 1
+    Delivery: 0
     Mode: 1
     DamageType: 0
     Damage: 6
@@ -28,6 +28,8 @@ MonoBehaviour:
     ReloadTime: 1.5
     BurstCount: 1
     BurstInterval: 0.06
+    SpinUpSeconds: 0
+    SpinDownMultiplier: 1.6
     SpreadDegrees: 2.2
     MovingSpreadDegrees: 3.4
     RecoilPitch: 0.35
@@ -41,6 +43,7 @@ MonoBehaviour:
     ProjectileHoming: 0
     SplashRadius: 0
     SplashDamage: 0
+    Icon: {fileID: 0}
     ManaPerShot: 0
     Tint: {r: 1, g: 1, b: 1, a: 1}
     OnHitStatuses:
