@@ -31,6 +31,7 @@ MonoBehaviour:
     SpinUpSeconds: 0
     SpinDownMultiplier: 1.6
     SpreadDegrees: 2.2
+    NoiseMultiplier: 0.8
     MovingSpreadDegrees: 3.4
     RecoilPitch: 0.35
     RecoilYaw: 0.4

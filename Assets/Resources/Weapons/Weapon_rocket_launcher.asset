@@ -31,6 +31,7 @@ MonoBehaviour:
     SpinUpSeconds: 0
     SpinDownMultiplier: 1.6
     SpreadDegrees: 0.5
+    NoiseMultiplier: 2
     MovingSpreadDegrees: 1.2
     RecoilPitch: 5
     RecoilYaw: 0.4
@@ -43,6 +44,7 @@ MonoBehaviour:
     ProjectileHoming: 0
     SplashRadius: 4.4
     SplashDamage: 46
+    Icon: {fileID: 0}
     ManaPerShot: 0
     Tint: {r: 1, g: 0.92, b: 0.7, a: 1}
     OnHitStatuses: []
