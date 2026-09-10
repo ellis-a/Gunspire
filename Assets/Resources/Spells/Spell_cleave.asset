@@ -1,0 +1,64 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 742cfdfb30a993f448892174ad3ab0e9, type: 3}
+  m_Name: Spell_cleave
+  m_EditorClassIdentifier: Assembly-CSharp::Gunspire.SpellAsset
+  Definition:
+    Id: cleave
+    DisplayName: Cleave
+    ShortName: CLVE
+    Description: A wide, slow arc. Less damage to any one target than a bash, and
+      far more of them caught in it.
+    ManaCost: 9
+    Cooldown: 1.3
+    Rarity: 1
+    Type: 0
+    DamageType: 0
+    Slot: 2
+    Sustain:
+      ManaPerSecond: 0
+      MaxDuration: 0
+      MoveSpeedBonus: 0
+      Invulnerable: 0
+      BreakOnMovement: 0
+      WallZip: 0
+    MaxLevel: 1
+    GrowthPerLevel: 0.22
+    LevelUpNote: 
+    TintOverride: {r: 1, g: 0.7, b: 0.45, a: 1}
+    Icon: {fileID: 0}
+    OnCast:
+    - rid: 5643702153244311559
+    - rid: 5643702153244311560
+  references:
+    version: 2
+    RefIds:
+    - rid: 5643702153244311559
+      type: {class: SelectConeEffect, ns: Gunspire, asm: Assembly-CSharp}
+      data:
+        Range: 4.4
+        HalfAngle: 110
+        RequireLineOfSight: 0
+        ScaleRangeWithLevel: 0
+    - rid: 5643702153244311560
+      type: {class: DealDamageEffect, ns: Gunspire, asm: Assembly-CSharp}
+      data:
+        Amount: 8
+        CanCrit: 1
+        Knockback: 9
+        FalloffFromPoint: 0
+        FalloffRadius: 6
+        MinFraction: 0.4
+        UseSmashPower: 1
+        PerStatPoint: 2.4
+        ScaleStat: 0
+        OnlyOncePerCast: 0

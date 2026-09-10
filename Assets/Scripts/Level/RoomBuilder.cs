@@ -356,8 +356,8 @@ namespace Gunspire
             SpellBook book = rig != null ? rig.Book : null;
             MovementController movement = rig != null ? rig.Movement : null;
 
-            // A shrine offers either a spell or a new way to move, so the Shift slot is
-            // something a run can actually change rather than a fixed opening.
+            // A shrine offers a cast spell, or something for one of the two slots a run
+            // otherwise never changes, so Shift and melee are not fixed openings.
             bool offerMovement = rng.Chance(0.35f);
 
             if (TryFindSpot(width, depth, 2f, rng, occupied, out Vector3 runeSpot, clearance: 2.5f))
@@ -365,7 +365,17 @@ namespace Gunspire
                 // Shrines roll their own rarity, so a lucky wizard can find a legendary here.
                 if (offerMovement)
                 {
-                    MovementAbility ability = MovementAbilityLibrary.RollOffer(rng, movement, PlayerLuck(), 1.5f);
+                    // Movement and melee share the pedestal, and neither slot levels up, so a
+                    // pedestal offering what you already hold would do nothing at all.
+                    SpellSlot slot = rng.Chance(0.5f) ? SpellSlot.Movement : SpellSlot.Melee;
+
+                    Spell held = slot == SpellSlot.Melee
+                        ? (rig != null && rig.CombatInput != null ? rig.CombatInput.MeleeSpell : null)
+                        : (movement != null ? movement.Current : null);
+
+                    Spell ability = SpellLibrary.RollOffer(rng, book, PlayerLuck(), 1.5f, slot);
+                    if (ability != null && held != null && ability.Id == held.Id) ability = null;
+
                     if (ability != null)
                         MovementPedestal.Spawn(runeSpot, ability).transform.SetParent(parent, true);
                 }

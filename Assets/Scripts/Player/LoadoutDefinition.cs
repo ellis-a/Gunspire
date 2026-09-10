@@ -26,8 +26,11 @@ namespace Gunspire
         [Tooltip("Id from WeaponLibrary. This gun is also excluded from world drops.")]
         public string WeaponId = "arcanum";
 
-        [Tooltip("Id from MovementAbilityLibrary. Sits on Shift. Everyone opens with Dash.")]
-        public string MovementAbilityId = MovementAbilityLibrary.DefaultId;
+        [Tooltip("Movement-slot spell id. Sits on Shift. Everyone opens with Dash.")]
+        public string MovementAbilityId = SpellLibrary.DefaultMovementId;
+
+        [Tooltip("Melee-slot spell id. Everyone opens with Bash.")]
+        public string MeleeSpellId = SpellLibrary.DefaultMeleeId;
 
         [Tooltip("The one spell a run opens with, bound to E. Q starts empty and is filled at a shrine.")]
         public string SpellId = "cone_of_cold";

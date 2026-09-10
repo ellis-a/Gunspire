@@ -131,7 +131,7 @@ namespace Gunspire
                 y += 44f;
             }
 
-            MovementAbility movement = MovementAbilityLibrary.Get(loadout.MovementAbilityId);
+            Spell movement = SpellLibrary.Get(loadout.MovementAbilityId);
             if (movement != null)
             {
                 UIStyles.Text(new Rect(x, y, 46f, 18f), "SHIFT", UIStyles.Small, movement.Tint);
@@ -472,7 +472,7 @@ namespace Gunspire
             }
 
             // The Shift slot.
-            MovementAbility movement = player.Movement != null ? player.Movement.Current : null;
+            Spell movement = player.Movement != null ? player.Movement.Current : null;
             if (movement != null)
             {
                 UIStyles.Text(new Rect(rect.x + 20f, y, 110f, 20f), "SHIFT  " + movement.DisplayName,

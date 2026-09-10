@@ -100,7 +100,7 @@ namespace Gunspire.EditorTools
                 if (!string.IsNullOrEmpty(l.SpellId) && SpellLibrary.Get(l.SpellId) == null)
                     text.AppendLine("PROBLEM: \"" + l.Id + "\" wants unknown spell \"" + l.SpellId + "\"");
 
-                if (MovementAbilityLibrary.Get(l.MovementAbilityId) == null)
+                if (SpellLibrary.Get(l.MovementAbilityId) == null)
                     text.AppendLine("PROBLEM: \"" + l.Id + "\" wants unknown movement \""
                                     + l.MovementAbilityId + "\"");
             }

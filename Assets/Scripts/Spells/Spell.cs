@@ -26,6 +26,33 @@ namespace Gunspire
         public SpellType Type = SpellType.Attack;
         public DamageType DamageType = DamageType.Astral;
 
+        /// <summary>Which slot this can be bound to. See <see cref="SpellSlot"/>.</summary>
+        public SpellSlot Slot = SpellSlot.Cast;
+
+        /// <summary>
+        /// Filled in only on a movement spell that stays on until switched off rather than
+        /// firing once. Always present as an object - Unity insists - but inert until its
+        /// drain is set, so <see cref="IsSustained"/> is the question to ask, never a null check.
+        /// </summary>
+        public SustainProfile Sustain = new SustainProfile();
+
+        public bool IsSustained => Sustain != null && Sustain.Exists;
+
+        /// <summary>
+        /// Whether casting this spends one of the Agility-scaled dash charges, which the HUD
+        /// draws as pips instead of a cooldown. Read off the effect chain rather than kept as a
+        /// second flag beside it, so an authored spell that drops in a dash gets the pips too.
+        /// </summary>
+        public bool UsesDashCharges
+        {
+            get
+            {
+                for (int i = 0; i < OnCast.Count; i++)
+                    if (OnCast[i] is DashEffect) return true;
+                return false;
+            }
+        }
+
         /// <summary>How many times it can be taken. Each pick past the first raises the level.</summary>
         public int MaxLevel = 5;
 
@@ -71,6 +98,19 @@ namespace Gunspire
 
         /// <summary>Human-readable chain, skipping the cosmetic steps.</summary>
         public string EffectSummary() => AbilityRunner.Describe(OnCast);
+
+        /// <summary>One line of cost for the HUD, the pedestal prompt and the choice screens.</summary>
+        public string CostLine()
+        {
+            if (IsSustained) return Sustain.CostLine();
+
+            string mana = ManaCost > 0f ? Mathf.RoundToInt(ManaCost) + " mana" : "";
+            string cooldown = Cooldown > 0f ? Cooldown.ToString("0.#") + "s cooldown" : "";
+
+            if (mana.Length > 0 && cooldown.Length > 0) return mana + ", " + cooldown;
+            if (mana.Length > 0) return mana;
+            return cooldown.Length > 0 ? cooldown : "free";
+        }
 
         /// <summary>
         /// Runs the effect chain. Returns false if any effect aborted, in which case the

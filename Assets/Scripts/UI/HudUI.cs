@@ -97,7 +97,7 @@ namespace Gunspire
         private static void DrawMovementSlot(PlayerRig player, float x, float y)
         {
             MovementController movement = player.Movement;
-            MovementAbility ability = movement != null ? movement.Current : null;
+            Spell ability = movement != null ? movement.Current : null;
 
             if (ability == null)
             {
@@ -133,8 +133,9 @@ namespace Gunspire
                 bool on = movement.IsActive;
                 var bar = new Rect(x, y + 3f, 120f, 8f);
 
-                float fraction = ability.MaxDuration > 0f && on
-                    ? 1f - Mathf.Clamp01(movement.ActiveTime / ability.MaxDuration)
+                float cap = ability.Sustain.MaxDuration;
+                float fraction = cap > 0f && on
+                    ? 1f - Mathf.Clamp01(movement.ActiveTime / cap)
                     : (on ? 1f : 0f);
 
                 UIStyles.Bar(bar, fraction, ability.Tint, new Color(1f, 1f, 1f, 0.10f));

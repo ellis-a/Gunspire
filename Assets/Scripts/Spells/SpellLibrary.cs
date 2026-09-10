@@ -27,6 +27,13 @@ namespace Gunspire
             }
         }
 
+        /// <summary>What every run opens with in the slots that are never empty.</summary>
+        public const string DefaultMovementId = "dash";
+        public const string DefaultMeleeId = "bash";
+
+        public static Spell DefaultMovement => Get(DefaultMovementId);
+        public static Spell DefaultMelee => Get(DefaultMeleeId);
+
         /// <summary>Drops the cached roster so authored assets are picked up again.</summary>
         public static void Reload() => _all = null;
 
@@ -67,18 +74,40 @@ namespace Gunspire
         /// Spells a shrine can still offer: never learned, or learned but below their level
         /// cap. Taking one you already know levels it instead of rebinding it.
         /// </summary>
-        public static List<Spell> Offerable(SpellBook book)
+        public static List<Spell> Offerable(SpellBook book, SpellSlot slot = SpellSlot.Cast)
+        {
+            var list = new List<Spell>();
+
+            for (int i = 0; i < All.Count; i++)
+            {
+                Spell spell = All[i];
+                if (spell.Slot != slot) continue;
+
+                // Only the cast slots stack levels, and only they are tracked by the book.
+                // A movement or melee spell is a straight swap, so the caller drops whichever
+                // one is already bound rather than the book knowing about it.
+                if (slot == SpellSlot.Cast && book != null && !book.CanTake(spell)) continue;
+
+                list.Add(spell);
+            }
+
+            return list;
+        }
+
+        /// <summary>Every spell that can go in one slot, ignoring what is already bound.</summary>
+        public static List<Spell> ForSlot(SpellSlot slot)
         {
             var list = new List<Spell>();
             for (int i = 0; i < All.Count; i++)
-                if (book == null || book.CanTake(All[i])) list.Add(All[i]);
+                if (All[i].Slot == slot) list.Add(All[i]);
             return list;
         }
 
         /// <summary>Rolls a rarity from Luck, then picks an offerable spell at that tier.</summary>
-        public static Spell RollOffer(Rng rng, SpellBook book, float luck, float rarityBonus = 1f)
+        public static Spell RollOffer(Rng rng, SpellBook book, float luck, float rarityBonus = 1f,
+            SpellSlot slot = SpellSlot.Cast)
         {
-            List<Spell> pool = Offerable(book);
+            List<Spell> pool = Offerable(book, slot);
             if (pool.Count == 0) return null;
 
             Rarity rolled = Rarities.Roll(rng, luck, rarityBonus);
@@ -91,10 +120,10 @@ namespace Gunspire
         /// guaranteed offer should check the count rather than assume it.
         /// </summary>
         public static List<Spell> OfferDistinct(Rng rng, SpellBook book, float luck, int count,
-            float rarityBonus = 1f)
+            float rarityBonus = 1f, SpellSlot slot = SpellSlot.Cast)
         {
             var chosen = new List<Spell>();
-            List<Spell> pool = Offerable(book);
+            List<Spell> pool = Offerable(book, slot);
 
             int guard = 0;
             while (chosen.Count < count && pool.Count > 0 && guard++ < 200)
@@ -126,9 +155,208 @@ namespace Gunspire
                 Blightbloom(),
                 ChainLightning(),
                 GlacialPrison(),
-                Eventide()
+                Eventide(),
+
+                // Shift slot.
+                Dash(),
+                Blink(),
+                Sprint(),
+                AegisStance(),
+                SpiderLegs(),
+
+                // Melee slot.
+                Bash(),
+                Cleave(),
+                Leech()
             };
         }
+
+        // ---------------------------------------------------------------- movement
+
+        private static Spell Dash() => new Spell
+        {
+            Id = "dash",
+            DisplayName = "Dash",
+            ShortName = "DASH",
+            Description = "A short burst in the direction you are moving, with a sliver of " +
+                          "invulnerability. Charges recover on their own, and Agility grants more.",
+            Slot = SpellSlot.Movement,
+            Type = SpellType.Mobility,
+            Rarity = Rarity.Common,
+            ManaCost = 6f,
+            Cooldown = 0f,
+            MaxLevel = 1,
+            TintOverride = new Color(0.6f, 0.95f, 1f),
+            OnCast = { new DashEffect() }
+        };
+
+        private static Spell Blink() => new Spell
+        {
+            Id = "blink",
+            DisplayName = "Blink",
+            ShortName = "BLNK",
+            Description = "Teleport forward, passing through anything in the way. Stops at the " +
+                          "first wall rather than dropping you inside it.",
+            Slot = SpellSlot.Movement,
+            Type = SpellType.Mobility,
+            Rarity = Rarity.Uncommon,
+            ManaCost = 16f,
+            Cooldown = 4f,
+            MaxLevel = 1,
+            TintOverride = Palette.Arcane,
+            OnCast =
+            {
+                // Aborts against a wall, which refunds the mana and the cooldown.
+                new SweepForwardEffect { BaseDistance = 9f, PerIntellect = 0.18f, MaxDistance = 22f },
+                new VfxGhostTrailEffect(),
+                new TeleportEffect(),
+                new GrantInvulnerabilityEffect { Seconds = 0.18f }
+            }
+        };
+
+        private static Spell Sprint() => new Spell
+        {
+            Id = "sprint",
+            DisplayName = "Sprint",
+            ShortName = "SPRT",
+            Description = "Hold a hard run for as long as your mana lasts. No invulnerability, " +
+                          "no tricks, just distance.",
+            Slot = SpellSlot.Movement,
+            Type = SpellType.Mobility,
+            Rarity = Rarity.Common,
+            MaxLevel = 1,
+            TintOverride = new Color(1f, 0.9f, 0.45f),
+            Sustain = new SustainProfile { ManaPerSecond = 9f, MoveSpeedBonus = 0.55f }
+        };
+
+        private static Spell AegisStance() => new Spell
+        {
+            Id = "shield",
+            DisplayName = "Aegis Stance",
+            ShortName = "SHLD",
+            Description = "Plant your feet and ignore everything for a moment. Breaks the " +
+                          "instant you move, so it answers a telegraph rather than a chase.",
+            Slot = SpellSlot.Movement,
+            Type = SpellType.Ward,
+            Rarity = Rarity.Uncommon,
+            MaxLevel = 1,
+            TintOverride = new Color(0.8f, 0.85f, 1f),
+            Sustain = new SustainProfile
+            {
+                ManaPerSecond = 14f,
+                MaxDuration = 2.5f,
+                Invulnerable = true,
+                BreakOnMovement = true
+            }
+        };
+
+        private static Spell SpiderLegs() => new Spell
+        {
+            Id = "spider_legs",
+            DisplayName = "Spider Legs",
+            ShortName = "SPDR",
+            Description = "Fires a line at whatever you are looking at and hauls you to it. " +
+                          "Stick, and that surface becomes your new floor - jump and gravity " +
+                          "pulls you straight back down onto it, not away.",
+            Slot = SpellSlot.Movement,
+            Type = SpellType.Mobility,
+            Rarity = Rarity.Rare,
+            MaxLevel = 1,
+            TintOverride = new Color(0.55f, 0.9f, 0.5f),
+            Sustain = new SustainProfile { ManaPerSecond = 11f, WallZip = true }
+        };
+
+        // ---------------------------------------------------------------- melee
+
+        private static Spell Bash() => new Spell
+        {
+            Id = "bash",
+            DisplayName = "Bash",
+            ShortName = "BASH",
+            Description = "A close swing that scales on Strength. The smash power behind it is " +
+                          "what opens reinforced barriers, so it stays useful with nothing to hit.",
+            Slot = SpellSlot.Melee,
+            Type = SpellType.Attack,
+            DamageType = DamageType.Normal,
+            Rarity = Rarity.Common,
+            ManaCost = 4f,
+            Cooldown = 0.7f,
+            MaxLevel = 1,
+            TintOverride = new Color(1f, 0.85f, 0.6f),
+            OnCast =
+            {
+                new SelectConeEffect { Range = 3.2f, HalfAngle = 55f, RequireLineOfSight = false },
+                new DealDamageEffect
+                {
+                    Amount = 10f,
+                    PerStatPoint = 3.5f,
+                    ScaleStat = StatType.Strength,
+                    UseSmashPower = true,
+                    Knockback = 6f,
+                    CanCrit = true
+                }
+            }
+        };
+
+        private static Spell Cleave() => new Spell
+        {
+            Id = "cleave",
+            DisplayName = "Cleave",
+            ShortName = "CLVE",
+            Description = "A wide, slow arc. Less damage to any one target than a bash, and far " +
+                          "more of them caught in it.",
+            Slot = SpellSlot.Melee,
+            Type = SpellType.Attack,
+            DamageType = DamageType.Normal,
+            Rarity = Rarity.Uncommon,
+            ManaCost = 9f,
+            Cooldown = 1.3f,
+            MaxLevel = 1,
+            TintOverride = new Color(1f, 0.7f, 0.45f),
+            OnCast =
+            {
+                new SelectConeEffect { Range = 4.4f, HalfAngle = 110f, RequireLineOfSight = false },
+                new DealDamageEffect
+                {
+                    Amount = 8f,
+                    PerStatPoint = 2.4f,
+                    ScaleStat = StatType.Strength,
+                    UseSmashPower = true,
+                    Knockback = 9f,
+                    CanCrit = true
+                }
+            }
+        };
+
+        private static Spell Leech() => new Spell
+        {
+            Id = "leech",
+            DisplayName = "Leeching Strike",
+            ShortName = "LECH",
+            Description = "A shorter reach than a bash, and what it takes it gives back. The " +
+                          "answer to being out of everything except enemies.",
+            Slot = SpellSlot.Melee,
+            Type = SpellType.Attack,
+            DamageType = DamageType.Shadow,
+            Rarity = Rarity.Rare,
+            ManaCost = 7f,
+            Cooldown = 1f,
+            MaxLevel = 1,
+            TintOverride = new Color(0.65f, 0.4f, 0.8f),
+            OnCast =
+            {
+                new SelectConeEffect { Range = 2.6f, HalfAngle = 45f, RequireLineOfSight = false },
+                new DealDamageEffect
+                {
+                    Amount = 9f,
+                    PerStatPoint = 3f,
+                    ScaleStat = StatType.Strength,
+                    UseSmashPower = true,
+                    CanCrit = true
+                },
+                new HealSelfEffect { FractionOfMax = 0f, Flat = 6f }
+            }
+        };
 
 
         /// <summary>A lobbed grenade that bursts and leaves the ground burning.</summary>

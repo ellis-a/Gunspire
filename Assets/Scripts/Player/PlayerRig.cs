@@ -149,6 +149,7 @@ namespace Gunspire
             };
             book.Context = rig.SpellContext;
 
+            combat.Context = rig.SpellContext;
             movement.Context = rig.SpellContext;
             movement.Motor = motor;
             movement.Mana = mana;

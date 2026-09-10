@@ -48,6 +48,14 @@ namespace Gunspire
         public bool UseSmashPower;
 
         /// <summary>
+        /// Extra damage per point of <see cref="ScaleStat"/>, on top of <see cref="Amount"/>.
+        /// Zero leaves the damage flat, which is what every spell written before this existed
+        /// wants - and what an asset authored back then deserialises to.
+        /// </summary>
+        public float PerStatPoint = 0f;
+        public StatType ScaleStat = StatType.Strength;
+
+        /// <summary>
         /// Never strike the same target twice in one cast. A melee swing evaluated over
         /// several frames of a lunge needs this, or it connects once per frame.
         /// </summary>
@@ -56,6 +64,10 @@ namespace Gunspire
         public override bool Execute(AbilityContext ctx)
         {
             float smash = UseSmashPower && ctx.Sheet != null ? ctx.Sheet.Get(Attr.SmashPower) : 0f;
+
+            float amount = Amount;
+            if (PerStatPoint != 0f && ctx.Sheet != null)
+                amount += ctx.Sheet.GetStat(ScaleStat) * PerStatPoint;
 
             for (int i = 0; i < ctx.Targets.Count; i++)
             {
@@ -76,7 +88,7 @@ namespace Gunspire
                     if (distance > 0.01f) away = delta / distance;
                 }
 
-                DamageInfo info = ctx.BuildDamage(Amount * ctx.Power * falloff, center, -away, CanCrit);
+                DamageInfo info = ctx.BuildDamage(amount * ctx.Power * falloff, center, -away, CanCrit);
                 info.SmashPower = smash;
                 if (Knockback > 0f) info.Knockback = away * (Knockback * falloff);
 

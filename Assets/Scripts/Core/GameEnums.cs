@@ -22,6 +22,17 @@ namespace Gunspire
     /// <summary>What a spell is for. Boons can buff a whole category at once.</summary>
     public enum SpellType { Attack, Mobility, Control, Ward }
 
+    /// <summary>
+    /// Which slot a spell can be bound to. A spell only ever appears in offers for its own
+    /// slot, so the Shift slot cannot be filled with a fireball and Q cannot be filled with a
+    /// dash.
+    ///
+    /// Cast is deliberately first. Every spell asset authored before slots existed
+    /// deserialises this field to zero, and zero has to mean "an ordinary Q/E spell" or the
+    /// whole existing roster would silently move slots.
+    /// </summary>
+    public enum SpellSlot { Cast, Movement, Melee }
+
     /// <summary>The character sheet's core attributes. Everything else is derived from these.</summary>
     public enum StatType { Strength, Intellect, Agility, Vitality, Luck }
 

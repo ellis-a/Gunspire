@@ -1,0 +1,43 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 742cfdfb30a993f448892174ad3ab0e9, type: 3}
+  m_Name: Spell_spider_legs
+  m_EditorClassIdentifier: Assembly-CSharp::Gunspire.SpellAsset
+  Definition:
+    Id: spider_legs
+    DisplayName: Spider Legs
+    ShortName: SPDR
+    Description: Fires a line at whatever you are looking at and hauls you to it.
+      Stick, and that surface becomes your new floor - jump and gravity pulls you
+      straight back down onto it, not away.
+    ManaCost: 20
+    Cooldown: 6
+    Rarity: 2
+    Type: 1
+    DamageType: 5
+    Slot: 1
+    Sustain:
+      ManaPerSecond: 11
+      MaxDuration: 0
+      MoveSpeedBonus: 0
+      Invulnerable: 0
+      BreakOnMovement: 0
+      WallZip: 1
+    MaxLevel: 1
+    GrowthPerLevel: 0.22
+    LevelUpNote: 
+    TintOverride: {r: 0.55, g: 0.9, b: 0.5, a: 1}
+    Icon: {fileID: 0}
+    OnCast: []
+  references:
+    version: 2
+    RefIds: []

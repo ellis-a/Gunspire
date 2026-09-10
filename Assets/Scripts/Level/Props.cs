@@ -305,7 +305,20 @@ namespace Gunspire
     /// </summary>
     public class MovementPedestal : MonoBehaviour, IInteractable
     {
-        public MovementAbility Ability;
+        public Spell Ability;
+
+        /// <summary>Which control the offered spell would end up on.</summary>
+        private string KeyName => Ability != null && Ability.Slot == SpellSlot.Melee ? "MELEE" : "SHIFT";
+
+        private static Spell Bound(PlayerRig rig, SpellSlot slot)
+        {
+            if (rig == null) return null;
+
+            if (slot == SpellSlot.Melee)
+                return rig.CombatInput != null ? rig.CombatInput.MeleeSpell : null;
+
+            return rig.Movement != null ? rig.Movement.Current : null;
+        }
 
         public string Prompt
         {
@@ -313,12 +326,11 @@ namespace Gunspire
             {
                 if (Ability == null) return null;
 
-                PlayerRig rig = PlayerRig.Instance;
-                MovementAbility current = rig != null && rig.Movement != null ? rig.Movement.Current : null;
-
+                Spell current = Bound(PlayerRig.Instance, Ability.Slot);
                 string replaces = current != null ? "  -  replaces " + current.DisplayName : "";
-                return "Bind " + Ability.DisplayName + " to SHIFT  [" + Rarities.Name(Ability.Rarity)
-                       + "]  " + Ability.CostLine() + replaces;
+
+                return "Bind " + Ability.DisplayName + " to " + KeyName + "  ["
+                       + Rarities.Name(Ability.Rarity) + "]  " + Ability.CostLine() + replaces;
             }
         }
 
@@ -327,14 +339,26 @@ namespace Gunspire
         public void Interact(GameObject interactor)
         {
             var rig = interactor.GetComponentInParent<PlayerRig>();
-            if (rig == null || rig.Movement == null || Ability == null) return;
+            if (rig == null || Ability == null) return;
 
-            rig.Movement.Equip(Ability);
-            GameDirector.Instance?.Notify(Ability.DisplayName + " bound to SHIFT");
+            // Routed on the spell's own slot rather than a field on the pedestal, so the two
+            // cannot disagree about where the thing standing on it is going to end up.
+            if (Ability.Slot == SpellSlot.Melee)
+            {
+                if (rig.CombatInput == null) return;
+                rig.CombatInput.EquipMelee(Ability);
+            }
+            else
+            {
+                if (rig.Movement == null) return;
+                rig.Movement.Equip(Ability);
+            }
+
+            GameDirector.Instance?.Notify(Ability.DisplayName + " bound to " + KeyName);
             Destroy(gameObject);
         }
 
-        public static MovementPedestal Spawn(Vector3 position, MovementAbility ability)
+        public static MovementPedestal Spawn(Vector3 position, Spell ability)
         {
             var root = new GameObject("MovementPedestal");
             root.transform.position = position;

@@ -92,22 +92,60 @@ namespace Gunspire
             book.Bind(spell, slot);
         }
 
-        /// <summary>Puts the loadout's movement ability on Shift, defaulting to Dash.</summary>
+        /// <summary>Puts the loadout's movement spell on Shift, defaulting to Dash.</summary>
         public static void ApplyMovement(MovementController controller)
         {
             LoadoutDefinition loadout = Selected;
             if (controller == null || loadout == null) return;
 
-            MovementAbility ability = MovementAbilityLibrary.Get(loadout.MovementAbilityId);
-            if (ability == null)
-            {
-                Debug.LogWarning("Loadout \"" + loadout.Id + "\": no movement ability with id \""
-                                 + loadout.MovementAbilityId + "\". Falling back to Dash.");
-                ability = MovementAbilityLibrary.Default;
-            }
+            Spell spell = Resolve(loadout.MovementAbilityId, SpellSlot.Movement,
+                SpellLibrary.DefaultMovement, loadout.Id, "movement");
 
             controller.ResetState();
-            controller.Equip(ability);
+            controller.Equip(spell);
+        }
+
+        /// <summary>Puts the loadout's melee spell in the melee slot, defaulting to Bash.</summary>
+        public static void ApplyMelee(PlayerCombat combat)
+        {
+            LoadoutDefinition loadout = Selected;
+            if (combat == null || loadout == null) return;
+
+            combat.EquipMelee(Resolve(loadout.MeleeSpellId, SpellSlot.Melee,
+                SpellLibrary.DefaultMelee, loadout.Id, "melee"));
+        }
+
+        /// <summary>
+        /// Looks an id up and checks it belongs in the slot it is being bound to. A wrong-slot
+        /// id is the mistake a hand-edited loadout asset is most likely to make, and it would
+        /// otherwise present as an empty slot with no explanation.
+        /// </summary>
+        private static Spell Resolve(string id, SpellSlot slot, Spell fallback,
+            string loadoutId, string label)
+        {
+            // A blank id is a field nobody filled in rather than a typo. Loadout assets written
+            // before this slot existed keep the default from the field initialiser, so this is
+            // belt and braces - but a warning for an unset field would be noise, not a finding.
+            if (string.IsNullOrEmpty(id)) return fallback;
+
+            Spell spell = SpellLibrary.Get(id);
+
+            if (spell == null)
+            {
+                Debug.LogWarning("Loadout \"" + loadoutId + "\": no spell with id \"" + id
+                                 + "\". Falling back to " + (fallback != null ? fallback.DisplayName : "nothing") + ".");
+                return fallback;
+            }
+
+            if (spell.Slot != slot)
+            {
+                Debug.LogWarning("Loadout \"" + loadoutId + "\": \"" + id + "\" is a " + spell.Slot
+                                 + " spell, not " + label + ". Falling back to "
+                                 + (fallback != null ? fallback.DisplayName : "nothing") + ".");
+                return fallback;
+            }
+
+            return spell;
         }
 
         public static void ApplyTo(PlayerRig rig)
@@ -117,6 +155,7 @@ namespace Gunspire
             ApplyWeapon(rig.Weapon);
             ApplySpells(rig.Book);
             ApplyMovement(rig.Movement);
+            ApplyMelee(rig.CombatInput);
         }
 
         private static string KnownSpellIds()

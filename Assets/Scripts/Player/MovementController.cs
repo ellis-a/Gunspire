@@ -4,18 +4,19 @@ using UnityEngine;
 namespace Gunspire
 {
     /// <summary>
-    /// Owns the Shift slot: one <see cref="MovementAbility"/>, its cooldown, and the on/off
-    /// state of the sustained ones.
+    /// Owns the Shift slot: one <see cref="Spell"/> with <see cref="SpellSlot.Movement"/>, its
+    /// cooldown, and the on/off state when that spell is a sustained one.
     ///
-    /// Sustained abilities work by adding a stat modifier and flipping a motor flag while they
-    /// run, and taking both back when they stop, so nothing else in the game has to know they
-    /// exist.
+    /// Movement spells are ordinary spells - same asset, same effect chains, same library - so
+    /// the only thing this adds over the cast slots is the toggle. A spell carrying a
+    /// <see cref="SustainProfile"/> stays on and drains mana per second; one without it fires
+    /// its effect chain once and goes on cooldown, exactly as Q and E do.
     /// </summary>
     public class MovementController : MonoBehaviour
     {
         public static readonly KeyCode ActivateKey = KeyCode.LeftShift;
 
-        public MovementAbility Current { get; private set; }
+        public Spell Current { get; private set; }
         public AbilityContext Context { get; set; }
 
         public PlayerMotor Motor;
@@ -26,10 +27,10 @@ namespace Gunspire
         public bool InputEnabled { get; set; } = true;
         public bool IsActive { get; private set; }
 
-        /// <summary>Seconds left before an instant ability can fire again.</summary>
+        /// <summary>Seconds left before a one-shot movement spell can fire again.</summary>
         public float Cooldown { get; private set; }
 
-        /// <summary>How long a sustained ability has been running, for its duration cap.</summary>
+        /// <summary>How long a sustained spell has been running, for its duration cap.</summary>
         public float ActiveTime { get; private set; }
 
         public event Action Changed;
@@ -49,11 +50,19 @@ namespace Gunspire
             }
         }
 
-        public void Equip(MovementAbility ability)
+        /// <summary>Refuses anything that is not a movement spell, rather than binding it silently.</summary>
+        public void Equip(Spell spell)
         {
+            if (spell != null && spell.Slot != SpellSlot.Movement)
+            {
+                Debug.LogWarning("MovementController was handed " + spell.Id
+                                 + ", which is a " + spell.Slot + " spell. Ignoring it.");
+                return;
+            }
+
             if (IsActive) Deactivate();
 
-            Current = ability;
+            Current = spell;
             Cooldown = 0f;
             Changed?.Invoke();
         }
@@ -107,28 +116,23 @@ namespace Gunspire
                 return false;
             }
 
-            float upfront = Current.IsSustained ? Current.ManaPerSecond * 0.5f : Current.ManaCost;
+            // A sustained spell pays half a second up front, so flicking it on and off still
+            // costs something rather than being free.
+            float upfront = Current.IsSustained ? Current.Sustain.ManaPerSecond * 0.5f : Current.ManaCost;
             if (upfront > 0f && (Mana == null || !Mana.Has(upfront)))
             {
                 LastRefusal = "Not enough mana for " + Current.DisplayName;
                 return false;
             }
 
-            return Current.IsSustained ? BeginSustained() : FireInstant();
+            return Current.IsSustained ? BeginSustained() : FireOnce();
         }
 
-        private bool FireInstant()
+        private bool FireOnce()
         {
             if (Context == null) return false;
 
-            Context.Begin(DamageType.Astral, SpellType.Mobility, Current.Tint,
-                level: 1, levelScale: 1f, isSpell: true);
-
-            bool fired = AbilityRunner.Run(Current.OnActivate, Context);
-            Vector3 point = Context.Point;
-            Context.EndCast();
-
-            if (!fired)
+            if (!Current.Cast(Context, 1))
             {
                 // The chain refused - no dash charges, or a wall in the way. Charge nothing.
                 LastRefusal = Current.DisplayName + " has no room";
@@ -138,7 +142,6 @@ namespace Gunspire
             if (Current.ManaCost > 0f && Mana != null) Mana.TrySpend(Current.ManaCost);
             Cooldown = Current.Cooldown;
 
-            AbilityEvents.RaiseCast(Current.Id, Context, point);
             Changed?.Invoke();
             return true;
         }
@@ -149,10 +152,12 @@ namespace Gunspire
             ActiveTime = 0f;
             _stationaryAnchor = transform.position;
 
-            if (Current.MoveSpeedBonus != 0f && Sheet != null)
-                _speedModifier = Sheet.AddPercent(Attr.MoveSpeed, Current.MoveSpeedBonus, this);
+            SustainProfile sustain = Current.Sustain;
 
-            if (Current.WallZip && Motor != null)
+            if (sustain.MoveSpeedBonus != 0f && Sheet != null)
+                _speedModifier = Sheet.AddPercent(Attr.MoveSpeed, sustain.MoveSpeedBonus, this);
+
+            if (sustain.WallZip && Motor != null)
             {
                 // The camera's exact look direction, pitch included, so aiming up at a ledge
                 // or down at a floor zips there just as readily as a wall dead ahead.
@@ -164,19 +169,22 @@ namespace Gunspire
             return true;
         }
 
-        /// <summary>Returns false when the ability should stop.</summary>
+        /// <summary>Returns false when the spell should stop.</summary>
         private bool SustainTick(float dt)
         {
+            SustainProfile sustain = Current.Sustain;
+            if (sustain == null) return false;
+
             ActiveTime += dt;
 
-            if (Current.MaxDuration > 0f && ActiveTime >= Current.MaxDuration) return false;
+            if (sustain.MaxDuration > 0f && ActiveTime >= sustain.MaxDuration) return false;
 
-            if (Current.ManaPerSecond > 0f)
+            if (sustain.ManaPerSecond > 0f)
             {
-                if (Mana == null || !Mana.TrySpend(Current.ManaPerSecond * dt)) return false;
+                if (Mana == null || !Mana.TrySpend(sustain.ManaPerSecond * dt)) return false;
             }
 
-            if (Current.BreakOnMovement)
+            if (sustain.BreakOnMovement)
             {
                 // Planting your feet is the cost of the invulnerability, so any real movement
                 // ends it. A small tolerance keeps it from dropping on physics jitter.
@@ -184,13 +192,13 @@ namespace Gunspire
                 _stationaryAnchor = Vector3.Lerp(_stationaryAnchor, transform.position, 0.02f);
             }
 
-            if (Current.Invulnerable && Health != null)
+            if (sustain.Invulnerable && Health != null)
                 Health.InvulnerabilityTimer = Mathf.Max(Health.InvulnerabilityTimer, 0.2f);
 
             // The motor lets go on its own when the zip finds no wall, or the player walks off
             // the edge of one with nothing to land on - either way there is nothing left for
-            // this ability to be doing, so it should end rather than sit active and idle.
-            if (Current.WallZip && Motor != null && Motor.ZipState == PlayerMotor.WallZipState.Off)
+            // this spell to be doing, so it should end rather than sit active and idle.
+            if (sustain.WallZip && Motor != null && Motor.ZipState == PlayerMotor.WallZipState.Off)
                 return false;
 
             return true;
@@ -208,7 +216,7 @@ namespace Gunspire
                 _speedModifier = null;
             }
 
-            // Unconditional and harmless for abilities that never touched it - EndWallZip is a
+            // Unconditional and harmless for spells that never touched it - EndWallZip is a
             // no-op unless the motor is actually mid-zip or attached to something.
             if (Motor != null) Motor.EndWallZip();
             Changed?.Invoke();

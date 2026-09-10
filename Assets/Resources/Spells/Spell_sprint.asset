@@ -1,0 +1,42 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 742cfdfb30a993f448892174ad3ab0e9, type: 3}
+  m_Name: Spell_sprint
+  m_EditorClassIdentifier: Assembly-CSharp::Gunspire.SpellAsset
+  Definition:
+    Id: sprint
+    DisplayName: Sprint
+    ShortName: SPRT
+    Description: Hold a hard run for as long as your mana lasts. No invulnerability,
+      no tricks, just distance.
+    ManaCost: 20
+    Cooldown: 6
+    Rarity: 0
+    Type: 1
+    DamageType: 5
+    Slot: 1
+    Sustain:
+      ManaPerSecond: 9
+      MaxDuration: 0
+      MoveSpeedBonus: 0.55
+      Invulnerable: 0
+      BreakOnMovement: 0
+      WallZip: 0
+    MaxLevel: 1
+    GrowthPerLevel: 0.22
+    LevelUpNote: 
+    TintOverride: {r: 1, g: 0.9, b: 0.45, a: 1}
+    Icon: {fileID: 0}
+    OnCast: []
+  references:
+    version: 2
+    RefIds: []
