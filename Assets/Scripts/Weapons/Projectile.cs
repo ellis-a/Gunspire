@@ -15,7 +15,7 @@ namespace Gunspire
         public CharacterSheet OwnerSheet;
 
         public float Damage = 10f;
-        public DamageType DamageType = DamageType.Normal;
+        public DamageType DamageType = DamageType.Kinetic;
         public bool IsSpell;
         public bool CanCrit = true;
 

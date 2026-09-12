@@ -60,9 +60,17 @@ namespace Gunspire
             }
         }
 
-        public static void ApplyWeapon(Weapon weapon)
+        /// <summary>
+        /// Puts the loadout gun in the first slot and leaves the second empty. A second gun is
+        /// something the run finds - the first one picked up fills the free hand instead of
+        /// trading, which is what makes carrying two a reward rather than a starting condition.
+        /// </summary>
+        public static void ApplyWeapon(Holster holster)
         {
-            if (weapon != null) weapon.Equip(WeaponLibrary.Get(WeaponId));
+            if (holster == null) return;
+
+            holster.Clear();
+            holster.SetSlot(0, WeaponLibrary.Get(WeaponId));
         }
 
         /// <summary>
@@ -152,7 +160,7 @@ namespace Gunspire
         {
             if (rig == null) return;
             ApplyStats(rig.Sheet);
-            ApplyWeapon(rig.Weapon);
+            ApplyWeapon(rig.Holster);
             ApplySpells(rig.Book);
             ApplyMovement(rig.Movement);
             ApplyMelee(rig.CombatInput);

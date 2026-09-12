@@ -41,7 +41,7 @@ namespace Gunspire
         /// <summary>Level growth on its own, for effects that scale range or radius rather than damage.</summary>
         public float LevelScale = 1f;
 
-        public DamageType DamageType = DamageType.Astral;
+        public DamageType DamageType = DamageType.Energy;
         public SpellType Category = SpellType.Attack;
         public Color Tint = Color.white;
 

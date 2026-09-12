@@ -21,6 +21,7 @@ namespace Gunspire
         public SpellBook Book;
         public MovementController Movement;
         public Weapon Weapon;
+        public Holster Holster;
         public Camera Camera;
         public Transform CameraPivot;
 
@@ -51,7 +52,7 @@ namespace Gunspire
             if (Health != null) Health.Heal(Health.Max);
             if (Mana != null) Mana.Add(Mana.Max);
             if (Motor != null) Motor.RefillDashes();
-            if (Weapon != null) Weapon.RefillMagazine();
+            if (Holster != null) Holster.RefillAll();
             if (Book != null) Book.ResetCooldowns();
             if (Status != null) Status.ClearAll();
             if (Movement != null) Movement.ResetState();
@@ -102,6 +103,8 @@ namespace Gunspire
             var weaponHolder = Build.Empty(cameraObject.transform, "WeaponHolder",
                 new Vector3(0.26f, -0.20f, 0.30f));
             var weapon = weaponHolder.AddComponent<Weapon>();
+            var holster = root.AddComponent<Holster>();
+            holster.Weapon = weapon;
             weapon.OwnerTeam = Team.Player;
             weapon.Owner = root;
             weapon.OwnerSheet = sheet;
@@ -112,6 +115,8 @@ namespace Gunspire
             look.Initialise(pivot.transform, camera, motor);
 
             combat.Weapon = weapon;
+            combat.Holster = holster;
+            combat.Status = status;
             combat.Book = book;
             combat.Look = look;
             combat.Motor = motor;
@@ -132,6 +137,7 @@ namespace Gunspire
             rig.Book = book;
             rig.Movement = movement;
             rig.Weapon = weapon;
+            rig.Holster = holster;
             rig.Camera = camera;
             rig.CameraPivot = pivot.transform;
 

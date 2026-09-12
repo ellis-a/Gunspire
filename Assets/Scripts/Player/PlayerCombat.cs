@@ -8,10 +8,15 @@ namespace Gunspire
     /// </summary>
     public class PlayerCombat : MonoBehaviour
     {
+        [Header("Weapon swapping")]
+        /// <summary>Shortest gap between wheel-driven swaps, so one flick is one swap.</summary>
+        [SerializeField] private float scrollSwapInterval = 0.18f;
+
         [Header("Interaction")]
         [SerializeField] private float interactRange = 3.5f;
 
         public Weapon Weapon;
+        public Holster Holster;
         public SpellBook Book;
         public PlayerLook Look;
         public PlayerMotor Motor;
@@ -19,6 +24,7 @@ namespace Gunspire
         public Mana Mana;
         public CharacterSheet Sheet;
         public Transform Aim;
+        public StatusController Status;
 
         /// <summary>
         /// The melee slot. A <see cref="Spell"/> like any other, restricted to
@@ -30,6 +36,7 @@ namespace Gunspire
         public AbilityContext Context { get; set; }
 
         private float _bashTimer;
+        private float _swapCooldown;
         private IInteractable _focus;
         private Component _focusComponent;
 
@@ -81,6 +88,10 @@ namespace Gunspire
         {
             if (_bashTimer > 0f) _bashTimer -= Time.deltaTime;
 
+            // Shock deafens the player as well as the enemies, so the one place that ticks every
+            // frame on the player sets it. Left at one whenever nothing is shocking them.
+            Sfx.Muffle = ShockStatus.HearingScale(Status);
+
             ScanForInteractable();
 
             if (!InputEnabled)
@@ -95,6 +106,8 @@ namespace Gunspire
                 }
                 return;
             }
+
+            ReadSwapInput();
 
             if (Weapon != null)
             {
@@ -282,27 +295,52 @@ namespace Gunspire
 
         public Component FocusComponent => _focusComponent;
 
+        // ---------------------------------------------------------------- swapping
+
+        /// <summary>
+        /// X, or a flick of the wheel either way. With only two guns there is no next and
+        /// previous to tell apart, so both directions do the same thing.
+        ///
+        /// The wheel is rate-limited because one physical notch does not reliably arrive as one
+        /// frame of input - a fast scroll would otherwise swap twice and look like it did
+        /// nothing at all.
+        /// </summary>
+        private void ReadSwapInput()
+        {
+            if (Holster == null || !Holster.CanSwap) return;
+
+            if (_swapCooldown > 0f) _swapCooldown -= Time.deltaTime;
+
+            bool pressed = Input.GetKeyDown(Holster.SwapKey);
+            bool scrolled = _swapCooldown <= 0f
+                            && Mathf.Abs(Input.GetAxis("Mouse ScrollWheel")) > 0.01f;
+
+            if (!pressed && !scrolled) return;
+
+            _swapCooldown = scrollSwapInterval;
+            Holster.Swap();
+
+            Sfx.PlayFlat(SoundLibrary.Get(SoundLibrary.DryFireId), 0.35f, pitchVariance: 0.05f);
+        }
+
         /// <summary>Swaps the held gun, keeping the run modifiers attached to the weapon.</summary>
         public void EquipWeapon(WeaponDefinition definition)
         {
-            if (Weapon == null || definition == null) return;
-            Weapon.Equip(definition);
+            if (Holster == null || definition == null) return;
+            Holster.SetSlot(Holster.ActiveIndex, definition);
         }
 
         /// <summary>
-        /// Takes <paramref name="incoming"/> and hands back whatever was being held, along with
-        /// the rounds left in it. Returns null if there was nothing to give up.
+        /// Takes <paramref name="incoming"/> and hands back whatever it displaced, along with
+        /// the rounds left in it. Returns null when nothing was given up - which now happens
+        /// whenever a hand was free, not only on the very first gun of a run.
         /// </summary>
         public WeaponDefinition SwapWeapon(WeaponDefinition incoming, int incomingAmmo, out int outgoingAmmo)
         {
             outgoingAmmo = -1;
-            if (Weapon == null || incoming == null) return null;
+            if (Holster == null || incoming == null) return null;
 
-            WeaponDefinition outgoing = Weapon.Definition;
-            if (outgoing != null) outgoingAmmo = Weapon.AmmoInMagazine;
-
-            Weapon.Equip(incoming, incomingAmmo);
-            return outgoing;
+            return Holster.Take(incoming, incomingAmmo, out outgoingAmmo);
         }
     }
 }

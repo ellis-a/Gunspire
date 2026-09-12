@@ -302,7 +302,7 @@ namespace Gunspire
                     Rarity = Rarity.Common,
                     Delivery = DeliveryKind.Hitscan,
                     Mode = FireMode.Semi,
-                    DamageType = DamageType.Normal,
+                    DamageType = DamageType.Kinetic,
                     Damage = 14f,
                     RoundsPerMinute = 320f,
                     MagazineSize = 12,
@@ -312,7 +312,7 @@ namespace Gunspire
                     RecoilPitch = 1.3f,
                     RecoilYaw = 0.3f,
                     Range = 140f,
-                    Tint = DamageTypes.Tint(DamageType.Normal)
+                    Tint = DamageTypes.Tint(DamageType.Kinetic)
                 },
 
                 // ---- the three signature starting guns, tuned to roughly the Arcanum's 75 dps
@@ -326,7 +326,7 @@ namespace Gunspire
                     Rarity = Rarity.Common,
                     Delivery = DeliveryKind.Projectile,
                     Mode = FireMode.Auto,
-                    DamageType = DamageType.Fire,
+                    DamageType = DamageType.Energy,
                     Damage = 6f,
                     RoundsPerMinute = 750f,
                     MagazineSize = 30,
@@ -337,7 +337,7 @@ namespace Gunspire
                     RecoilYaw = 0.4f,
                     ProjectileSpeed = 75f,
                     ProjectileRadius = 0.11f,
-                    Tint = DamageTypes.Tint(DamageType.Fire),
+                    Tint = DamageTypes.Tint(DamageType.Energy),
                     OnHitStatuses = { StatusLibrary.Burn(2.5f, 1, 3f) }
                 },
 
@@ -349,7 +349,7 @@ namespace Gunspire
                     Rarity = Rarity.Common,
                     Delivery = DeliveryKind.Hitscan,
                     Mode = FireMode.Semi,
-                    DamageType = DamageType.Frost,
+                    DamageType = DamageType.Kinetic,
                     Damage = 7f,
                     PelletsPerShot = 7,
                     RoundsPerMinute = 90f,
@@ -361,8 +361,8 @@ namespace Gunspire
                     RecoilYaw = 0.55f,
                     Range = 38f,
                     Knockback = 2f,
-                    Tint = DamageTypes.Tint(DamageType.Frost),
-                    OnHitStatuses = { StatusLibrary.Chill(3f, 1) }
+                    Tint = DamageTypes.Tint(DamageType.Kinetic),
+                    OnHitStatuses = { StatusLibrary.Frost(3f, 1) }
                 },
 
                 // ---- the two starter guns with no alt fire. Both plain Normal damage: they
@@ -376,7 +376,7 @@ namespace Gunspire
                     Rarity = Rarity.Common,
                     Delivery = DeliveryKind.Projectile,
                     Mode = FireMode.Semi,
-                    DamageType = DamageType.Normal,
+                    DamageType = DamageType.Kinetic,
                     Damage = 20f,
                     RoundsPerMinute = 65f,
                     MagazineSize = 4,
@@ -394,7 +394,7 @@ namespace Gunspire
                     SplashRadius = 4.4f,
                     SplashDamage = 46f,
                     Knockback = 8f,
-                    Tint = DamageTypes.Tint(DamageType.Normal)
+                    Tint = DamageTypes.Tint(DamageType.Kinetic)
                 },
 
                 new WeaponDefinition
@@ -405,7 +405,7 @@ namespace Gunspire
                     Rarity = Rarity.Common,
                     Delivery = DeliveryKind.Hitscan,
                     Mode = FireMode.Auto,
-                    DamageType = DamageType.Normal,
+                    DamageType = DamageType.Kinetic,
                     Damage = 5f,
                     RoundsPerMinute = 900f,
                     MagazineSize = 90,
@@ -420,7 +420,7 @@ namespace Gunspire
 
                     SpinUpSeconds = 0.7f,
                     SpinDownMultiplier = 1.6f,
-                    Tint = DamageTypes.Tint(DamageType.Normal)
+                    Tint = DamageTypes.Tint(DamageType.Kinetic)
                 },
 
                 new WeaponDefinition
@@ -431,7 +431,7 @@ namespace Gunspire
                     Rarity = Rarity.Common,
                     Delivery = DeliveryKind.Projectile,
                     Mode = FireMode.Semi,
-                    DamageType = DamageType.Shadow,
+                    DamageType = DamageType.Necrotic,
                     Damage = 16f,
                     RoundsPerMinute = 80f,
                     MagazineSize = 4,
@@ -446,7 +446,7 @@ namespace Gunspire
                     SplashRadius = 3.6f,
                     SplashDamage = 30f,
                     Knockback = 6f,
-                    Tint = DamageTypes.Tint(DamageType.Shadow),
+                    Tint = DamageTypes.Tint(DamageType.Necrotic),
                     OnHitStatuses = { StatusLibrary.Weaken(4f) }
                 },
 
@@ -458,7 +458,7 @@ namespace Gunspire
                     Rarity = Rarity.Common,
                     Delivery = DeliveryKind.Projectile,
                     Mode = FireMode.Auto,
-                    DamageType = DamageType.Fire,
+                    DamageType = DamageType.Energy,
                     Damage = 7f,
                     RoundsPerMinute = 620f,
                     MagazineSize = 34,
@@ -469,7 +469,7 @@ namespace Gunspire
                     RecoilYaw = 0.35f,
                     ProjectileSpeed = 70f,
                     ProjectileRadius = 0.12f,
-                    Tint = DamageTypes.Tint(DamageType.Fire),
+                    Tint = DamageTypes.Tint(DamageType.Energy),
                     OnHitStatuses = { StatusLibrary.Burn(3f, 1, 4f) }
                 },
 
@@ -481,7 +481,7 @@ namespace Gunspire
                     Rarity = Rarity.Uncommon,
                     Delivery = DeliveryKind.Projectile,
                     Mode = FireMode.Semi,
-                    DamageType = DamageType.Frost,
+                    DamageType = DamageType.Kinetic,
                     Damage = 34f,
                     RoundsPerMinute = 110f,
                     MagazineSize = 5,
@@ -493,8 +493,8 @@ namespace Gunspire
                     ProjectileSpeed = 90f,
                     ProjectileRadius = 0.18f,
                     Knockback = 3f,
-                    Tint = DamageTypes.Tint(DamageType.Frost),
-                    OnHitStatuses = { StatusLibrary.Chill(4f, 2) }
+                    Tint = DamageTypes.Tint(DamageType.Kinetic),
+                    OnHitStatuses = { StatusLibrary.Frost(4f, 2) }
                 },
 
                 new WeaponDefinition
@@ -505,7 +505,7 @@ namespace Gunspire
                     Rarity = Rarity.Uncommon,
                     Delivery = DeliveryKind.Hitscan,
                     Mode = FireMode.Semi,
-                    DamageType = DamageType.Nature,
+                    DamageType = DamageType.Necrotic,
                     Damage = 8f,
                     PelletsPerShot = 9,
                     RoundsPerMinute = 95f,
@@ -517,8 +517,8 @@ namespace Gunspire
                     RecoilYaw = 0.6f,
                     Range = 42f,
                     Knockback = 2f,
-                    Tint = DamageTypes.Tint(DamageType.Nature),
-                    OnHitStatuses = { StatusLibrary.Blight(6f, 1, 2.5f) }
+                    Tint = DamageTypes.Tint(DamageType.Necrotic),
+                    OnHitStatuses = { StatusLibrary.Poison(6f, 1, 2.5f) }
                 },
 
                 new WeaponDefinition
@@ -529,7 +529,7 @@ namespace Gunspire
                     Rarity = Rarity.Rare,
                     Delivery = DeliveryKind.Projectile,
                     Mode = FireMode.Semi,
-                    DamageType = DamageType.Normal,
+                    DamageType = DamageType.Kinetic,
                     Damage = 26f,
                     RoundsPerMinute = 80f,
                     MagazineSize = 4,
@@ -555,7 +555,7 @@ namespace Gunspire
                     Rarity = Rarity.Rare,
                     Delivery = DeliveryKind.Hitscan,
                     Mode = FireMode.Semi,
-                    DamageType = DamageType.Astral,
+                    DamageType = DamageType.Energy,
                     Damage = 55f,
                     RoundsPerMinute = 70f,
                     MagazineSize = 4,
@@ -566,7 +566,7 @@ namespace Gunspire
                     RecoilYaw = 0.4f,
                     Range = 200f,
                     MaxPierce = 4,
-                    Tint = DamageTypes.Tint(DamageType.Astral),
+                    Tint = DamageTypes.Tint(DamageType.Energy),
                     OnHitStatuses = { StatusLibrary.Shock(4f) }
                 },
 
@@ -580,7 +580,7 @@ namespace Gunspire
                     Mode = FireMode.Burst,
                     BurstCount = 3,
                     BurstInterval = 0.055f,
-                    DamageType = DamageType.Shadow,
+                    DamageType = DamageType.Necrotic,
                     Damage = 16f,
                     // RoundsPerMinute paces the burst, not the round: 120 is one burst every half second.
                     RoundsPerMinute = 120f,
@@ -591,7 +591,7 @@ namespace Gunspire
                     RecoilPitch = 1.8f,
                     RecoilYaw = 0.35f,
                     Range = 120f,
-                    Tint = DamageTypes.Tint(DamageType.Shadow),
+                    Tint = DamageTypes.Tint(DamageType.Necrotic),
                     OnHitStatuses = { StatusLibrary.Weaken(4f) }
                 },
 
@@ -603,7 +603,7 @@ namespace Gunspire
                     Rarity = Rarity.Mythic,
                     Delivery = DeliveryKind.Projectile,
                     Mode = FireMode.Auto,
-                    DamageType = DamageType.Shadow,
+                    DamageType = DamageType.Necrotic,
                     Damage = 17f,
                     RoundsPerMinute = 300f,
                     MagazineSize = 20,
@@ -615,8 +615,8 @@ namespace Gunspire
                     ProjectileSpeed = 68f,
                     ProjectileRadius = 0.16f,
                     MaxPierce = 1,
-                    Tint = DamageTypes.Tint(DamageType.Shadow),
-                    OnHitStatuses = { StatusLibrary.Weaken(4f), StatusLibrary.Blight(5f, 1, 3f) }
+                    Tint = DamageTypes.Tint(DamageType.Necrotic),
+                    OnHitStatuses = { StatusLibrary.Weaken(4f), StatusLibrary.Poison(5f, 1, 3f) }
                 },
 
                 new WeaponDefinition
@@ -627,7 +627,7 @@ namespace Gunspire
                     Rarity = Rarity.Legendary,
                     Delivery = DeliveryKind.Hitscan,
                     Mode = FireMode.Semi,
-                    DamageType = DamageType.Astral,
+                    DamageType = DamageType.Energy,
                     Damage = 95f,
                     RoundsPerMinute = 45f,
                     MagazineSize = 3,

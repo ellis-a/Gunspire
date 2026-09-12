@@ -28,15 +28,58 @@ namespace Gunspire
         /// <summary>Raised when effects are added or removed, for HUD refreshes.</summary>
         public event Action Changed;
 
-        public bool IsFrozen => Has(StatusId.Freeze);
+        /// <summary>
+        /// Frost at full stacks: a hundred percent slowed, so frozen in every sense that used to
+        /// be a separate status. This is the state that kinetic damage finishes.
+        /// </summary>
+        public bool IsFrozen => Stacks(StatusId.Frost) >= FrostStatus.FullStacks;
 
         /// <summary>True while the entity should not be allowed to move or attack.</summary>
         public bool IsControlImpaired => IsFrozen;
 
+        public bool IsEthereal => Has(StatusId.Ethereal);
+
+        /// <summary>Removes the death mark if present, and reports whether there was one.</summary>
+        public bool ConsumeDeathmark()
+        {
+            ActiveStatus s = Find(StatusId.Deathmark);
+            if (s == null) return false;
+            RemoveInstance(s);
+            return true;
+        }
+
+        /// <summary>
+        /// Called when the entity is healed. Bleeding never expires on a timer, so mending it is
+        /// the only way it ends - and healing through a bleed should feel like it accomplished
+        /// something rather than being immediately undone.
+        /// </summary>
+        public void OnHealed()
+        {
+            Remove(StatusId.Bleed);
+        }
+
+        /// <summary>
+        /// How fast this entity is actually moving, from its own position rather than from any
+        /// motor. Poison reads it to fall off faster while the victim holds still, and the
+        /// player and the enemies have entirely different movement code to ask otherwise.
+        /// </summary>
+        public float Speed { get; private set; }
+
+        private Vector3 _lastPosition;
+        private bool _hasLastPosition;
+
         private void Update()
         {
-            if (_active.Count == 0) return;
             float dt = Time.deltaTime;
+
+            if (dt > 0f)
+            {
+                Speed = _hasLastPosition ? Vector3.Distance(transform.position, _lastPosition) / dt : 0f;
+                _lastPosition = transform.position;
+                _hasLastPosition = true;
+            }
+
+            if (_active.Count == 0) return;
 
             // Copy first: a tick can kill the entity, which clears the live list.
             _scratch.Clear();
@@ -47,7 +90,7 @@ namespace Gunspire
                 ActiveStatus s = _scratch[i];
                 if (!_active.Contains(s)) continue;
 
-                s.Remaining -= dt;
+                s.Remaining -= dt * Mathf.Max(0f, s.Def.DecayScale(this, s));
 
                 float interval = Mathf.Max(0.05f, s.Def.TickInterval);
                 s.TickTimer += dt;
@@ -96,19 +139,8 @@ namespace Gunspire
 
             CharacterSheet sourceSheet = source != null ? source.GetComponent<CharacterSheet>() : null;
 
-            // Chill saturating into a hard freeze is the ice payoff, so check before stacking.
-            if (app.Id == StatusId.Chill)
-            {
-                int current = Stacks(StatusId.Chill);
-                if (current + app.Stacks >= def.MaxStacks && !Has(StatusId.Freeze))
-                {
-                    Remove(StatusId.Chill);
-                    var freeze = new StatusApplication(StatusId.Freeze, 1.6f, 1, 1f);
-                    Apply(freeze, source, sourceTeam);
-                    return;
-                }
-            }
-
+            // Frost needs no special case any more: saturating at a hundred stacks IS the
+            // freeze, so the clamp below does what a second status used to have to.
             StatusId[] cleanses = def.Cleanses;
             if (cleanses != null)
                 for (int i = 0; i < cleanses.Length; i++) Remove(cleanses[i]);

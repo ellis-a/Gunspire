@@ -41,7 +41,17 @@ namespace Gunspire
         public virtual float TickInterval => 0.5f;
         public virtual bool IsDebuff => true;
 
-        /// <summary>Statuses cleared when this one lands, e.g. fire thaws ice.</summary>
+        /// <summary>
+        /// How fast this effect burns through its duration. One is real time; two wears off in
+        /// half as long. Poison uses it to reward standing still.
+        /// </summary>
+        public virtual float DecayScale(StatusController c, ActiveStatus s) => 1f;
+
+        /// <summary>
+        /// Statuses cleared when this one lands. Nothing uses it at present: burn and frost
+        /// used to cancel each other and no longer do, because they are magic and are allowed
+        /// to coexist. Kept for the cleanse and dispel effects that will want it.
+        /// </summary>
         public virtual StatusId[] Cleanses => null;
 
         /// <summary>Rebuild the stat modifiers for the current stack count. Called on apply and on every restack.</summary>

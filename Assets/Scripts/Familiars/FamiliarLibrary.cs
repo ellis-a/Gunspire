@@ -88,7 +88,7 @@ namespace Gunspire
                 {
                     new AttackDefinition
                     {
-                        Name = "Starbolt", DamageType = DamageType.Astral, Tint = Palette.Arcane,
+                        Name = "Starbolt", DamageType = DamageType.Energy, Tint = Palette.Arcane,
                         MinRange = 0f, MaxRange = 22f, Cooldown = 1.4f, InitialDelay = 0.4f,
                         Sequence =
                         {
@@ -129,7 +129,7 @@ namespace Gunspire
                 {
                     new AttackDefinition
                     {
-                        Name = "Mend", DamageType = DamageType.Nature, Tint = Palette.Poison,
+                        Name = "Mend", DamageType = DamageType.Necrotic, Tint = Palette.Poison,
                         MinRange = 0f, MaxRange = 999f, Cooldown = 6f, InitialDelay = 3f,
                         RequiresLineOfSight = false,
                         Sequence =
@@ -164,7 +164,7 @@ namespace Gunspire
                     // attack at all makes it feel inert next to the others.
                     new AttackDefinition
                     {
-                        Name = "Cinder Nip", DamageType = DamageType.Fire, Tint = Palette.Fire,
+                        Name = "Cinder Nip", DamageType = DamageType.Energy, Tint = Palette.Fire,
                         MinRange = 0f, MaxRange = 14f, Cooldown = 2.2f, InitialDelay = 1f,
                         Sequence =
                         {
@@ -194,14 +194,14 @@ namespace Gunspire
                 {
                     new AttackDefinition
                     {
-                        Name = "Rime Pool", DamageType = DamageType.Frost, Tint = Palette.Ice,
+                        Name = "Rime Pool", DamageType = DamageType.Kinetic, Tint = Palette.Ice,
                         MinRange = 0f, MaxRange = 20f, Cooldown = 7f, InitialDelay = 2f,
                         Sequence =
                         {
                             new TargetGroundPointEffect { LeadDistance = 0f },
                             new StatusPayloadEffect
                             {
-                                Status = StatusId.Chill, Duration = 2.5f, Stacks = 1, Magnitude = 0.11f
+                                Status = StatusId.Frost, Duration = 2.5f, Stacks = 1, Magnitude = 0.11f
                             },
                             new LingeringZoneEffect
                             {

@@ -33,7 +33,7 @@ MonoBehaviour:
       InitialDelay: 2
       RequiresLineOfSight: 1
       Priority: 0
-      DamageType: 2
+      DamageType: 0
       Category: 0
       Tint: {r: 0.55, g: 0.85, b: 1, a: 1}
       Sequence:

@@ -33,13 +33,11 @@ namespace Gunspire
         {
             switch (type)
             {
-                case DamageType.Normal: return "Normal";
-                case DamageType.Fire:   return "Fire";
-                case DamageType.Frost:  return "Frost";
-                case DamageType.Nature: return "Nature";
-                case DamageType.Shadow: return "Shadow";
-                case DamageType.Astral: return "Astral";
-                default:                return "True";
+                case DamageType.Kinetic:  return "Kinetic";
+                case DamageType.Energy:   return "Energy";
+                case DamageType.Psychic:  return "Psychic";
+                case DamageType.Necrotic: return "Necrotic";
+                default:                  return "True";
             }
         }
 
@@ -47,13 +45,11 @@ namespace Gunspire
         {
             switch (type)
             {
-                case DamageType.Fire:   return new Color(1.00f, 0.48f, 0.15f);
-                case DamageType.Frost:  return new Color(0.55f, 0.85f, 1.00f);
-                case DamageType.Nature: return new Color(0.55f, 0.90f, 0.35f);
-                case DamageType.Shadow: return new Color(0.62f, 0.35f, 0.80f);
-                case DamageType.Astral: return new Color(0.72f, 0.72f, 1.00f);
-                case DamageType.Normal: return new Color(1.00f, 0.92f, 0.70f);
-                default:                return Color.white;
+                case DamageType.Kinetic:  return new Color(1.00f, 0.92f, 0.70f);
+                case DamageType.Energy:   return new Color(1.00f, 0.58f, 0.20f);
+                case DamageType.Psychic:  return new Color(0.85f, 0.45f, 0.95f);
+                case DamageType.Necrotic: return new Color(0.45f, 0.80f, 0.40f);
+                default:                  return Color.white;
             }
         }
     }

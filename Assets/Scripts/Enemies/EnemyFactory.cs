@@ -75,6 +75,11 @@ namespace Gunspire
             root.AddComponent<StatusController>();
 
             var healthComponent = root.AddComponent<Health>();
+
+            // Elites are exempt from the instant kills, and a definition can declare that this
+            // archetype simply is not physical.
+            healthComponent.IsElite = elite;
+            healthComponent.EtherealByNature = def.Ethereal;
             healthComponent.Team = Team.Enemy;
 
             var visuals = root.AddComponent<EnemyVisuals>();

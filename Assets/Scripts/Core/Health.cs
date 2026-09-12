@@ -120,6 +120,64 @@ namespace Gunspire
 
         // ---------------------------------------------------------------- damage
 
+        /// <summary>
+        /// Set from the enemy definition at spawn. Elites are exempt from the instant kills, so
+        /// a frost stack or a death mark is a large chunk of their health rather than the whole
+        /// fight - otherwise the answer to every elite would be one status and one bullet.
+        /// </summary>
+        public bool IsElite { get; set; }
+
+        /// <summary>
+        /// Ethereal from a spell, or simply what this thing is. Ghosts and cursed cultists take
+        /// damage by the same rule; only the source of the state differs.
+        /// </summary>
+        public bool EtherealByNature { get; set; }
+
+        public bool IsEthereal => EtherealByNature || (Status != null && Status.IsEthereal);
+
+        /// <summary>
+        /// The two effects that skip the health bar entirely: a full stack of frost taking a
+        /// kinetic hit, and a death mark taking any hit at all.
+        ///
+        /// Never fires on the player. An instant death from a status the HUD had a second to
+        /// show would read as the game breaking rather than as a mistake the player made.
+        /// Returns true when it has dealt with the hit.
+        /// </summary>
+        private bool TryExecute(in DamageInfo info)
+        {
+            if (team == Team.Player) return false;
+
+            bool marked = Status.ConsumeDeathmark();
+            bool shattering = info.Type == DamageType.Kinetic && Status.IsFrozen;
+
+            if (!marked && !shattering) return false;
+
+            if (IsElite)
+            {
+                // Heavy, but survivable. Routed through the normal path so resistances, the
+                // damage hooks and the death handling all still apply.
+                float bite = Max * (marked ? DeathmarkStatus.EliteFraction : 0.25f);
+                if (shattering) Status.Remove(StatusId.Frost);
+
+                Current = Mathf.Max(0f, Current - bite);
+                Damaged?.Invoke(info, bite);
+                AnyDamaged?.Invoke(this, info, bite);
+                HealthChanged?.Invoke();
+
+                if (Current <= 0f) Die(info);
+                return true;
+            }
+
+            float lethal = Current;
+            Current = 0f;
+
+            Damaged?.Invoke(info, lethal);
+            AnyDamaged?.Invoke(this, info, lethal);
+            HealthChanged?.Invoke();
+            Die(info);
+            return true;
+        }
+
         public void TakeDamage(in DamageInfo info)
         {
             if (!IsAlive) return;
@@ -130,21 +188,22 @@ namespace Gunspire
 
             if (info.Type != DamageType.True)
             {
+                // Ethereal comes first and can end the hit outright, before any multiplier has
+                // a chance to make "immune" into "immune but for the fire damage on the bullet".
+                if (IsEthereal)
+                {
+                    if (info.Type == DamageType.Kinetic) return;
+                    amount *= EtherealStatus.VulnerabilityMultiplier;
+                }
+
                 amount *= Mathf.Max(0f, 1f - GetResistance(info.Type));
 
-                if (Status != null)
-                {
-                    // Frozen targets shatter.
-                    if (Status.IsFrozen)
-                    {
-                        amount *= 1.5f;
-                        Status.Remove(StatusId.Freeze);
-                    }
-                    amount *= 1f + Status.ConsumeMark();
-                }
+                if (Status != null) amount *= 1f + Status.ConsumeMark();
 
                 if (_sheet != null) amount *= _sheet.Get(Attr.DamageTaken);
             }
+
+            if (Status != null && TryExecute(in info)) return;
 
             if (Status != null && info.Statuses != null)
                 Status.ApplyAll(info.Statuses, info.Source, info.SourceTeam);
@@ -189,7 +248,7 @@ namespace Gunspire
         {
             if (!IsAlive || amount <= 0f) return 0f;
 
-            if (_sheet != null) amount *= _sheet.Get(Attr.HealingReceived);  // Blight drives this to zero
+            if (_sheet != null) amount *= _sheet.Get(Attr.HealingReceived);
             if (amount <= 0f) return 0f;
 
             float before = Current;
@@ -198,6 +257,10 @@ namespace Gunspire
 
             if (healed > 0f)
             {
+                // Mending a bleed is the only thing that stops one, so healing has to be what
+                // clears it. Regeneration counts: a silent trickle still closes the wound.
+                if (Status != null) Status.OnHealed();
+
                 if (!silent) Healed?.Invoke(healed);
                 HealthChanged?.Invoke();
             }

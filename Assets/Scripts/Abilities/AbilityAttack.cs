@@ -25,7 +25,7 @@ namespace Gunspire
         public int Priority = 0;
 
         [Header("Ability")]
-        public DamageType DamageType = DamageType.Astral;
+        public DamageType DamageType = DamageType.Energy;
         public SpellType Category = SpellType.Attack;
         public Color Tint = Palette.Arcane;
 

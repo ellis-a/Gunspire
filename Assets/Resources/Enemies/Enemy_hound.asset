@@ -38,7 +38,7 @@ MonoBehaviour:
     Crowned: 0
     Resists: 0
     Resistance: 0.4
-    WeakTo: 2
+    WeakTo: 0
     Vulnerability: 0.3
     ResistsEverything: 0
     BroadResistance: 0.18

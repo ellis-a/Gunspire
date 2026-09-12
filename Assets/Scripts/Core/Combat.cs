@@ -134,7 +134,7 @@ namespace Gunspire
         /// funnels through here, so this is the one place impact feedback has to be wired.
         /// </summary>
         public static void SpawnImpact(Vector3 point, Vector3 normal, Color color, float size = 0.35f,
-            DamageType type = DamageType.Normal)
+            DamageType type = DamageType.Kinetic)
         {
             GameObject go = Build.Sphere(null, "Impact", point + normal * 0.05f, size,
                 MaterialLibrary.Transparent(color), collider: false);

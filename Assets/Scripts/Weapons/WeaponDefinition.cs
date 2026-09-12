@@ -20,7 +20,7 @@ namespace Gunspire
         [Header("Delivery")]
         public DeliveryKind Delivery = DeliveryKind.Hitscan;
         public FireMode Mode = FireMode.Semi;
-        public DamageType DamageType = DamageType.Normal;
+        public DamageType DamageType = DamageType.Kinetic;
 
         [Header("Damage")]
         public float Damage = 12f;

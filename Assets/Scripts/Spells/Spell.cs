@@ -30,7 +30,13 @@ namespace Gunspire
 
         public Rarity Rarity = Rarity.Common;
         public SpellType Type = SpellType.Attack;
-        public DamageType DamageType = DamageType.Astral;
+        public DamageType DamageType = DamageType.Energy;
+
+        /// <summary>
+        /// The tradition this belongs to. Elemental is first so that spell assets written before
+        /// schools existed land there, which is where most of the opening roster belongs anyway.
+        /// </summary>
+        public SpellSchool School = SpellSchool.Elemental;
 
         /// <summary>Which slot this can be bound to. See <see cref="SpellSlot"/>.</summary>
         public SpellSlot Slot = SpellSlot.Cast;

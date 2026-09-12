@@ -226,7 +226,11 @@ namespace Gunspire
             if (IsAlerted || this == null) return;
             if (Health != null && !Health.IsAlive) return;
 
-            if (TravelDistanceTo(position) <= HearingRange * loudness) Alert();
+            // Shock deadens hearing, which is what makes it worth putting on something that has
+            // not noticed you yet rather than only on something already shooting at you.
+            float hearing = HearingRange * ShockStatus.HearingScale(Status);
+
+            if (TravelDistanceTo(position) <= hearing * loudness) Alert();
         }
 
         /// <summary>
@@ -309,8 +313,21 @@ namespace Gunspire
             get
             {
                 if (Target == null) return transform.forward;
+
                 Vector3 aimAt = Target.position + Vector3.up * 0.95f;
-                return (aimAt - MuzzlePosition).normalized;
+                Vector3 direction = (aimAt - MuzzlePosition).normalized;
+
+                // Poison spoils an enemy's aim the same way it spoils the player's: by moving
+                // where the shot actually goes, rather than by drawing something wobbly. The
+                // bob phase is already per-enemy, so a poisoned group does not sway in unison.
+                float sway = PoisonStatus.SwayFor(Status);
+                if (sway <= 0f) return direction;
+
+                float t = Time.time + _bobPhase;
+                return Quaternion.Euler(
+                    Mathf.Sin(t * 1.1f) * sway * 0.7f,
+                    Mathf.Sin(t * 1.7f) * sway,
+                    0f) * direction;
             }
         }
 

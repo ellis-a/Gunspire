@@ -53,7 +53,7 @@ namespace Gunspire
         /// <summary>The surface impact tick for a school of damage.</summary>
         public static AudioClip Impact(DamageType type)
         {
-            string id = type == DamageType.Normal ? ImpactId : ImpactId + "_" + DamageTypes.Name(type).ToLowerInvariant();
+            string id = type == DamageType.Kinetic ? ImpactId : ImpactId + "_" + DamageTypes.Name(type).ToLowerInvariant();
             return Resolve(id, () => ImpactRecipe(type));
         }
 
@@ -137,23 +137,23 @@ namespace Gunspire
             switch (type)
             {
                 // Roar rather than crack: noisy, dark, and it hangs around.
-                case DamageType.Fire:
-                    return new SchoolVoice { BodyScale = 0.85f, NoiseMix = 0.88f, Brightness = 0.42f, DecayScale = 0.75f, Crack = 0.45f };
-
-                // Brittle and immediate. High body, very little tail.
-                case DamageType.Frost:
+                // Brittle and immediate. High body, very little tail - a bullet or a shard of
+                // ice landing, which are now the same kind of arrival.
+                case DamageType.Kinetic:
                     return new SchoolVoice { BodyScale = 1.75f, NoiseMix = 0.45f, Brightness = 0.95f, DecayScale = 1.45f, Crack = 0.7f };
 
-                case DamageType.Nature:
-                    return new SchoolVoice { BodyScale = 0.95f, NoiseMix = 0.66f, Brightness = 0.34f, DecayScale = 0.95f, Crack = 0.35f };
+                // Roar and crackle together, covering everything from a flame to a discharge.
+                case DamageType.Energy:
+                    return new SchoolVoice { BodyScale = 0.85f, NoiseMix = 0.88f, Brightness = 0.42f, DecayScale = 0.75f, Crack = 0.45f };
+
+                // Almost tonal, and pitched high enough to sit oddly against the rest - a
+                // struck bell more than a bang, because nothing physical arrived.
+                case DamageType.Psychic:
+                    return new SchoolVoice { BodyScale = 2.30f, NoiseMix = 0.28f, Brightness = 0.88f, DecayScale = 0.85f, Crack = 0.4f };
 
                 // Muffled, as though the sound is being absorbed on its way out.
-                case DamageType.Shadow:
+                case DamageType.Necrotic:
                     return new SchoolVoice { BodyScale = 0.60f, NoiseMix = 0.52f, Brightness = 0.16f, DecayScale = 0.65f, Crack = 0.2f };
-
-                // Almost tonal - a struck bell more than a bang.
-                case DamageType.Astral:
-                    return new SchoolVoice { BodyScale = 2.30f, NoiseMix = 0.28f, Brightness = 0.88f, DecayScale = 0.85f, Crack = 0.4f };
 
                 default:
                     return new SchoolVoice { BodyScale = 1f, NoiseMix = 0.80f, Brightness = 0.55f, DecayScale = 1f, Crack = 0.6f };

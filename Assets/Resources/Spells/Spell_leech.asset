@@ -22,7 +22,7 @@ MonoBehaviour:
     Cooldown: 1
     Rarity: 2
     Type: 0
-    DamageType: 4
+    DamageType: 3
     Slot: 2
     Sustain:
       ManaPerSecond: 0

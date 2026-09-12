@@ -176,6 +176,7 @@ namespace Gunspire
         private static Spell Dash() => new Spell
         {
             Id = "dash",
+            School = SpellSchool.Divination,
             DisplayName = "Dash",
             ShortName = "DASH",
             Description = "A short burst in the direction you are moving, with a sliver of " +
@@ -193,6 +194,7 @@ namespace Gunspire
         private static Spell Blink() => new Spell
         {
             Id = "blink",
+            School = SpellSchool.Psionic,
             DisplayName = "Blink",
             ShortName = "BLNK",
             Description = "Teleport forward, passing through anything in the way. Stops at the " +
@@ -217,6 +219,7 @@ namespace Gunspire
         private static Spell Sprint() => new Spell
         {
             Id = "sprint",
+            School = SpellSchool.Divination,
             DisplayName = "Sprint",
             ShortName = "SPRT",
             Description = "Hold a hard run for as long as your mana lasts. No invulnerability, " +
@@ -232,6 +235,7 @@ namespace Gunspire
         private static Spell AegisStance() => new Spell
         {
             Id = "shield",
+            School = SpellSchool.Divination,
             DisplayName = "Aegis Stance",
             ShortName = "SHLD",
             Description = "Plant your feet and ignore everything for a moment. Breaks the " +
@@ -253,6 +257,7 @@ namespace Gunspire
         private static Spell SpiderLegs() => new Spell
         {
             Id = "spider_legs",
+            School = SpellSchool.Bestial,
             DisplayName = "Spider Legs",
             ShortName = "SPDR",
             Description = "Fires a line at whatever you are looking at and hauls you to it. " +
@@ -271,13 +276,14 @@ namespace Gunspire
         private static Spell Bash() => new Spell
         {
             Id = "bash",
+            School = SpellSchool.Elemental,
             DisplayName = "Bash",
             ShortName = "BASH",
             Description = "A close swing that scales on Strength. The smash power behind it is " +
                           "what opens reinforced barriers, so it stays useful with nothing to hit.",
             Slot = SpellSlot.Melee,
             Type = SpellType.Attack,
-            DamageType = DamageType.Normal,
+            DamageType = DamageType.Kinetic,
             Rarity = Rarity.Common,
             ManaCost = 4f,
             Cooldown = 0.7f,
@@ -301,13 +307,14 @@ namespace Gunspire
         private static Spell Cleave() => new Spell
         {
             Id = "cleave",
+            School = SpellSchool.Elemental,
             DisplayName = "Cleave",
             ShortName = "CLVE",
             Description = "A wide, slow arc. Less damage to any one target than a bash, and far " +
                           "more of them caught in it.",
             Slot = SpellSlot.Melee,
             Type = SpellType.Attack,
-            DamageType = DamageType.Normal,
+            DamageType = DamageType.Kinetic,
             Rarity = Rarity.Uncommon,
             ManaCost = 9f,
             Cooldown = 1.3f,
@@ -331,13 +338,14 @@ namespace Gunspire
         private static Spell Leech() => new Spell
         {
             Id = "leech",
+            School = SpellSchool.Abyssal,
             DisplayName = "Leeching Strike",
             ShortName = "LECH",
             Description = "A shorter reach than a bash, and what it takes it gives back. The " +
                           "answer to being out of everything except enemies.",
             Slot = SpellSlot.Melee,
             Type = SpellType.Attack,
-            DamageType = DamageType.Shadow,
+            DamageType = DamageType.Necrotic,
             Rarity = Rarity.Rare,
             ManaCost = 7f,
             Cooldown = 1f,
@@ -363,6 +371,7 @@ namespace Gunspire
         private static Spell LavaSplash() => new Spell
         {
             Id = "lava_splash",
+            School = SpellSchool.Elemental,
             DisplayName = "Lava Splash",
             ShortName = "LAVA",
             Description = "Lob a gobbet of molten rock. It bursts on landing and leaves the floor " +
@@ -371,7 +380,7 @@ namespace Gunspire
             Cooldown = 6f,
             Rarity = Rarity.Common,
             Type = SpellType.Attack,
-            DamageType = DamageType.Fire,
+            DamageType = DamageType.Energy,
             LevelUpNote = "and a wider, longer-lasting pool",
             OnCast =
             {
@@ -409,6 +418,7 @@ namespace Gunspire
         private static Spell ConeOfCold() => new Spell
         {
             Id = "cone_of_cold",
+            School = SpellSchool.Elemental,
             DisplayName = "Cone of Cold",
             ShortName = "COLD",
             Description = "A freezing cone that damages and heavily chills everything in front of you. " +
@@ -417,14 +427,14 @@ namespace Gunspire
             Cooldown = 6.5f,
             Rarity = Rarity.Common,
             Type = SpellType.Control,
-            DamageType = DamageType.Frost,
+            DamageType = DamageType.Kinetic,
             LevelUpNote = "and more chill per hit",
             OnCast =
             {
                 new SelectConeEffect { Range = 13f, HalfAngle = 34f, RequireLineOfSight = true },
                 new StatusPayloadEffect
                 {
-                    Status = StatusId.Chill, Duration = 4.5f,
+                    Status = StatusId.Frost, Duration = 4.5f,
                     Stacks = 2, StacksPerLevel = 0.5f, Magnitude = 0.11f
                 },
                 new DealDamageEffect { Amount = 17f },
@@ -436,6 +446,7 @@ namespace Gunspire
         private static Spell Firebolt() => new Spell
         {
             Id = "firebolt",
+            School = SpellSchool.Elemental,
             DisplayName = "Firebolt",
             ShortName = "FIRE",
             Description = "Hurl a bolt of fire that detonates on impact and sets the survivors alight.",
@@ -443,7 +454,7 @@ namespace Gunspire
             Cooldown = 3.5f,
             Rarity = Rarity.Uncommon,
             Type = SpellType.Attack,
-            DamageType = DamageType.Fire,
+            DamageType = DamageType.Energy,
             OnCast =
             {
                 new StatusPayloadEffect
@@ -476,6 +487,7 @@ namespace Gunspire
         private static Spell KineticSlam() => new Spell
         {
             Id = "kinetic_slam",
+            School = SpellSchool.Psionic,
             DisplayName = "Kinetic Slam",
             ShortName = "SLAM",
             Description = "A shockwave around you that hurls enemies back and shatters weak barriers.",
@@ -483,7 +495,7 @@ namespace Gunspire
             Cooldown = 8f,
             Rarity = Rarity.Uncommon,
             Type = SpellType.Control,
-            DamageType = DamageType.Normal,
+            DamageType = DamageType.Kinetic,
             TintOverride = new Color(0.9f, 0.75f, 0.45f),
             OnCast =
             {
@@ -508,6 +520,7 @@ namespace Gunspire
         private static Spell FelEmpowerment() => new Spell
         {
             Id = "fel_empowerment",
+            School = SpellSchool.Abyssal,
             DisplayName = "Fel Empowerment",
             ShortName = "FEL",
             Description = "Your familiars strike far harder for a time, and take a bite out of you " +
@@ -516,7 +529,7 @@ namespace Gunspire
             Cooldown = 18f,
             Rarity = Rarity.Rare,
             Type = SpellType.Ward,
-            DamageType = DamageType.Shadow,
+            DamageType = DamageType.Necrotic,
             TintOverride = new Color(0.85f, 0.35f, 0.30f),
             LevelUpNote = "and a longer empowerment",
             OnCast =
@@ -535,6 +548,7 @@ namespace Gunspire
         private static Spell ArcaneWard() => new Spell
         {
             Id = "arcane_ward",
+            School = SpellSchool.Divination,
             DisplayName = "Arcane Ward",
             ShortName = "WARD",
             Description = "Sheathe yourself in force: take much less damage for a few seconds and mend a wound.",
@@ -542,7 +556,7 @@ namespace Gunspire
             Cooldown = 14f,
             Rarity = Rarity.Uncommon,
             Type = SpellType.Ward,
-            DamageType = DamageType.Astral,
+            DamageType = DamageType.Energy,
             TintOverride = new Color(0.75f, 0.8f, 1f),
             LevelUpNote = "and a longer ward",
             OnCast =
@@ -560,6 +574,7 @@ namespace Gunspire
         private static Spell Blightbloom() => new Spell
         {
             Id = "blightbloom",
+            School = SpellSchool.Death,
             DisplayName = "Blightbloom",
             ShortName = "BLOM",
             Description = "Lob a seed that bursts into a patch of rot. Anything standing in it takes " +
@@ -568,14 +583,14 @@ namespace Gunspire
             Cooldown = 11f,
             Rarity = Rarity.Rare,
             Type = SpellType.Control,
-            DamageType = DamageType.Nature,
+            DamageType = DamageType.Necrotic,
             MaxLevel = 4,
             LevelUpNote = "and a wider, longer-lived patch",
             OnCast =
             {
                 new StatusPayloadEffect
                 {
-                    Status = StatusId.Blight, Duration = 6f,
+                    Status = StatusId.Poison, Duration = 6f,
                     Stacks = 2, StacksPerLevel = 0.5f, Magnitude = 3f
                 },
                 new SpawnProjectileEffect
@@ -605,6 +620,7 @@ namespace Gunspire
         private static Spell ChainLightning() => new Spell
         {
             Id = "chain_lightning",
+            School = SpellSchool.Elemental,
             DisplayName = "Chain Lightning",
             ShortName = "ARC",
             Description = "An arc that leaps between nearby enemies, shocking each one.",
@@ -612,7 +628,7 @@ namespace Gunspire
             Cooldown = 7f,
             Rarity = Rarity.Rare,
             Type = SpellType.Attack,
-            DamageType = DamageType.Astral,
+            DamageType = DamageType.Energy,
             LevelUpNote = "and one more target",
             OnCast =
             {
@@ -627,6 +643,7 @@ namespace Gunspire
         private static Spell GlacialPrison() => new Spell
         {
             Id = "glacial_prison",
+            School = SpellSchool.Elemental,
             DisplayName = "Glacial Prison",
             ShortName = "PRSN",
             Description = "Every enemy around you is frozen solid and takes heavy frost damage. " +
@@ -635,7 +652,7 @@ namespace Gunspire
             Cooldown = 18f,
             Rarity = Rarity.Mythic,
             Type = SpellType.Control,
-            DamageType = DamageType.Frost,
+            DamageType = DamageType.Kinetic,
             MaxLevel = 4,
             LevelUpNote = "and a longer freeze",
             OnCast =
@@ -643,7 +660,7 @@ namespace Gunspire
                 new SelectSphereEffect { Radius = 14f, ScaleRadiusWithLevel = true },
                 new StatusPayloadEffect
                 {
-                    Status = StatusId.Freeze, Duration = 2.0f, DurationPerLevel = 0.35f,
+                    Status = StatusId.Frost, Duration = 2.0f, DurationPerLevel = 0.35f,
                     Stacks = 1, Magnitude = 1f
                 },
                 new DealDamageEffect { Amount = 40f },
@@ -655,6 +672,7 @@ namespace Gunspire
         private static Spell Eventide() => new Spell
         {
             Id = "eventide",
+            School = SpellSchool.Death,
             DisplayName = "Eventide",
             ShortName = "EVEN",
             Description = "Mark a point in the world. A moment later the light there collapses, " +
@@ -663,7 +681,7 @@ namespace Gunspire
             Cooldown = 22f,
             Rarity = Rarity.Legendary,
             Type = SpellType.Attack,
-            DamageType = DamageType.Shadow,
+            DamageType = DamageType.Necrotic,
             MaxLevel = 3,
             GrowthPerLevel = 0.35f,
             OnCast =
@@ -676,7 +694,7 @@ namespace Gunspire
                 },
                 new StatusPayloadEffect
                 {
-                    Status = StatusId.Blight, Duration = 6f, Stacks = 3, Magnitude = 4f
+                    Status = StatusId.Poison, Duration = 6f, Stacks = 3, Magnitude = 4f
                 },
                 new DelayedBlastEffect { Delay = 0.9f, Radius = 9f, Damage = 95f, Knockback = 10f }
             }

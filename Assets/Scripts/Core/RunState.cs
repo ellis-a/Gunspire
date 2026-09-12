@@ -158,7 +158,7 @@ namespace Gunspire
             if (!BlinkDetonates || abilityId != "blink") return;
 
             DamageInfo template = DamageInfo.Create(BlinkDetonationDamage * ctx.Power,
-                DamageType.Astral, Team.Player, ctx.Caster);
+                DamageType.Energy, Team.Player, ctx.Caster);
             template.CanCrit = false;
             template = template.WithStatuses(SpellStatuses);
 

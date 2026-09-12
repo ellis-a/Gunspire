@@ -197,6 +197,33 @@ namespace Gunspire
             }
 
             DrawAltFire(weapon, x, y + 78f, width);
+            DrawHolster(player, x, y - 24f, width);
+        }
+
+        /// <summary>
+        /// The other gun, above the one in hand. Without this the pair is invisible: you can
+        /// feel a swap happen but have no way to know what you are about to swap to, or that
+        /// there is a free hand for the gun on the plinth in front of you.
+        /// </summary>
+        private void DrawHolster(PlayerRig player, float x, float y, float width)
+        {
+            Holster holster = player.Holster;
+            if (holster == null) return;
+
+            int other = (holster.ActiveIndex + 1) % Holster.SlotCount;
+            WeaponDefinition stowed = holster.GetSlot(other);
+
+            if (stowed == null)
+            {
+                UIStyles.Text(new Rect(x, y, width, 18f), "second hand empty",
+                    UIStyles.Right, UIStyles.Muted);
+                return;
+            }
+
+            string label = "[" + Holster.SwapKey + "/wheel]  " + stowed.DisplayName
+                           + "   " + holster.AmmoIn(other) + " / " + stowed.MagazineSize;
+
+            UIStyles.Text(new Rect(x, y, width, 18f), label, UIStyles.Right, UIStyles.Muted);
         }
 
         /// <summary>

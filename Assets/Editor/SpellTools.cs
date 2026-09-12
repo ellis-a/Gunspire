@@ -153,14 +153,14 @@ namespace Gunspire.EditorTools
         public static void LogSpellTable()
         {
             var text = new System.Text.StringBuilder();
-            text.AppendLine("id              rarity     type      school   mana  cd    chain");
+            text.AppendLine("id              slot      school       rarity     dmg       mana  cd    chain");
 
             IReadOnlyList<Spell> all = SpellLibrary.All;
             for (int i = 0; i < all.Count; i++)
             {
                 Spell s = all[i];
-                text.AppendLine(string.Format("{0,-15} {1,-10} {2,-9} {3,-8} {4,4:0} {5,5:0.#}  {6}",
-                    s.Id, s.Rarity, s.Type, DamageTypes.Name(s.DamageType),
+                text.AppendLine(string.Format("{0,-15} {1,-9} {2,-12} {3,-10} {4,-9} {5,4:0} {6,5:0.#}  {7}",
+                    s.Id, s.Slot, s.School, s.Rarity, DamageTypes.Name(s.DamageType),
                     s.ManaCost, s.Cooldown, s.EffectSummary()));
             }
 

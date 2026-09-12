@@ -16,6 +16,113 @@ namespace Gunspire.EditorTools
         private const string FolderPath = RootFolder + "/Weapons";
 
         /// <summary>
+        /// Exercises carrying two guns.
+        ///
+        /// The bug worth proving absent is the magazine: the rounds in the gun you are holding
+        /// live on the weapon component, not in the holster's array, so a swap has to bank them
+        /// on the way out. Get that wrong and a half-spent gun quietly comes back full - which
+        /// nobody reports as a bug, they just stop noticing they are reloading less.
+        /// </summary>
+        [MenuItem("Gunspire/Verify Holster")]
+        public static void VerifyHolster()
+        {
+            var problems = new List<string>();
+
+            IReadOnlyList<WeaponDefinition> guns = WeaponLibrary.All;
+            if (guns.Count < 2)
+            {
+                Debug.LogError("Holster: need at least two guns in the library to test with.");
+                return;
+            }
+
+            WeaponDefinition first = guns[0];
+            WeaponDefinition second = guns[1];
+
+            var root = new GameObject("HolsterProbe");
+
+            try
+            {
+                var weapon = root.AddComponent<Weapon>();
+                var holster = root.AddComponent<Holster>();
+                holster.Weapon = weapon;
+
+                // One gun: nothing to swap to, and the swap must be refused rather than
+                // silently drawing the same gun again and resetting its magazine.
+                holster.SetSlot(0, first, 3);
+                if (holster.CanSwap) problems.Add("claims it can swap while carrying one gun");
+
+                holster.Swap();
+                if (weapon.AmmoInMagazine != 3)
+                    problems.Add("a refused swap changed the magazine to " + weapon.AmmoInMagazine);
+
+                // A free hand takes a gun rather than trading one away.
+                WeaponDefinition given = holster.Take(second, 5, out int givenAmmo);
+                if (given != null) problems.Add("gave up " + given.Id + " while a hand was free");
+                if (holster.FilledSlots != 2) problems.Add("a free hand did not get filled");
+                if (holster.GetSlot(holster.ActiveIndex) != second)
+                    problems.Add("a picked-up gun was not drawn");
+
+                // The banked magazine has to survive the round trip in both directions.
+                if (weapon.AmmoInMagazine != 5)
+                    problems.Add("picked up with 5 rounds but holds " + weapon.AmmoInMagazine);
+
+                // Spend rounds the way firing does: straight on the weapon, leaving the
+                // holster's own array stale. This is the divergence the write-back exists for,
+                // and setting ammo through the holster would never produce it - which is
+                // exactly how a test can pass while the banking is missing entirely.
+                weapon.Equip(second, 2);
+
+                holster.Swap();
+                if (holster.AmmoIn(1) != 2)
+                    problems.Add("spent gun banked " + holster.AmmoIn(1) + " rounds instead of the 2 it held");
+
+                if (weapon.AmmoInMagazine != 3)
+                    problems.Add("swapped back to the first gun and found " + weapon.AmmoInMagazine + " rounds, not 3");
+
+                holster.Swap();
+                if (weapon.AmmoInMagazine != 2)
+                    problems.Add("the spent gun came back with " + weapon.AmmoInMagazine + " rounds, not 2");
+
+                // Both hands full: now a pickup is a trade, and it must hand back the gun in
+                // hand along with its live count, not whatever the array last held.
+                WeaponDefinition inHand = holster.GetSlot(holster.ActiveIndex);
+                int liveBefore = weapon.AmmoInMagazine;
+
+                WeaponDefinition traded = holster.Take(first, -1, out int tradedAmmo);
+                if (traded != inHand)
+                    problems.Add("a full holster traded away " + (traded == null ? "nothing" : traded.Id)
+                                 + " rather than the " + inHand.Id + " in hand");
+                if (tradedAmmo != liveBefore)
+                    problems.Add("handed back " + tradedAmmo + " rounds but the gun held " + liveBefore);
+
+                // Refilling has to reach the gun that is put away, not only the one in hand.
+                holster.SetSlot(0, first, 1);
+                holster.SetSlot(1, second, 1);
+                holster.SetActive(0);
+                holster.RefillAll();
+
+                if (holster.AmmoIn(0) != first.MagazineSize)
+                    problems.Add("refill left the drawn gun at " + holster.AmmoIn(0));
+                if (holster.AmmoIn(1) != second.MagazineSize)
+                    problems.Add("refill missed the holstered gun, left at " + holster.AmmoIn(1));
+            }
+            finally
+            {
+                Object.DestroyImmediate(root);
+            }
+
+            if (problems.Count == 0)
+            {
+                Debug.Log("Holster: two-gun carry, swapping, trading and refilling all hold up.\n  no problems.");
+                return;
+            }
+
+            var report = new System.Text.StringBuilder("Holster: " + problems.Count + " PROBLEMS:\n");
+            for (int i = 0; i < problems.Count && i < 25; i++) report.AppendLine("    " + problems[i]);
+            Debug.LogError(report.ToString());
+        }
+
+        /// <summary>
         /// A shot cone has to be the same shape whichever way the player is facing. It was not:
         /// spread was applied by rotating about the world axes, so a shot down world X was
         /// rotated about its own direction and the cone collapsed to a horizontal line.

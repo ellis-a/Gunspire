@@ -172,14 +172,14 @@ namespace Gunspire
         private static void BuildUncommon()
         {
             Add("frostbite_rounds", "Frostbite Rounds", "Your bullets chill what they hit.", Rarity.Uncommon, 3,
-                Bullets(StatusLibrary.Chill(3f, 1)));
+                Bullets(StatusLibrary.Frost(3f, 1)));
 
             Add("incendiary_rounds", "Incendiary Rounds", "Your bullets set targets burning.", Rarity.Uncommon, 3,
                 Bullets(StatusLibrary.Burn(3.5f, 1, 4f)));
 
             Add("venomed_rounds", "Venomed Rounds",
                 "Your bullets blight targets, poisoning them and absorbing their healing.", Rarity.Uncommon, 3,
-                Bullets(StatusLibrary.Blight(6f, 1, 3f)));
+                Bullets(StatusLibrary.Poison(6f, 1, 3f)));
 
             Add("conductive_rounds", "Conductive Rounds",
                 "Your bullets shock targets, making them take more damage.", Rarity.Uncommon, 3,

@@ -36,7 +36,7 @@ MonoBehaviour:
     BodyColor: {r: 0.85, g: 0.25, b: 0.45, a: 1}
     EyeColor: {r: 1, g: 0.4, b: 0.6, a: 1}
     Crowned: 1
-    Resists: 5
+    Resists: 1
     Resistance: 0.4
     WeakTo: 3
     Vulnerability: 0.3
@@ -54,7 +54,7 @@ MonoBehaviour:
       InitialDelay: 0.6
       RequiresLineOfSight: 1
       Priority: 0
-      DamageType: 5
+      DamageType: 1
       Category: 0
       Tint: {r: 0.6, g: 0.45, b: 1, a: 1}
       Sequence:
@@ -70,7 +70,7 @@ MonoBehaviour:
       InitialDelay: 0.6
       RequiresLineOfSight: 1
       Priority: 1
-      DamageType: 5
+      DamageType: 1
       Category: 0
       Tint: {r: 0.75, g: 0.8, b: 1, a: 1}
       Sequence:

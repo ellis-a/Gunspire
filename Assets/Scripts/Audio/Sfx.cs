@@ -15,6 +15,13 @@ namespace Gunspire
         /// <summary>Global scale on everything played here. Hook an options slider to this.</summary>
         public static float MasterVolume = 1f;
 
+        /// <summary>
+        /// Scales everything the player hears. Shock drives this down, which is the other half of
+        /// what that status does - being deafened matters in a game where enemies are located by
+        /// the noise they make.
+        /// </summary>
+        public static float Muffle = 1f;
+
         /// <summary>Concurrent positional sounds. Past this the oldest voice is stolen.</summary>
         private const int VoiceCount = 16;
 
@@ -60,7 +67,7 @@ namespace Gunspire
             _nextFlat = (_nextFlat + 1) % _flatVoices.Length;
 
             voice.pitch = Pitch(pitchVariance);
-            voice.PlayOneShot(clip, Mathf.Clamp01(volume) * MasterVolume);
+            voice.PlayOneShot(clip, Mathf.Clamp01(volume) * MasterVolume * Muffle);
         }
 
         /// <summary>
@@ -80,7 +87,7 @@ namespace Gunspire
             AudioSource voice = NextVoice();
             voice.transform.position = position;
             voice.pitch = Pitch(pitchVariance);
-            voice.PlayOneShot(clip, Mathf.Clamp01(volume) * crowdFade * MasterVolume);
+            voice.PlayOneShot(clip, Mathf.Clamp01(volume) * crowdFade * MasterVolume * Muffle);
         }
 
         /// <summary>Drops the pool. The next play rebuilds it.</summary>

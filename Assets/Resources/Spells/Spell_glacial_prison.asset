@@ -22,7 +22,7 @@ MonoBehaviour:
     Cooldown: 9
     Rarity: 3
     Type: 2
-    DamageType: 2
+    DamageType: 0
     MaxLevel: 4
     GrowthPerLevel: 0.22
     LevelUpNote: and a longer freeze
@@ -47,11 +47,11 @@ MonoBehaviour:
     - rid: 5643702077732683806
       type: {class: StatusPayloadEffect, ns: Gunspire, asm: Assembly-CSharp}
       data:
-        Status: 1
+        Status: 0
         Duration: 2
-        Stacks: 1
+        Stacks: 100
         StacksPerLevel: 0
-        Magnitude: 1
+        Magnitude: 0.01
         DurationPerLevel: 0.35
     - rid: 5643702077732683807
       type: {class: DealDamageEffect, ns: Gunspire, asm: Assembly-CSharp}

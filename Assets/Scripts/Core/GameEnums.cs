@@ -4,19 +4,53 @@ namespace Gunspire
     public enum Team { Player, Enemy, Neutral }
 
     /// <summary>
-    /// Damage schools. Resistances, boons and VFX key off these.
-    /// To add one: add a member here and a case in <see cref="DamageTypes"/>. Nothing else
-    /// needs to change - everything reads the registry rather than switching on the enum.
+    /// What damage is made of. Resistances, boons and VFX key off these.
+    ///
+    /// Four kinds rather than one per element, so an enemy's affinity is a real decision
+    /// instead of a lottery over seven near-identical options. Which element something looks
+    /// like is now the spell's school; this is only what it does on contact.
+    ///
+    /// The order is deliberate and must not be rearranged. These are stored as plain integers
+    /// in every asset, so the members that kept an old member's index kept its meaning too -
+    /// Kinetic reads the old Normal, Energy the old Fire, Necrotic the old Nature. Reordering
+    /// would silently re-school 46 assets with nothing to show it had happened.
     /// </summary>
     public enum DamageType
     {
-        Normal,   // plain kinetic rounds
-        Fire,
-        Frost,
-        Nature,
-        Shadow,
-        Astral,
-        True      // special: ignores resistance and invulnerability, never rolled as an element
+        Kinetic,   // bullets, thrown ice, anything that arrives as an object
+        Energy,    // most magic: fire, lightning, lasers
+        Psychic,   // attacks on the mind
+        Necrotic,  // disease, poison, shadow
+        True       // special: ignores resistance and invulnerability, never rolled as an element
+    }
+
+    /// <summary>
+    /// The tradition a spell belongs to. Thematic rather than mechanical - what a spell is
+    /// made of and what it is for are <see cref="DamageType"/> and <see cref="SpellType"/>.
+    /// Schools are what a run builds an identity out of, and what a boon can favour wholesale.
+    /// </summary>
+    public enum SpellSchool
+    {
+        /// <summary>Fire, ice and storms. The school that simply deals damage well.</summary>
+        Elemental,
+
+        /// <summary>Furred things called to fight beside you.</summary>
+        Bestial,
+
+        /// <summary>Demons and the deep. Buys power with your own life.</summary>
+        Abyssal,
+
+        /// <summary>Heavenly sight. Sharpens the wizard rather than the spell.</summary>
+        Divination,
+
+        /// <summary>Zombies, skeletons and spirits, raised and spent.</summary>
+        Death,
+
+        /// <summary>The mind as a weapon - and as something to be turned.</summary>
+        Psionic,
+
+        /// <summary>Turrets, charged ammunition and things bolted onto a gun.</summary>
+        Artifice
     }
 
     /// <summary>What a spell is for. Boons can buff a whole category at once.</summary>
@@ -85,17 +119,39 @@ namespace Gunspire
     }
 
     /// <summary>Status effect identifiers. See <c>StatusLibrary</c> for behaviour.</summary>
+    /// <summary>
+    /// Like <see cref="DamageType"/>, these are stored as integers in assets, so the order is
+    /// fixed. Frost took the old Chill's slot and Poison the old Blight's because they are the
+    /// same effect renamed; Bleed took Freeze's because removing a member from the middle would
+    /// have shifted every id after it and silently re-pointed every authored status payload.
+    /// </summary>
     public enum StatusId
     {
-        Chill,    // slows; stacks into Freeze
-        Freeze,   // immobilised, takes shatter bonus damage
-        Burn,     // fire damage over time, thaws Chill/Freeze
-        Blight,   // poison damage over time, absorbs healing
-        Shock,    // amplifies damage taken
+        /// <summary>Slows 1% per stack. At full stacks, kinetic damage finishes the target.</summary>
+        Frost,
+
+        /// <summary>Bleeds until healed, and never wears off on its own.</summary>
+        Bleed,
+
+        /// <summary>Burns for the amount applied, then halves.</summary>
+        Burn,
+
+        /// <summary>Ruins aim. Falls off faster if the victim holds still.</summary>
+        Poison,
+
+        /// <summary>Amplifies damage taken and deadens hearing.</summary>
+        Shock,
+
         Weaken,   // reduces damage dealt
         Haste,    // move speed buff
         Fortify,  // damage taken reduction
-        Mark      // takes extra crit damage
+        Mark,     // takes extra crit damage
+
+        /// <summary>The next hit finishes the target. Short, and rare.</summary>
+        Deathmark,
+
+        /// <summary>Untouchable by kinetic damage, and doubly hurt by everything else.</summary>
+        Ethereal
     }
 
     public enum FireMode { Semi, Auto, Burst }

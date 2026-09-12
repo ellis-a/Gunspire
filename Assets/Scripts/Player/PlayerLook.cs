@@ -23,6 +23,7 @@ namespace Gunspire
         [SerializeField] private float fovLerp = 6f;
 
         private Transform _cameraPivot;
+        private StatusController _status;
         private Camera _camera;
         private PlayerMotor _motor;
         private float _pitch;
@@ -41,6 +42,8 @@ namespace Gunspire
             _motor = motor;
             if (_camera != null) _camera.fieldOfView = baseFov;
         }
+
+        private void Awake() => _status = GetComponent<StatusController>();
 
         private void Update()
         {
@@ -63,10 +66,32 @@ namespace Gunspire
             _pitch = Mathf.Clamp(_pitch - my, -pitchLimit, pitchLimit);
         }
 
+        /// <summary>
+        /// Poison drifts the whole view, not a crosshair drawn on top of it. Shots go where the
+        /// reticle is pointing, so the sway has to move the aim itself - a wobbling crosshair
+        /// over a steady gun would look like an effect and cost nothing.
+        ///
+        /// Two out-of-phase waves rather than random noise: a drift you can read and fight is
+        /// more interesting to shoot through than a jitter you can only wait out.
+        /// </summary>
+        private Vector2 PoisonSway()
+        {
+            float sway = PoisonStatus.SwayFor(_status);
+            if (sway <= 0f) return Vector2.zero;
+
+            float t = Time.time;
+            return new Vector2(
+                Mathf.Sin(t * 1.7f) * sway,
+                Mathf.Sin(t * 1.1f + 2.2f) * sway * 0.7f);
+        }
+
         private void ApplyRotation()
         {
             if (_cameraPivot == null) return;
-            _cameraPivot.localRotation = Quaternion.Euler(_pitch + _recoilPitch, _recoilYaw, 0f);
+
+            Vector2 sway = PoisonSway();
+            _cameraPivot.localRotation = Quaternion.Euler(
+                _pitch + _recoilPitch + sway.y, _recoilYaw + sway.x, 0f);
         }
 
         private void DecayRecoil()

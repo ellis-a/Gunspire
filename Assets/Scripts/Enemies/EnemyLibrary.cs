@@ -100,12 +100,12 @@ namespace Gunspire
                 Health = 55f, MoveSpeed = 4.2f, Radius = 0.42f, BodyHeight = 1.8f, BodyWidth = 0.8f,
                 PreferredRange = 13f, MinComfortRange = 8f,
                 BodyColor = Palette.EnemyRanged, EyeColor = new Color(1f, 0.5f, 1f),
-                Resists = DamageType.Astral, WeakTo = DamageType.Nature,
+                Resists = DamageType.Energy, WeakTo = DamageType.Necrotic,
                 Attacks =
                 {
                     new AttackDefinition
                     {
-                        Name = "Arcane Volley", DamageType = DamageType.Astral, Tint = Palette.Arcane,
+                        Name = "Arcane Volley", DamageType = DamageType.Energy, Tint = Palette.Arcane,
                         MinRange = 0f, MaxRange = 26f, Cooldown = 2.6f, Priority = 0,
                         Sequence =
                         {
@@ -145,12 +145,12 @@ namespace Gunspire
                 Health = 46f, MoveSpeed = 6.9f, Radius = 0.4f, BodyHeight = 1.2f, BodyWidth = 0.75f,
                 PreferredRange = 1.6f, MinComfortRange = 0f, StrafeInterval = 2.6f,
                 BodyColor = Palette.EnemyMelee, EyeColor = new Color(1f, 0.4f, 0.2f),
-                Resists = DamageType.Normal, WeakTo = DamageType.Frost,
+                Resists = DamageType.Kinetic, WeakTo = DamageType.Kinetic,
                 Attacks =
                 {
                     new AttackDefinition
                     {
-                        Name = "Lunge", DamageType = DamageType.Normal, Tint = Palette.EnemyMelee,
+                        Name = "Lunge", DamageType = DamageType.Kinetic, Tint = Palette.EnemyMelee,
                         MinRange = 0f, MaxRange = 4.6f, Cooldown = 1.9f, Priority = 0,
                         Sequence =
                         {
@@ -191,12 +191,12 @@ namespace Gunspire
                 Health = 95f, MoveSpeed = 3.1f, Radius = 0.5f, BodyHeight = 2.2f, BodyWidth = 0.95f,
                 PreferredRange = 18f, MinComfortRange = 12f,
                 BodyColor = Palette.EnemyBeam, EyeColor = new Color(0.5f, 0.9f, 1f),
-                Resists = DamageType.Astral, WeakTo = DamageType.Shadow,
+                Resists = DamageType.Energy, WeakTo = DamageType.Necrotic,
                 Attacks =
                 {
                     new AttackDefinition
                     {
-                        Name = "Sweeping Beam", DamageType = DamageType.Astral, Tint = Palette.Lightning,
+                        Name = "Sweeping Beam", DamageType = DamageType.Energy, Tint = Palette.Lightning,
                         MinRange = 6f, MaxRange = 38f, Cooldown = 5.5f, Priority = 0,
                         Sequence =
                         {
@@ -228,12 +228,12 @@ namespace Gunspire
                 Health = 84f, MoveSpeed = 3.6f, Radius = 0.55f, BodyHeight = 2.0f, BodyWidth = 1.05f,
                 PreferredRange = 11f, MinComfortRange = 6f,
                 BodyColor = Palette.EnemyCaster, EyeColor = new Color(1f, 0.8f, 0.3f),
-                Resists = DamageType.Fire, WeakTo = DamageType.Frost,
+                Resists = DamageType.Energy, WeakTo = DamageType.Kinetic,
                 Attacks =
                 {
                     new AttackDefinition
                     {
-                        Name = "Cinder Slam", DamageType = DamageType.Fire, Tint = Palette.Fire,
+                        Name = "Cinder Slam", DamageType = DamageType.Energy, Tint = Palette.Fire,
                         MinRange = 0f, MaxRange = 24f, Cooldown = 4.6f, Priority = 0,
                         Sequence =
                         {
@@ -275,12 +275,12 @@ namespace Gunspire
                 Health = 68f, MoveSpeed = 4.6f, Radius = 0.45f, BodyHeight = 1.9f, BodyWidth = 0.85f,
                 PreferredRange = 12f, MinComfortRange = 7f,
                 BodyColor = body, EyeColor = Palette.Ice,
-                Resists = DamageType.Frost, WeakTo = DamageType.Fire,
+                Resists = DamageType.Kinetic, WeakTo = DamageType.Energy,
                 Attacks =
                 {
                     new AttackDefinition
                     {
-                        Name = "Ice Shards", DamageType = DamageType.Frost, Tint = Palette.Ice,
+                        Name = "Ice Shards", DamageType = DamageType.Kinetic, Tint = Palette.Ice,
                         MinRange = 5f, MaxRange = 28f, Cooldown = 3.2f, Priority = 0,
                         Sequence =
                         {
@@ -288,7 +288,7 @@ namespace Gunspire
                             new WaitEffect { Seconds = 0.5f },
                             new StatusPayloadEffect
                             {
-                                Status = StatusId.Chill, Duration = 3f, Stacks = 1, Magnitude = 0.11f
+                                Status = StatusId.Frost, Duration = 3f, Stacks = 1, Magnitude = 0.11f
                             },
                             new RepeatEffect
                             {
@@ -309,7 +309,7 @@ namespace Gunspire
 
                     new AttackDefinition
                     {
-                        Name = "Frost Breath", DamageType = DamageType.Frost, Tint = Palette.Ice,
+                        Name = "Frost Breath", DamageType = DamageType.Kinetic, Tint = Palette.Ice,
                         MinRange = 0f, MaxRange = 10f, Cooldown = 6.5f, Priority = 1,
                         Sequence =
                         {
@@ -319,7 +319,7 @@ namespace Gunspire
                             new WaitEffect { Seconds = 0.85f },
                             new StatusPayloadEffect
                             {
-                                Status = StatusId.Chill, Duration = 4f, Stacks = 2, Magnitude = 0.11f
+                                Status = StatusId.Frost, Duration = 4f, Stacks = 2, Magnitude = 0.11f
                             },
                             new SelectConeEffect { Range = 11f, HalfAngle = 32f, RequireLineOfSight = false },
                             new DealDamageEffect { Amount = 16f },
@@ -352,13 +352,13 @@ namespace Gunspire
                 EyeHeight = 0.55f,            // it looks out of its middle; there is no head
                 Shape = BodyShape.Eyeball,
                 BodyColor = Palette.EnemyFlyer, EyeColor = new Color(1f, 0.35f, 0.30f),
-                Resists = DamageType.Shadow, WeakTo = DamageType.Astral,
+                Resists = DamageType.Necrotic, WeakTo = DamageType.Energy,
                 Attacks =
                 {
                     // The cheap attack: dodgeable bolts that punish standing in the open.
                     new AttackDefinition
                     {
-                        Name = "Laser Bolts", DamageType = DamageType.Shadow,
+                        Name = "Laser Bolts", DamageType = DamageType.Necrotic,
                         Tint = new Color(1f, 0.4f, 0.35f),
                         MinRange = 0f, MaxRange = 30f, Cooldown = 2.9f, Priority = 0,
                         Sequence =
@@ -385,7 +385,7 @@ namespace Gunspire
                     // The signature. Telegraphed, then a slow sweep - break line of sight or move.
                     new AttackDefinition
                     {
-                        Name = "Searing Gaze", DamageType = DamageType.Shadow,
+                        Name = "Searing Gaze", DamageType = DamageType.Necrotic,
                         Tint = new Color(1f, 0.3f, 0.25f),
                         MinRange = 5f, MaxRange = 34f, Cooldown = 7.5f, Priority = 1,
                         Sequence =
@@ -431,7 +431,7 @@ namespace Gunspire
                 {
                     new AttackDefinition
                     {
-                        Name = "Arcane Fan", DamageType = DamageType.Astral, Tint = Palette.Arcane,
+                        Name = "Arcane Fan", DamageType = DamageType.Energy, Tint = Palette.Arcane,
                         MinRange = 0f, MaxRange = 34f, Cooldown = 3.4f, Priority = 0,
                         Sequence =
                         {
@@ -449,7 +449,7 @@ namespace Gunspire
 
                     new AttackDefinition
                     {
-                        Name = "Warden Beam", DamageType = DamageType.Astral, Tint = Palette.Lightning,
+                        Name = "Warden Beam", DamageType = DamageType.Energy, Tint = Palette.Lightning,
                         MinRange = 5f, MaxRange = 40f, Cooldown = 7.5f, Priority = 1,
                         Sequence =
                         {
@@ -467,7 +467,7 @@ namespace Gunspire
 
                     new AttackDefinition
                     {
-                        Name = "Cinder Rain", DamageType = DamageType.Fire, Tint = Palette.Fire,
+                        Name = "Cinder Rain", DamageType = DamageType.Energy, Tint = Palette.Fire,
                         MinRange = 0f, MaxRange = 28f, Cooldown = 6.5f, Priority = 1,
                         Sequence =
                         {
@@ -495,7 +495,7 @@ namespace Gunspire
 
                     new AttackDefinition
                     {
-                        Name = "Withering Breath", DamageType = DamageType.Nature, Tint = Palette.Poison,
+                        Name = "Withering Breath", DamageType = DamageType.Necrotic, Tint = Palette.Poison,
                         MinRange = 0f, MaxRange = 13f, Cooldown = 8f, Priority = 2,
                         Sequence =
                         {
@@ -504,7 +504,7 @@ namespace Gunspire
                             new WaitEffect { Seconds = 0.85f },
                             new StatusPayloadEffect
                             {
-                                Status = StatusId.Blight, Duration = 8f, Stacks = 3, Magnitude = 4f
+                                Status = StatusId.Poison, Duration = 8f, Stacks = 3, Magnitude = 4f
                             },
                             new SelectConeEffect { Range = 14f, HalfAngle = 40f, RequireLineOfSight = false },
                             new DealDamageEffect { Amount = 30f },

@@ -19,7 +19,7 @@ MonoBehaviour:
     Rarity: 3
     Delivery: 1
     Mode: 1
-    DamageType: 4
+    DamageType: 3
     Damage: 17
     PelletsPerShot: 1
     Knockback: 0

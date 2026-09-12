@@ -54,7 +54,7 @@ namespace Gunspire
     [System.Serializable]
     public class ModifyResistanceEffect : BoonEffect
     {
-        public DamageType School = DamageType.Fire;
+        public DamageType School = DamageType.Energy;
         public float Amount = 0.15f;
 
         /// <summary>Applies to every elemental school instead of the one named above.</summary>
@@ -84,7 +84,7 @@ namespace Gunspire
     [System.Serializable]
     public class ModifyDamageSchoolEffect : BoonEffect
     {
-        public DamageType School = DamageType.Fire;
+        public DamageType School = DamageType.Energy;
         public float Percent = 0.18f;
 
         /// <summary>Applies to every elemental school instead of the one named above.</summary>

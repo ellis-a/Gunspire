@@ -28,7 +28,7 @@ namespace Gunspire
         public int Priority;
 
         [Header("Ability")]
-        public DamageType DamageType = DamageType.Astral;
+        public DamageType DamageType = DamageType.Energy;
         public SpellType Category = SpellType.Attack;
         public Color Tint = new Color(0.60f, 0.45f, 1.00f);
 
@@ -92,6 +92,12 @@ namespace Gunspire
         /// <summary>How far a noise carries to this enemy, measured around walls rather than through.</summary>
         public float HearingRange;
 
+        /// <summary>
+        /// Simply not physical. Kinetic damage cannot touch it and everything else lands twice
+        /// as hard - the same rule the Ethereal status applies, but permanent.
+        /// </summary>
+        public bool Ethereal;
+
         [Header("Flight")]
         public bool Flying;
         public float HoverHeight = 3.2f;
@@ -109,11 +115,11 @@ namespace Gunspire
 
         [Header("Affinity")]
         [Tooltip("Damage school this shrugs off. Set Resistance to 0 to have no affinity.")]
-        public DamageType Resists = DamageType.Astral;
+        public DamageType Resists = DamageType.Energy;
         public float Resistance = 0.40f;
 
         [Tooltip("Damage school this is soft to.")]
-        public DamageType WeakTo = DamageType.Nature;
+        public DamageType WeakTo = DamageType.Necrotic;
         public float Vulnerability = 0.30f;
 
         [Tooltip("Resists every elemental school a little instead of the pairing above. For bosses.")]

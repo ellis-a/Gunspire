@@ -163,10 +163,18 @@ namespace Gunspire
             }
         }
 
+        /// <summary>
+        /// What taking this would cost you, or nothing while a hand is still free. Naming a gun
+        /// you are not about to put down would be a lie - with a slot empty this is a straight
+        /// pickup, not a trade.
+        /// </summary>
         private static string HeldName()
         {
             PlayerRig rig = PlayerRig.Instance;
-            WeaponDefinition held = rig != null && rig.Weapon != null ? rig.Weapon.Definition : null;
+            Holster holster = rig != null ? rig.Holster : null;
+            if (holster == null || holster.FilledSlots < Holster.SlotCount) return null;
+
+            WeaponDefinition held = holster.GetSlot(holster.ActiveIndex);
             return held != null ? held.DisplayName : null;
         }
 

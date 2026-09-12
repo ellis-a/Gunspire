@@ -22,7 +22,7 @@ MonoBehaviour:
     Cooldown: 3
     Rarity: 0
     Type: 2
-    DamageType: 2
+    DamageType: 0
     MaxLevel: 5
     GrowthPerLevel: 0.22
     LevelUpNote: and more chill per hit

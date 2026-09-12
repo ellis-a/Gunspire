@@ -21,7 +21,7 @@ MonoBehaviour:
     Cooldown: 4
     Rarity: 2
     Type: 0
-    DamageType: 5
+    DamageType: 1
     MaxLevel: 5
     GrowthPerLevel: 0.22
     LevelUpNote: and one more target

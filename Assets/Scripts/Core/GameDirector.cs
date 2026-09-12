@@ -213,7 +213,7 @@ namespace Gunspire
             Player.Motor.Teleport(CurrentRoom.PlayerSpawn + Vector3.up * 0.5f, preserveVelocity: false);
             Player.transform.rotation = CurrentRoom.PlayerFacing;
 
-            Player.Weapon.RefillMagazine();
+            if (Player.Holster != null) Player.Holster.RefillAll();
             Player.Motor.RefillDashes();
             Player.Mana.Add(Player.Mana.Max * 0.5f);
 
@@ -239,6 +239,10 @@ namespace Gunspire
             if (State != GameStateKind.Playing || CurrentRoom == null || !CurrentRoom.IsCleared) return;
 
             Run.RoomsCleared++;
+
+            // Bleeding never stops on its own, so surviving the floor is the other way out of it.
+            // Without this a single unlucky bleed would follow the player the whole run.
+            if (Player != null && Player.Status != null) Player.Status.Remove(StatusId.Bleed);
 
             if (Run.CurrentNode != null && Run.CurrentNode.Kind == RoomKind.Boss)
             {
