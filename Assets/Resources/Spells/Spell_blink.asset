@@ -16,10 +16,14 @@ MonoBehaviour:
     Id: blink
     DisplayName: Blink
     ShortName: BLNK
-    Description: Teleport forward, passing through anything in the way. Stops at
-      the first wall rather than dropping you inside it.
+    Description: Teleport forward through walls, landing on the furthest floor you
+      could walk to. The outer edge of the map still stops you.
     ManaCost: 16
     Cooldown: 4
+    SoulCost: 0
+    HealthCost: 0
+    PsiCost: 0
+    SpendsAllSouls: 0
     NoiseMultiplier: 1
     Rarity: 0
     Type: 1
@@ -28,45 +32,65 @@ MonoBehaviour:
     Slot: 1
     Sustain:
       ManaPerSecond: 0
+      HealthPerSecond: 0
+      Toggle: 0
       MaxDuration: 0
       MoveSpeedBonus: 0
       Invulnerable: 0
       BreakOnMovement: 0
+      HideFromSight: 0
+      BreakOnShoot: 0
+      BreakOnCast: 0
+      BreakOnMelee: 0
       WallZip: 0
+      Buoyant: 0
+      Trail:
+        Radius: 0
+        Spacing: 1.5
+        SegmentLifetime: 2.5
+        DamagePerTick: 3
+        TickInterval: 0.5
+        DamageType: 1
+        Tint: {r: 1, g: 0.5, b: 0.15, a: 1}
+        Statuses: []
+    Charge:
+      SecondsToFull: 0
+      MinimumFraction: 0
+    Stance:
+      Modes: []
+    VariantGroup: 
+    NeverEchoes: 0
+    DodgeCooldownRefund: 0
     MaxLevel: 1
     GrowthPerLevel: 0.22
     LevelUpNote: 
     TintOverride: {r: 0.6, g: 0.45, b: 1, a: 1}
     Icon: {fileID: 0}
     OnCast:
-    - rid: 5643702153244311553
-    - rid: 5643702153244311554
-    - rid: 5643702153244311555
-    - rid: 5643702153244311556
+    - rid: 5643702255643525120
+    - rid: 5643702255643525121
+    - rid: 5643702255643525122
+    - rid: 5643702255643525123
   references:
     version: 2
     RefIds:
-    - rid: 5643702153244311553
-      type: {class: SweepForwardEffect, ns: Gunspire, asm: Assembly-CSharp}
+    - rid: 5643702255643525120
+      type: {class: SelectWalkableLandingEffect, ns: Gunspire, asm: Assembly-CSharp}
       data:
-        BaseDistance: 9.54
-        PerStatPoint: 0
-        ScaleStat: 1
-        MaxDistance: 22
-        MinDistance: 0.4
-        PitchDownLimit: -0.25
-        PitchUpLimit: 0.45
-        ScaleWithLevel: 1
-    - rid: 5643702153244311554
+        Range: 9.54
+        MinDistance: 1.5
+        ScaleWithLevel: 0
+    - rid: 5643702255643525121
       type: {class: VfxGhostTrailEffect, ns: Gunspire, asm: Assembly-CSharp}
       data:
         Ghosts: 6
         Lifetime: 0.28
-    - rid: 5643702153244311555
+    - rid: 5643702255643525122
       type: {class: TeleportEffect, ns: Gunspire, asm: Assembly-CSharp}
       data:
         PreserveVelocity: 1
-    - rid: 5643702153244311556
+        ShoveOccupants: 1
+    - rid: 5643702255643525123
       type: {class: GrantInvulnerabilityEffect, ns: Gunspire, asm: Assembly-CSharp}
       data:
         Seconds: 0.18

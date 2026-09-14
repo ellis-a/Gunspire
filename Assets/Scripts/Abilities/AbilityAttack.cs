@@ -52,6 +52,12 @@ namespace Gunspire
         /// <summary>Off cooldown and not already running, ignoring range and sight. A possessed body fires on command.</summary>
         public bool IsReady => !IsExecuting && _timer <= 0f && _owner != null;
 
+        /// <summary>Statuses every hit of this attack also carries, until cleared with null. A minion's infusion.</summary>
+        public void SetExtraStatuses(List<StatusApplication> statuses)
+        {
+            if (_context != null) _context.ExtraStatuses = statuses;
+        }
+
         /// <summary>Whether <see cref="Initialise"/> has bound this to an owner yet.</summary>
         public bool IsInitialised => _owner != null;
 

@@ -27,6 +27,7 @@ namespace Gunspire
         private Vector3 _anchor;
         private PlayerRig _rig;
         private PlayerConcealment _concealment;
+        private TrailEmitter _trail;
         private readonly object _concealKey = new object();
 
         /// <summary>A held spell pays half a second up front, so flicking it on and off still costs something.</summary>
@@ -75,6 +76,12 @@ namespace Gunspire
                 // or down at a floor zips there just as readily as a wall dead ahead.
                 ctx.Motor.BeginWallZip(ctx.Aim != null ? ctx.Aim.forward : caster.forward);
             }
+
+            if (sustain.Buoyant && ctx.Motor != null) ctx.Motor.Buoyant = true;
+
+            if (sustain.Trail != null && sustain.Trail.Exists)
+                _trail = sustain.Trail.AttachTo(caster, ctx.Team, ctx.Caster,
+                    Combat.OutgoingMultiplier(ctx.Sheet, true, sustain.Trail.DamageType, spell.Type), DamageOrigin.Spell);
 
             _rig = ctx.Caster.GetComponent<PlayerRig>();
             _concealment = ctx.Caster.GetComponent<PlayerConcealment>();
@@ -139,7 +146,12 @@ namespace Gunspire
             _speedModifier = null;
 
             if (Spell.Sustain.WallZip && _ctx.Motor != null) _ctx.Motor.EndWallZip();
+            if (Spell.Sustain.Buoyant && _ctx.Motor != null) _ctx.Motor.Buoyant = false;
             if (_concealment != null) _concealment.Release(_concealKey);
+
+            // What is already down burns out on its own.
+            if (_trail != null) _trail.Stop();
+            _trail = null;
 
             ActiveTime = 0f;
             Ended?.Invoke(this);

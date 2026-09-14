@@ -18,6 +18,21 @@ namespace Gunspire
 
         public Weapon Source => Follow != null ? Follow.Weapon : null;
 
+        /// <summary>Copies the gun in the other hand rather than the one drawn. Divine Assistance summons your other weapon.</summary>
+        public bool FollowsOtherHand { get; private set; }
+
+        public WeaponDefinition OtherHand =>
+            Follow != null ? Follow.GetSlot((Follow.ActiveIndex + 1) % Holster.SlotCount) : null;
+
+        public static PhantomWeapon Create(Holster follow, Transform aimOrigin, GameObject owner,
+            bool useOwnerStats, bool shareInfusions, bool followOtherHand)
+        {
+            PhantomWeapon phantom = Create(follow, aimOrigin, owner, useOwnerStats, shareInfusions);
+            phantom.FollowsOtherHand = followOtherHand;
+            phantom.Refresh();
+            return phantom;
+        }
+
         public static PhantomWeapon Create(Holster follow, Transform aimOrigin, GameObject owner,
             bool useOwnerStats, bool shareInfusions)
         {
@@ -60,7 +75,7 @@ namespace Gunspire
         {
             if (this == null || Weapon == null) return;
 
-            WeaponDefinition current = Source != null ? Source.Definition : null;
+            WeaponDefinition current = FollowsOtherHand ? OtherHand : Source != null ? Source.Definition : null;
             if (current != null && Weapon.Definition != current) Weapon.Equip(current);
         }
 

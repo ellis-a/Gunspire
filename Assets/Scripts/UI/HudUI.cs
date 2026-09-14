@@ -28,6 +28,7 @@ namespace Gunspire
             if (playing)
             {
                 DrawDivineKnowledge(player);
+                DrawBloodScent(player);
                 DrawCrosshair(player);
                 DrawInteractPrompt(player);
                 DrawPossession(player);
@@ -66,6 +67,37 @@ namespace Gunspire
 
             DivineKnowledgeMastery knowledge = player.Masteries.Get<DivineKnowledgeMastery>();
             if (knowledge != null) knowledge.DrawGUI(player.Camera);
+        }
+
+        private float _scentRefresh;
+        private EnemyController[] _scented = new EnemyController[0];
+
+        /// <summary>
+        /// Blood Scent: a marker over every enemy, drawn in screen space so walls cannot hide it. The cheap,
+        /// reliable version the design notes chose over a silhouette shader.
+        /// </summary>
+        private void DrawBloodScent(PlayerRig player)
+        {
+            if (player.Status == null || !player.Status.Has(StatusId.Scenting) || player.Camera == null) return;
+
+            if ((_scentRefresh -= Time.unscaledDeltaTime) <= 0f)
+            {
+                _scentRefresh = 0.5f;
+                _scented = FindObjectsByType<EnemyController>(FindObjectsSortMode.None);
+            }
+
+            var color = new Color(0.9f, 0.2f, 0.2f, 0.85f);
+            for (int i = 0; i < _scented.Length; i++)
+            {
+                EnemyController enemy = _scented[i];
+                if (enemy == null || enemy.IsHidden || enemy.Health == null || !enemy.Health.IsAlive) continue;
+
+                Vector3 screen = player.Camera.WorldToScreenPoint(enemy.transform.position + Vector3.up);
+                if (screen.z <= 0f) continue;
+
+                float size = Mathf.Clamp(260f / screen.z, 6f, 18f);
+                UIStyles.Fill(new Rect(screen.x - size * 0.5f, Screen.height - screen.y - size * 0.5f, size, size), color);
+            }
         }
 
         /// <summary>Who you are controlling and for how long, since the body on screen is not your own.</summary>

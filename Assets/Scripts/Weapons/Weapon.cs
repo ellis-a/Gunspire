@@ -160,6 +160,29 @@ namespace Gunspire
 
         public void RemoveInfusion(string id) => _infusions.RemoveAll(i => i.Id == id);
 
+        /// <summary>Puts the magazine at a count, as Rewind restores it. Ends any reload in progress.</summary>
+        public void SetAmmo(int rounds)
+        {
+            if (Definition == null) return;
+
+            StopAllRunningRoutines();
+            IsReloading = false;
+            ReloadProgress = 0f;
+            AmmoInMagazine = Mathf.Clamp(rounds, 0, Definition.MagazineSize);
+        }
+
+        /// <summary>
+        /// One ordinary round now, ignoring the rate of fire, for a copy firing whenever its real gun does.
+        /// Divine Assistance's mirrored gun. Spends ammo only if this gun spends ammo at all.
+        /// </summary>
+        public void FireNow()
+        {
+            if (Definition == null || IsReloading) return;
+            if (!FreeRounds && AmmoInMagazine <= 0) return;
+
+            FireRound(ShotSpec.Primary(Definition, CurrentSpread()), 1);
+        }
+
         private List<BulletInfusion> InfusionList
             => InfusionSource != null && InfusionSource != this ? InfusionSource._infusions : _infusions;
 

@@ -19,6 +19,9 @@ namespace Gunspire
         /// <summary>One bit per action whose key went down this frame.</summary>
         public int ActionsPressed;
 
+        /// <summary>One bit per action whose key is held down. The Alpha Stag's charge.</summary>
+        public int ActionsHeld;
+
         public Vector3 AimOrigin;
         public Vector3 AimForward;
     }
@@ -85,7 +88,13 @@ namespace Gunspire
         private Quaternion _returnFromRotation;
         private readonly object _concealKey = new object();
 
-        public void Bind(PlayerRig rig) => Rig = rig;
+        public void Bind(PlayerRig rig)
+        {
+            Rig = rig;
+
+            // A player who dies while in another body is not left watching through its eyes.
+            if (rig != null && rig.Health != null) rig.Health.Died += info => { if (this != null) Cancel(); };
+        }
 
         /// <summary>Takes over a body. Refused while already possessing or returning, or if the body is dead.</summary>
         public bool Begin(IPossessable target, float seconds, bool endOnDirectDamage = true)
@@ -187,7 +196,10 @@ namespace Gunspire
             if (Input.GetKey(KeyCode.LeftControl)) input.Rise -= 1f;
 
             for (int i = 0; i < ActionKeys.Length; i++)
+            {
                 if (Input.GetKeyDown(ActionKeys[i])) input.ActionsPressed |= 1 << i;
+                if (Input.GetKey(ActionKeys[i])) input.ActionsHeld |= 1 << i;
+            }
 
             return input;
         }

@@ -24,6 +24,10 @@ namespace Gunspire
         public static List<MinionDefinition> BuiltIn() => new List<MinionDefinition>
         {
             Zombie(),
+            PlagueZombie(),
+            Monstrosity(),
+            Eye(),
+            Mimic(),
             Jackalope(),
             Fox(),
             Wolf(),
@@ -47,6 +51,107 @@ namespace Gunspire
             PreferredRange = 1.4f,
             Persistent = true,
             Attacks = { Strike("Claw", 9f, 1.4f, 2.2f, new Color(0.6f, 0.8f, 0.45f)) }
+        };
+
+        /// <summary>Apocalypse's risen: short-lived, left behind with its floor.</summary>
+        private static MinionDefinition PlagueZombie() => new MinionDefinition
+        {
+            Id = "plague_zombie",
+            DisplayName = "Plague Zombie",
+            Health = 30f,
+            MoveSpeed = 4.2f,
+            Radius = 0.4f,
+            BodyHeight = 1.7f,
+            BodyWidth = 0.7f,
+            BodyColor = new Color(0.5f, 0.6f, 0.25f),
+            EyeColor = new Color(0.9f, 1f, 0.3f),
+            Persistent = false,
+            LifetimeSeconds = 20f,
+            Attacks = { Strike("Claw", 7f, 1.2f, 2.2f, new Color(0.7f, 0.85f, 0.35f)) }
+        };
+
+        /// <summary>The Stitched Monstrosity: a fast goliath whose slam knocks everything around it away.</summary>
+        private static MinionDefinition Monstrosity() => new MinionDefinition
+        {
+            Id = "monstrosity",
+            DisplayName = "Stitched Monstrosity",
+            Health = 260f,
+            MoveSpeed = 6.5f,
+            Radius = 0.6f,
+            BodyHeight = 2.6f,
+            BodyWidth = 1.4f,
+            BodyColor = new Color(0.55f, 0.45f, 0.45f),
+            EyeColor = new Color(1f, 0.4f, 0.3f),
+            FollowDistance = 3.5f,
+            EngageRange = 14f,
+            PreferredRange = 2f,
+            Persistent = true,
+            Attacks =
+            {
+                new AttackDefinition
+                {
+                    Name = "Slam", DamageType = DamageType.Kinetic, Reach = AttackReach.Melee,
+                    Tint = new Color(0.8f, 0.6f, 0.5f),
+                    MinRange = 0f, MaxRange = 3f, Cooldown = 2.2f, InitialDelay = 0.4f, RequiresLineOfSight = false,
+                    Sequence =
+                    {
+                        new WaitEffect { Seconds = 0.35f },
+                        new SelectSphereEffect { Radius = 3.5f },
+                        new DealDamageEffect { Amount = 30f, Knockback = 14f, FalloffFromPoint = true, FalloffRadius = 3.5f }
+                    }
+                }
+            }
+        };
+
+        /// <summary>Eye of E'pheraxx: immobile, staring a necrotic beam at the nearest enemy.</summary>
+        private static MinionDefinition Eye() => new MinionDefinition
+        {
+            Id = "eye",
+            DisplayName = "Eye of E'pheraxx",
+            Health = 60f,
+            MoveSpeed = 1f,
+            Radius = 0.45f,
+            BodyHeight = 1.3f,
+            BodyWidth = 0.9f,
+            BodyColor = new Color(0.25f, 0.2f, 0.35f),
+            EyeColor = new Color(0.6f, 1f, 0.6f),
+            EngageRange = 20f,
+            Immobile = true,
+            Persistent = false,
+            LifetimeSeconds = 15f,
+            Attacks =
+            {
+                new AttackDefinition
+                {
+                    Name = "Stare", DamageType = DamageType.Necrotic, Reach = AttackReach.Ranged,
+                    Tint = new Color(0.55f, 0.9f, 0.5f),
+                    MinRange = 0f, MaxRange = 20f, Cooldown = 1.6f, InitialDelay = 0.2f,
+                    Sequence =
+                    {
+                        new AimAtTargetEffect(),
+                        new BeamEffect { Duration = 1.5f, Length = 20f, Width = 0.3f, DamagePerTick = 4f, TickInterval = 0.2f,
+                            SweepDegreesPerSecond = 0f, MaxPitch = 1f }
+                    }
+                }
+            }
+        };
+
+        /// <summary>The Phantasmal Mimic's body: immobile, and armed by <see cref="MimicGunner"/> rather than attacks.</summary>
+        private static MinionDefinition Mimic() => new MinionDefinition
+        {
+            Id = "mimic",
+            DisplayName = "Phantasmal Mimic",
+            Health = 50f,
+            MoveSpeed = 1f,
+            Radius = 0.4f,
+            BodyHeight = 1.8f,
+            BodyWidth = 0.7f,
+            BodyColor = new Color(0.7f, 0.6f, 0.95f),
+            EyeColor = new Color(1f, 0.8f, 1f),
+            EngageRange = 30f,
+            Immobile = true,
+            Persistent = false,
+            LifetimeSeconds = 12f
         };
 
         // ---------------------------------------------------------------- the Bestial ladder

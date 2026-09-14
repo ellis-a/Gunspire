@@ -207,6 +207,15 @@ namespace Gunspire
             DestroyAllOfType<TrailEmitter>();
             DestroyAllOfType<WorldTimedLife>();
 
+            // What spells leave running in the world belongs to the floor it was cast on.
+            DestroyAllOfType<TetherLink>();
+            DestroyAllOfType<KrakenSummon>();
+            DestroyAllOfType<SoulStorm>();
+            DestroyAllOfType<DesecratedGround>();
+            DestroyAllOfType<Whirlpool>();
+            DestroyAllOfType<RouteMarkers>();
+            DestroyAllOfType<DelayedChain>();
+
             // A new room starts in normal time, with nothing held, nothing to avoid and no bodies on
             // the floor, and with the player in their own body.
             WorldClock.Reset();

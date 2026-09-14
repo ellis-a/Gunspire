@@ -66,6 +66,12 @@ namespace Gunspire
         /// </summary>
         public bool WallZip;
 
+        /// <summary>Swims through the air instead of falling. See <see cref="PlayerMotor.Buoyant"/>.</summary>
+        public bool Buoyant;
+
+        /// <summary>Ground laid behind the caster while it runs. Burning Feet's fire, Bloodwake's wake.</summary>
+        public TrailProfile Trail = new TrailProfile();
+
         /// <summary>One line for the HUD and the pedestal prompt.</summary>
         public string CostLine()
         {
@@ -107,6 +113,59 @@ namespace Gunspire
         public Color Tint = Color.white;
         public System.Collections.Generic.List<StatusApplication> BulletStatuses =
             new System.Collections.Generic.List<StatusApplication>();
+
+        /// <summary>Changes to the caster's attributes while this mode is the active one.</summary>
+        public System.Collections.Generic.List<StanceModifier> Modifiers =
+            new System.Collections.Generic.List<StanceModifier>();
+
+        /// <summary>Damage a second to every enemy within the radius, while active. Elemental Form's fire.</summary>
+        public float AuraDamagePerSecond;
+        public float AuraRadius = 4f;
+    }
+
+    [System.Serializable]
+    public class StanceModifier
+    {
+        public Attr Attr = Attr.MoveSpeed;
+
+        /// <summary>A fraction: 0.2 is twenty percent more, -0.2 twenty percent less.</summary>
+        public float Percent;
+    }
+
+    /// <summary>
+    /// Hurting ground laid behind something moving, for whatever carries a <see cref="TrailEmitter"/>: a
+    /// held spell's caster or a projectile. Inert until it has a radius.
+    /// </summary>
+    [System.Serializable]
+    public class TrailProfile
+    {
+        public float Radius;
+        public float Spacing = 1.5f;
+        public float SegmentLifetime = 2.5f;
+        public float DamagePerTick = 3f;
+        public float TickInterval = 0.5f;
+        public DamageType DamageType = DamageType.Energy;
+        public Color Tint = new Color(1f, 0.5f, 0.15f);
+        public System.Collections.Generic.List<StatusApplication> Statuses =
+            new System.Collections.Generic.List<StatusApplication>();
+
+        public bool Exists => Radius > 0f;
+
+        /// <summary>Starts a trail behind the carrier, its damage scaled by the caster's outgoing multiplier.</summary>
+        public TrailEmitter AttachTo(Transform carrier, Team team, GameObject source, float damageScale, DamageOrigin origin)
+        {
+            TrailEmitter trail = TrailEmitter.Attach(carrier, team, source);
+            trail.Radius = Radius;
+            trail.Spacing = Spacing;
+            trail.SegmentLifetime = SegmentLifetime;
+            trail.DamagePerTick = DamagePerTick * damageScale;
+            trail.TickInterval = TickInterval;
+            trail.DamageType = DamageType;
+            trail.Origin = origin;
+            trail.Tint = Tint;
+            trail.Statuses = new System.Collections.Generic.List<StatusApplication>(Statuses);
+            return trail;
+        }
     }
 
     /// <summary>

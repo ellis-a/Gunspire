@@ -14,13 +14,17 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Gunspire.SpellAsset
   Definition:
     Id: spider_legs
-    DisplayName: Spider Legs
+    DisplayName: Spider Gravity
     ShortName: SPDR
     Description: Fires a line at whatever you are looking at and hauls you to it.
       Stick, and that surface becomes your new floor - jump and gravity pulls you
       straight back down onto it, not away.
     ManaCost: 20
     Cooldown: 6
+    SoulCost: 0
+    HealthCost: 0
+    PsiCost: 0
+    SpendsAllSouls: 0
     NoiseMultiplier: 1
     Rarity: 2
     Type: 1
@@ -29,11 +33,35 @@ MonoBehaviour:
     Slot: 1
     Sustain:
       ManaPerSecond: 11
+      HealthPerSecond: 0
+      Toggle: 0
       MaxDuration: 0
       MoveSpeedBonus: 0
       Invulnerable: 0
       BreakOnMovement: 0
+      HideFromSight: 0
+      BreakOnShoot: 0
+      BreakOnCast: 0
+      BreakOnMelee: 0
       WallZip: 1
+      Buoyant: 0
+      Trail:
+        Radius: 0
+        Spacing: 1.5
+        SegmentLifetime: 2.5
+        DamagePerTick: 3
+        TickInterval: 0.5
+        DamageType: 1
+        Tint: {r: 1, g: 0.5, b: 0.15, a: 1}
+        Statuses: []
+    Charge:
+      SecondsToFull: 0
+      MinimumFraction: 0
+    Stance:
+      Modes: []
+    VariantGroup: 
+    NeverEchoes: 0
+    DodgeCooldownRefund: 0
     MaxLevel: 1
     GrowthPerLevel: 0.22
     LevelUpNote: 

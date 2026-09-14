@@ -168,6 +168,17 @@ namespace Gunspire
             Weapon.Equip(definition, _ammo[index]);
         }
 
+        /// <summary>Puts a slot's rounds at a count, the drawn gun's included. Rewind restores ammo through this.</summary>
+        public void SetAmmo(int index, int rounds)
+        {
+            if (index < 0 || index >= SlotCount || _slots[index] == null) return;
+
+            if (index == ActiveIndex && Weapon != null && Weapon.Definition != null) Weapon.SetAmmo(rounds);
+            else _ammo[index] = Mathf.Clamp(rounds, 0, _slots[index].MagazineSize);
+
+            Changed?.Invoke();
+        }
+
         // ---------------------------------------------------------------- run upkeep
 
         /// <summary>Tops up both guns, including the one that is put away.</summary>

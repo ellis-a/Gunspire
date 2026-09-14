@@ -87,6 +87,9 @@ namespace Gunspire
         /// <summary>Echo never repeats this. Rewind, whose second copy would have nothing to return to.</summary>
         public bool NeverEchoes;
 
+        /// <summary>Seconds taken off this spell's cooldown whenever its caster dodges a hit. Foretell.</summary>
+        public float DodgeCooldownRefund;
+
         /// <summary>
         /// Whether casting this spends one of the dash charges, which the HUD
         /// draws as pips instead of a cooldown. Read off the effect chain rather than kept as a

@@ -35,8 +35,19 @@ namespace Gunspire
             Register(new DisarmStatus());
             Register(new FearStatus());
             Register(new ConfusionStatus());
-            Register(new PlannedStatus(StatusId.Plague, "Plagued", "Rises as a zombie on death, and spreads the plague.", new Color(0.5f, 0.65f, 0.25f)));
-            Register(new PlannedStatus(StatusId.Torment, "Tormented", "Takes damage over time.", new Color(0.8f, 0.35f, 0.6f)));
+            Register(new PlagueStatus());
+            Register(new TormentStatus());
+
+            // The spell designs' own statuses.
+            Register(new EmpoweredStatus());
+            Register(new ExposedStatus());
+            Register(new QuickenedStatus());
+            Register(new WitheredStatus());
+            Register(new EnlargedStatus());
+            Register(new ScentingStatus());
+            Register(new ForetoldStatus());
+            Register(new PhasedStatus());
+            Register(new UnleashedStatus());
         }
 
         private static void Register(StatusDefinition def) => Map[def.Id] = def;
@@ -107,6 +118,41 @@ namespace Gunspire
 
         public static StatusApplication Confusion(float seconds = 5f)
             => new StatusApplication(StatusId.Confusion, seconds, 1, 1f);
+
+        public static StatusApplication Plague(float seconds = 12f)
+            => new StatusApplication(StatusId.Plague, seconds, 1, 1f);
+
+        /// <summary>Magnitude is psychic damage per second, per stack.</summary>
+        public static StatusApplication Torment(float seconds = 6f, int stacks = 1, float dps = 6f)
+            => new StatusApplication(StatusId.Torment, seconds, stacks, dps);
+
+        public static StatusApplication Empowered(float seconds = 8f, float bonus = 0.25f)
+            => new StatusApplication(StatusId.Empowered, seconds, 1, bonus);
+
+        public static StatusApplication Exposed(float seconds = 8f, float extra = 0.25f)
+            => new StatusApplication(StatusId.Exposed, seconds, 1, extra);
+
+        public static StatusApplication Quickened(float seconds = 8f, float bonus = 0.3f)
+            => new StatusApplication(StatusId.Quickened, seconds, 1, bonus);
+
+        /// <summary>Magnitude is the share of maximum health below which it dies.</summary>
+        public static StatusApplication Withered(float seconds = 8f, float threshold = 0.1f)
+            => new StatusApplication(StatusId.Withered, seconds, 1, threshold);
+
+        public static StatusApplication Enlarged(float seconds = 6f, float bonus = 0.3f)
+            => new StatusApplication(StatusId.Enlarged, seconds, 1, bonus);
+
+        public static StatusApplication Scenting(float seconds = 10f)
+            => new StatusApplication(StatusId.Scenting, seconds, 1, 1f);
+
+        public static StatusApplication Foretold(float seconds = 3f)
+            => new StatusApplication(StatusId.Foretold, seconds, 1, 1f);
+
+        public static StatusApplication Phased(float seconds = 0.6f)
+            => new StatusApplication(StatusId.Phased, seconds, 1, 1f);
+
+        public static StatusApplication Unleashed(float seconds = 8f)
+            => new StatusApplication(StatusId.Unleashed, seconds, 1, 1f);
     }
 
     // -------------------------------------------------------------------------------- control

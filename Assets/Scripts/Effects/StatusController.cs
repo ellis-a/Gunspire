@@ -300,6 +300,20 @@ namespace Gunspire
             if (s != null) RemoveInstance(s);
         }
 
+        /// <summary>Removes one debuff chosen at random, if there is one. Flicker and Embiggen. Returns what went.</summary>
+        public StatusDefinition RemoveRandomDebuff()
+        {
+            _scratch.Clear();
+            for (int i = 0; i < _active.Count; i++)
+                if (_active[i].Def.IsDebuff) _scratch.Add(_active[i]);
+
+            if (_scratch.Count == 0) return null;
+
+            ActiveStatus pick = _scratch[UnityEngine.Random.Range(0, _scratch.Count)];
+            RemoveInstance(pick);
+            return pick.Def;
+        }
+
         public void ClearAll()
         {
             for (int i = _active.Count - 1; i >= 0; i--) RemoveInstance(_active[i]);

@@ -56,6 +56,9 @@ namespace Gunspire
         }
 
         public event Action<DamageInfo, float> Damaged;
+
+        /// <summary>Raised when a hit was dodged rather than taken. Foretell's cooldown refund listens.</summary>
+        public event Action<DamageInfo> Dodged;
         public event Action<float> Healed;
         public event Action<DamageInfo> Died;
         public event Action HealthChanged;
@@ -240,6 +243,14 @@ namespace Gunspire
                 return;
             }
             if (IsInvulnerable && info.Type != DamageType.True) return;
+
+            // Foretell: the next direct hit misses. Never a status tick, and never a hit with nothing in it.
+            if (Status != null && info.Origin != DamageOrigin.StatusTick && info.Amount > 0f && Status.Has(StatusId.Foretold))
+            {
+                Status.Remove(StatusId.Foretold);
+                Dodged?.Invoke(info);
+                return;
+            }
 
             float amount = Mathf.Max(0f, info.Amount);
 

@@ -346,7 +346,8 @@ namespace Gunspire.EditorTools
             var scalesMagnitude = new HashSet<StatusId>
             {
                 StatusId.Burn, StatusId.Bleed, StatusId.Poison, StatusId.Shock,
-                StatusId.Weaken, StatusId.Haste, StatusId.Fortify, StatusId.Mark
+                StatusId.Weaken, StatusId.Haste, StatusId.Fortify, StatusId.Mark,
+                StatusId.Torment, StatusId.Empowered, StatusId.Quickened
             };
             var scalesStacks = new HashSet<StatusId> { StatusId.Frost };
 

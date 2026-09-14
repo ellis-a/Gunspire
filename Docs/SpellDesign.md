@@ -1,6 +1,8 @@
 # Spell design notes
 
-Planning only. Nothing here is implemented. One section per school as the designs land.
+The design for each school. Every spell here now exists as a code built-in in `SpellLibrary.<School>.cs`,
+with placeholder numbers; the choices made while building them, including the defaults taken for questions
+still open here, are listed under Phase 5 in Architecture.md.
 
 Schools: Elemental, Bestial, Abyssal, Divination, Death, Psionic, Aetherics.
 Per-school spread: 3 common, 3 uncommon, 2 rare, 1 mythic cast, 1 common movement,

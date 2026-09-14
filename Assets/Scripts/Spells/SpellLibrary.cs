@@ -14,7 +14,7 @@ namespace Gunspire
     /// <see cref="SpellAsset"/> found under a Resources folder is merged in: a matching id
     /// replaces the built-in, a new id is added to the roster.
     /// </summary>
-    public static class SpellLibrary
+    public static partial class SpellLibrary
     {
         private static List<Spell> _all;
 
@@ -172,9 +172,9 @@ namespace Gunspire
         /// <summary>The code roster. Also what the editor tool seeds new assets from.</summary>
         public static List<Spell> BuiltIn()
         {
-            return new List<Spell>
+            var roster = new List<Spell>
             {
-                // Cast slots. Only the Petty spells so far. The spells from before the school
+                // The Petty spells, which belong to no school. The spells from before the school
                 // designs were retired, and the editor's RetiredSpells lists them so none
                 // quietly comes back.
                 Dart(),
@@ -183,15 +183,23 @@ namespace Gunspire
                 Dazzle(),
                 Shock(),
                 Rot(),
-
-                // Shift slot.
                 Dash(),
-                Blink(),
-                SpiderLegs(),
+                Bash(),
 
-                // Melee slot.
-                Bash()
+                // The two movement spells that already existed, now Aetherics' and Bestial's.
+                Blink(),
+                SpiderLegs()
             };
+
+            // One file per school. Every number in them is a first guess that has not been tuned in play.
+            roster.AddRange(ElementalSpells());
+            roster.AddRange(BestialSpells());
+            roster.AddRange(AbyssalSpells());
+            roster.AddRange(DivinationSpells());
+            roster.AddRange(DeathSpells());
+            roster.AddRange(PsionicSpells());
+            roster.AddRange(AethericsSpells());
+            return roster;
         }
 
         // ---------------------------------------------------------------- cast: Petty
@@ -385,8 +393,8 @@ namespace Gunspire
             School = SpellSchool.Aetherics,
             DisplayName = "Blink",
             ShortName = "BLNK",
-            Description = "Teleport forward, passing through anything in the way. Stops at the " +
-                          "first wall rather than dropping you inside it.",
+            Description = "Teleport forward through walls, landing on the furthest floor you could walk to. " +
+                          "The outer edge of the map still stops you.",
             Slot = SpellSlot.Movement,
             Type = SpellType.Mobility,
             Rarity = Rarity.Common,
@@ -396,11 +404,11 @@ namespace Gunspire
             TintOverride = Palette.Arcane,
             OnCast =
             {
-                // Aborts against a wall, which refunds the mana and the cooldown.
-                // The reach the old Intellect scaling gave every loadout, which opened at 3.
-                new SweepForwardEffect { BaseDistance = 9.54f, MaxDistance = 22f },
+                // Aborts with nowhere to land, which refunds the mana and the cooldown. The reach is
+                // what the old Intellect scaling gave every loadout, which opened at 3.
+                new SelectWalkableLandingEffect { Range = 9.54f, MinDistance = 1.5f, ScaleWithLevel = false },
                 new VfxGhostTrailEffect(),
-                new TeleportEffect(),
+                new TeleportEffect { ShoveOccupants = true },
                 new GrantInvulnerabilityEffect { Seconds = 0.18f }
             }
         };
@@ -409,7 +417,7 @@ namespace Gunspire
         {
             Id = "spider_legs",
             School = SpellSchool.Bestial,
-            DisplayName = "Spider Legs",
+            DisplayName = "Spider Gravity",
             ShortName = "SPDR",
             Description = "Fires a line at whatever you are looking at and hauls you to it. " +
                           "Stick, and that surface becomes your new floor - jump and gravity " +

@@ -18,13 +18,17 @@ namespace Gunspire
         public float Magnitude = 4f;
         public float DurationPerLevel;
 
+        /// <summary>Added to the magnitude for each level past the first. Wither's threshold rises a point a level.</summary>
+        public float MagnitudePerLevel;
+
         public override bool Execute(AbilityContext ctx)
         {
             int levels = ctx.Level - 1;
             int stacks = Stacks + Mathf.FloorToInt(levels * StacksPerLevel);
             float duration = Duration + levels * DurationPerLevel;
+            float magnitude = Magnitude + levels * MagnitudePerLevel;
 
-            ctx.AddPayload(ctx.Empower(new StatusApplication(Status, duration, Mathf.Max(1, stacks), Magnitude)));
+            ctx.AddPayload(ctx.Empower(new StatusApplication(Status, duration, Mathf.Max(1, stacks), magnitude)));
             return true;
         }
 
@@ -63,6 +67,9 @@ namespace Gunspire
         public float Amount = 20f;
         public bool CanCrit;
         public float Knockback;
+
+        /// <summary>Knockback straight up on top of the push away, so a blast lifts as it throws. Gush.</summary>
+        public float KnockbackUp;
 
         /// <summary>Scale damage down with distance from the point, for blasts.</summary>
         public bool FalloffFromPoint;
@@ -109,7 +116,8 @@ namespace Gunspire
                 }
 
                 DamageInfo info = ctx.BuildDamage(amount * ctx.Power * falloff, center, -away, CanCrit);
-                if (Knockback > 0f) info.Knockback = away * (Knockback * falloff);
+                if (Knockback > 0f || KnockbackUp > 0f)
+                    info.Knockback = away * (Knockback * falloff) + Vector3.up * (KnockbackUp * falloff);
 
                 target.TakeDamage(info);
             }
@@ -265,6 +273,21 @@ namespace Gunspire
         public float SplashDamage;
         public bool ScaleSplashWithLevel = true;
 
+        /// <summary>A side-to-side weave in flight. Flaming Skull.</summary>
+        public float SwayAmplitude;
+        public float SwayFrequency = 2f;
+
+        public bool PassesThroughWalls;
+
+        /// <summary>Burning ground behind each projectile. Flaming Skull.</summary>
+        public TrailProfile Trail = new TrailProfile();
+
+        /// <summary>More projectiles at a full charge, in proportion to the charge. Bone Shards.</summary>
+        public int ExtraCountAtFullCharge;
+
+        /// <summary>More projectiles for every soul the cast spent. Bone Shards.</summary>
+        public int ExtraCountPerSoul;
+
         /// <summary>
         /// Run at the impact point when the projectile lands. This is the OnHit hook.
         /// Must start non-null: definitions fill it with a collection initializer, which calls
@@ -276,13 +299,16 @@ namespace Gunspire
         {
             Vector3 origin = ctx.Origin + ctx.Forward * 0.8f;
 
-            for (int i = 0; i < Mathf.Max(1, Count); i++)
+            int count = Mathf.Max(1, Count) + Mathf.RoundToInt(Mathf.Clamp01(ctx.Charge) * ExtraCountAtFullCharge)
+                        + Mathf.Max(0, ctx.SoulsSpent) * ExtraCountPerSoul;
+
+            for (int i = 0; i < count; i++)
             {
                 Vector3 direction = ctx.Forward;
 
-                if (ArcSpreadDegrees > 0f && Count > 1)
+                if (ArcSpreadDegrees > 0f && count > 1)
                 {
-                    float t = i / (float)(Count - 1) - 0.5f;
+                    float t = i / (float)(count - 1) - 0.5f;
                     direction = Quaternion.AngleAxis(t * ArcSpreadDegrees, Vector3.up) * direction;
                 }
                 if (SpreadDegrees > 0f)
@@ -309,10 +335,16 @@ namespace Gunspire
                 p.SplashRadius = SplashRadius * (ScaleSplashWithLevel ? ctx.LevelScale : 1f);
                 p.SplashDamage = SplashDamage * ctx.Power;
                 p.Statuses = new List<StatusApplication>(ctx.Payload);
+                p.SwayAmplitude = SwayAmplitude;
+                p.SwayFrequency = SwayFrequency;
+                p.PassesThroughWalls = PassesThroughWalls;
 
                 if (OnHit != null && OnHit.Count > 0) p.AttachOnHit(OnHit, ctx);
 
                 p.Launch();
+
+                if (Trail != null && Trail.Exists)
+                    Trail.AttachTo(p.transform, ctx.Team, ctx.Caster, ctx.Power, ctx.DamageOrigin);
             }
             return true;
         }
@@ -545,6 +577,14 @@ namespace Gunspire
         }
 
         private void OnDestroy() => Hazards.Unregister(_hazard);
+
+        /// <summary>Stops the other side shying away from it. Nether Smoke, whose guaranteed hits want enemies to stay inside.</summary>
+        public LingeringZone NotAHazard()
+        {
+            Hazards.Unregister(_hazard);
+            _hazard = null;
+            return this;
+        }
 
         private void BuffAlliesInside()
         {

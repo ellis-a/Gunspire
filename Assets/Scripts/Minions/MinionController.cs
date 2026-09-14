@@ -77,6 +77,39 @@ namespace Gunspire
         private bool _knockbackActive;
         private float _retargetTimer;
         private float _downTimer;
+        private float _age;
+        private float _infusionLeft;
+
+        /// <summary>How many minions of one kind are out and standing, for summons limited to one at a time.</summary>
+        public static int CountOf(string id)
+        {
+            int count = 0;
+            IReadOnlyList<MinionController> live = Live;
+            for (int i = 0; i < live.Count; i++)
+            {
+                MinionController minion = live[i];
+                if (minion.Definition != null && minion.Definition.Id == id && minion.Health != null
+                    && (minion.Health.IsAlive || minion.IsDown))
+                    count++;
+            }
+            return count;
+        }
+
+        /// <summary>
+        /// Puts statuses on everything its attacks hit for a while, the way a bullet infusion does for a gun.
+        /// Viper's Sting reaches the companion through this.
+        /// </summary>
+        public void InfuseAttacks(List<StatusApplication> statuses, float seconds)
+        {
+            _infusionLeft = seconds;
+            foreach (AbilityAttack attack in GetComponents<AbilityAttack>()) attack.SetExtraStatuses(statuses);
+        }
+
+        private void TickInfusion(float dt)
+        {
+            if (_infusionLeft <= 0f || (_infusionLeft -= dt) > 0f) return;
+            foreach (AbilityAttack attack in GetComponents<AbilityAttack>()) attack.SetExtraStatuses(null);
+        }
 
         public bool IsAttacking
         {
@@ -135,6 +168,16 @@ namespace Gunspire
         public void Step(float dt)
         {
             if (Definition == null) return;
+
+            TickInfusion(dt);
+
+            _age += dt;
+            if (Definition.LifetimeSeconds > 0f && _age >= Definition.LifetimeSeconds)
+            {
+                if (Application.isPlaying) Destroy(gameObject);
+                else DestroyImmediate(gameObject);
+                return;
+            }
 
             if (IsDown)
             {
@@ -233,6 +276,8 @@ namespace Gunspire
         {
             Vector3 here = transform.position;
             Vector3 desired = Vector3.zero;
+
+            if (Definition.Immobile) return desired;
 
             if (Target != null)
             {

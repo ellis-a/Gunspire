@@ -71,10 +71,19 @@ namespace Gunspire
 
         // ---------------------------------------------------------------- charging
 
+        /// <summary>
+        /// Extra charge for a round landing on a split enemy, outside the quarter-second limit like the mimic's.
+        /// Whether it should be was left open; it is, since inside the limit it adds nothing once you charge at the cap.
+        /// </summary>
+        public const float SplitEnemyBonus = 0.15f;
+
         private void OnGunHit(WeaponHit hit)
         {
             if (this == null || hit.IsPhantom) return;
             AddFromHit(Time.time);
+
+            if (hit.Target != null && hit.Target.Transform != null && hit.Target.Transform.GetComponent<SplitMarker>() != null)
+                AddBonus(SplitEnemyBonus);
         }
 
         /// <summary>A bullet hit at the given time. Gains nothing inside the quarter-second window.</summary>

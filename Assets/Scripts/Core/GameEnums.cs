@@ -228,8 +228,35 @@ namespace Gunspire
         /// <summary>Rises as a zombie on death, and passes the plague on.</summary>
         Plague,
 
-        /// <summary>Damage over time of any damage type.</summary>
-        Torment
+        /// <summary>Psychic damage over time. Intrusive Thoughts.</summary>
+        Torment,
+
+        /// <summary>Deals more damage. Soul Bargain, Consecrate.</summary>
+        Empowered,
+
+        /// <summary>Takes more damage. The price of Soul Bargain.</summary>
+        Exposed,
+
+        /// <summary>Attacks and reloads faster. Howl.</summary>
+        Quickened,
+
+        /// <summary>Dies outright below a share of its health, elites included. Wither.</summary>
+        Withered,
+
+        /// <summary>Grown large, and hits harder for it. Embiggen.</summary>
+        Enlarged,
+
+        /// <summary>Senses every enemy through walls. Blood Scent.</summary>
+        Scenting,
+
+        /// <summary>The next direct hit misses. Foretell.</summary>
+        Foretold,
+
+        /// <summary>Out of reality: untouchable and unseen. Flicker.</summary>
+        Phased,
+
+        /// <summary>Id incarnate: the gun fires itself and never misses. Superid.</summary>
+        Unleashed
     }
 
     public enum FireMode { Semi, Auto, Burst }

@@ -32,7 +32,13 @@ namespace Gunspire
         /// <summary>How close it gets to what it is fighting.</summary>
         public float PreferredRange = 1.4f;
 
+        /// <summary>Never moves: turns to face what it fights, and nothing more. Eye of E'pheraxx, the Phantasmal Mimic.</summary>
+        public bool Immobile;
+
         [Header("Life")]
+        /// <summary>Above zero, it crumbles after this many world seconds. Plague zombies, summoned eyes.</summary>
+        public float LifetimeSeconds;
+
         /// <summary>Follows the player to the next floor. Zombies do; plague zombies do not.</summary>
         public bool Persistent = true;
 

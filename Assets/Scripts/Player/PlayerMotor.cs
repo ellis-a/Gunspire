@@ -202,10 +202,18 @@ namespace Gunspire
             Vector2 input = (InputEnabled && !frozen) ? ReadMoveInput() : Vector2.zero;
             _wishDirection = WishDirection(input);
 
+            // Swimming reads jump and crouch as rise and sink instead of jumping.
+            _riseInput = RiseOverride;
+            if (Buoyant && InputEnabled && !frozen)
+            {
+                if (Input.GetKey(KeyCode.Space)) _riseInput += 1f;
+                if (Input.GetKey(KeyCode.LeftControl)) _riseInput -= 1f;
+            }
+
             // Held, not pressed. Chaining hops by re-tapping on the exact landing frame is a
             // reflex test rather than a skill, and it is the one thing that has to be
             // effortless for a speed chain to be about steering.
-            if (InputEnabled && !frozen && Input.GetKey(KeyCode.Space))
+            if (InputEnabled && !frozen && !Buoyant && Input.GetKey(KeyCode.Space))
                 _jumpBufferTimer = jumpBuffer;
 
             RollTowardsUpAxis(dt);
@@ -226,7 +234,7 @@ namespace Gunspire
             {
                 _coyoteTimer = coyoteTime;
                 float vertical = Vector3.Dot(_velocity, _upAxis);
-                if (vertical < 0f) _velocity += _upAxis * (-2f - vertical);   // pinned to the surface
+                if (vertical < 0f && !Buoyant) _velocity += _upAxis * (-2f - vertical);   // pinned to the surface
             }
             else
             {
@@ -257,6 +265,7 @@ namespace Gunspire
 
             if (ZipState == WallZipState.Zipping) UpdateZip(dt);
             else if (_dashTimer > 0f) UpdateDash(dt);
+            else if (Buoyant) UpdateSwimming(_wishDirection, dt);
             else UpdateNormalMovement(_wishDirection, dt, skipFriction: hopping);
 
             if (hopping) DoJump();
@@ -398,6 +407,35 @@ namespace Gunspire
 
         // ---------------------------------------------------------------- spell verbs
 
+        /// <summary>
+        /// Gravity becomes buoyancy: no falling, slower movement, and rise and sink on the jump and crouch
+        /// keys. Rapture of the Deep. The maze's roof keeps a swimmer inside the level.
+        /// </summary>
+        public bool Buoyant { get; set; }
+
+        /// <summary>Rise input added to the keyboard's, from minus one to one. Tooling swims with it.</summary>
+        public float RiseOverride { get; set; }
+
+        private float _riseInput;
+        private const float SwimSpeedFraction = 0.7f;
+        private const float SwimRiseSpeed = 4.5f;
+        private const float SwimAcceleration = 14f;
+
+        private void UpdateSwimming(Vector3 wishDir, float dt)
+        {
+            float speed = (_sheet != null ? _sheet.Get(Attr.MoveSpeed) : 7f) * SwimSpeedFraction;
+
+            Vector3 up = _upAxis;
+            float vertical = Vector3.Dot(_velocity, up);
+            Vector3 horizontal = _velocity - up * vertical;
+
+            // Water drags rather than grips: everything eases toward what the input asks for.
+            horizontal = Vector3.MoveTowards(horizontal, wishDir * speed, SwimAcceleration * dt);
+            vertical = Mathf.MoveTowards(vertical, Mathf.Clamp(_riseInput, -1f, 1f) * SwimRiseSpeed, SwimAcceleration * dt);
+
+            _velocity = horizontal + up * vertical;
+        }
+
         private float _frictionSuppressed;
 
         /// <summary>Ground friction is skipped for this long, as it already is on a jump frame. Ride the Gale's push.</summary>
@@ -473,6 +511,7 @@ namespace Gunspire
         private readonly List<ImpulseStep> _sequence = new List<ImpulseStep>();
         private readonly List<bool> _stepStarted = new List<bool>();
         private readonly List<bool> _stepLanded = new List<bool>();
+        private readonly List<Vector3> _stepForward = new List<Vector3>();
         private float _sequenceTime;
         private Vector3 _sequenceForward;
         private float _sequenceGravityScale = 1f;
@@ -497,6 +536,7 @@ namespace Gunspire
                 _sequence.Add(steps[i]);
                 _stepStarted.Add(false);
                 _stepLanded.Add(false);
+                _stepForward.Add(Vector3.zero);
             }
 
             Vector3 flat = Vector3.ProjectOnPlane(forward, _upAxis);
@@ -510,6 +550,7 @@ namespace Gunspire
             _sequence.Clear();
             _stepStarted.Clear();
             _stepLanded.Clear();
+            _stepForward.Clear();
             _sequenceGravityScale = 1f;
             _sequenceSuppressesFriction = false;
         }
@@ -540,7 +581,14 @@ namespace Gunspire
                 if (!_stepStarted[i])
                 {
                     _stepStarted[i] = true;
-                    _velocity += _sequenceForward * step.ForwardImpulse + _upAxis * step.UpImpulse;
+
+                    // A step steered by input reads it when it starts, not when the sequence was cast, and
+                    // with no input it has no forward part at all. Bound's second hop.
+                    _stepForward[i] = !step.ForwardFromInput
+                        ? _sequenceForward
+                        : _wishDirection.sqrMagnitude > 0.01f ? _wishDirection.normalized : Vector3.zero;
+
+                    _velocity += _stepForward[i] * step.ForwardImpulse + _upAxis * step.UpImpulse;
                     if (step.UpImpulse > 0f) _coyoteTimer = 0f;
                 }
 
@@ -551,9 +599,12 @@ namespace Gunspire
 
                 // Integrated over exactly the part of this frame the window covers.
                 float covered = Mathf.Min(_sequenceTime, end) - Mathf.Max(previous, start);
-                if (covered > 0f) _velocity += (_sequenceForward * step.ForwardForce + _upAxis * step.UpForce) * covered;
+                if (covered > 0f) _velocity += (_stepForward[i] * step.ForwardForce + _upAxis * step.UpForce) * covered;
 
                 if (_sequenceTime > end) continue;
+
+                // A hang: the rise is taken away for as long as the step holds.
+                if (step.StopVertical) _velocity -= _upAxis * Vector3.Dot(_velocity, _upAxis);
 
                 anyLeft = true;
                 gravityScale *= step.GravityScale;
@@ -729,13 +780,19 @@ namespace Gunspire
         /// Fires a dash in the direction being held, or straight ahead when standing still.
         /// Returns false with no charges left, which lets the ability refund itself.
         /// </summary>
-        public bool TryDash()
+        public bool TryDash() => TryDash(null);
+
+        /// <summary>A dash in a given direction, flattened against the up axis; the held direction when none is given. Repulse.</summary>
+        public bool TryDash(Vector3? direction)
         {
             if (DashCharges <= 0) return false;
 
+            Vector3 dir = direction.HasValue ? Vector3.ProjectOnPlane(direction.Value, _upAxis) : Vector3.zero;
+
             // _wishDirection is already flattened against the up axis; transform.forward is a
             // close enough stand-in when there is no input to take a direction from.
-            Vector3 dir = (_wishDirection.sqrMagnitude > 0.01f ? _wishDirection : transform.forward).normalized;
+            if (dir.sqrMagnitude < 0.01f) dir = _wishDirection.sqrMagnitude > 0.01f ? _wishDirection : transform.forward;
+            dir.Normalize();
 
             DashCharges--;
             if (_dashRechargeTimer <= 0f) _dashRechargeTimer = dashRechargeSeconds;

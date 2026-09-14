@@ -31,6 +31,12 @@ namespace Gunspire
         public bool EndOnLanding;
 
         public bool SuppressFriction;
+
+        /// <summary>Forward is the movement input when the step starts, and nothing without input. Bound's hops.</summary>
+        public bool ForwardFromInput;
+
+        /// <summary>Vertical speed is held at nothing while the step runs: a hang in the air. Ascend.</summary>
+        public bool StopVertical;
     }
 
     /// <summary>Plays a timed run of pushes on the caster. Ride the Gale, Bound.</summary>

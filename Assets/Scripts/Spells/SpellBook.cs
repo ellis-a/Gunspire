@@ -304,9 +304,11 @@ namespace Gunspire
             int count = spell.Stance.Modes.Count;
             _stanceModes[slot] = ((mode % count) + count) % count;
 
+            StanceMode active = spell.Stance.Modes[_stanceModes[slot]];
+            SetStanceModifiers(slot, active);
+
             if (Weapon == null) return;
 
-            StanceMode active = spell.Stance.Modes[_stanceModes[slot]];
             var infusion = new BulletInfusion { Id = StanceInfusionId(spell) };
             if (active.BulletStatuses != null) infusion.Statuses.AddRange(active.BulletStatuses);
 
@@ -317,7 +319,79 @@ namespace Gunspire
         private void LeaveStance(int slot)
         {
             if (Weapon != null && _slots[slot] != null) Weapon.RemoveInfusion(StanceInfusionId(_slots[slot]));
+            SetStanceModifiers(slot, null);
             _stanceModes[slot] = 0;
+        }
+
+        private readonly object[] _stanceSources = new object[SlotCount];
+        private readonly float[] _auraTimers = new float[SlotCount];
+        private const float AuraInterval = 0.5f;
+
+        /// <summary>Swaps the attribute changes of whichever mode a stance slot is in, or clears them with null.</summary>
+        private void SetStanceModifiers(int slot, StanceMode mode)
+        {
+            CharacterSheet sheet = Context != null ? Context.Sheet : null;
+            if (sheet == null) return;
+
+            if (_stanceSources[slot] == null) _stanceSources[slot] = new object();
+            object source = _stanceSources[slot];
+
+            sheet.RemoveModifiersFrom(source);
+            if (mode == null || mode.Modifiers == null) return;
+
+            for (int i = 0; i < mode.Modifiers.Count; i++)
+                if (mode.Modifiers[i] != null) sheet.AddPercent(mode.Modifiers[i].Attr, mode.Modifiers[i].Percent, source, mode.Name);
+        }
+
+        /// <summary>A stance mode's damage aura, dealt twice a second to every enemy around the caster.</summary>
+        private void TickStanceAura(int slot, float dt)
+        {
+            StanceMode mode = ActiveStanceMode(slot);
+            if (mode == null || mode.AuraDamagePerSecond <= 0f || Context == null || Context.Caster == null) return;
+            if ((_auraTimers[slot] -= dt) > 0f) return;
+            _auraTimers[slot] = AuraInterval;
+
+            Spell spell = _slots[slot];
+            float damage = mode.AuraDamagePerSecond * AuraInterval
+                           * Combat.OutgoingMultiplier(Context.Sheet, true, spell.DamageType, spell.Type);
+
+            Collider[] found = Physics.OverlapSphere(Context.Caster.transform.position + Vector3.up * 0.9f, mode.AuraRadius,
+                Context.TargetMask, QueryTriggerInteraction.Ignore);
+
+            var struck = new HashSet<IDamageable>();
+            for (int i = 0; i < found.Length; i++)
+            {
+                IDamageable target = Combat.FindDamageable(found[i]);
+                if (target == null || !target.IsAlive || !struck.Add(target)) continue;
+
+                DamageInfo info = DamageInfo.Create(damage, spell.DamageType, Context.Team, Context.Caster);
+                info.CanCrit = false;
+                info.Origin = DamageOrigin.Spell;
+                target.TakeDamage(info.At(AbilityContext.CenterOf(target), Vector3.up));
+            }
+        }
+
+        private Health _dodgeSource;
+
+        /// <summary>Follows the caster's health for dodges, which refund a little of any spell asking for it.</summary>
+        private void HookDodges()
+        {
+            Health health = Context != null ? Context.Health : null;
+            if (health == _dodgeSource) return;
+
+            if (_dodgeSource != null) _dodgeSource.Dodged -= OnDodged;
+            _dodgeSource = health;
+            if (health != null) health.Dodged += OnDodged;
+        }
+
+        private void OnDodged(DamageInfo info)
+        {
+            for (int i = 0; i < SlotCount; i++)
+            {
+                Spell spell = _slots[i];
+                if (spell != null && spell.DodgeCooldownRefund > 0f)
+                    _cooldowns[i] = Mathf.Max(0f, _cooldowns[i] - spell.DodgeCooldownRefund);
+            }
         }
 
         private SustainRunner Runner(int slot)
@@ -347,6 +421,8 @@ namespace Gunspire
         /// <summary>One frame of cooldowns, drains and charging. Update calls it; public so tooling can step time.</summary>
         public void Tick(float dt)
         {
+            HookDodges();
+
             float rate = Context != null && Context.Sheet != null ? Context.Sheet.Get(Attr.CooldownRate) : 1f;
             float step = dt * rate;
 
@@ -356,6 +432,7 @@ namespace Gunspire
                 else if (_cooldowns[i] > 0f) _cooldowns[i] = Mathf.Max(0f, _cooldowns[i] - step);
 
                 if (_charging[i]) _chargeHeld[i] += dt;
+                TickStanceAura(i, dt);
             }
         }
 

@@ -692,6 +692,49 @@ form. It depends on Phase 2.1, so enemies treat the occupied body as the player.
 
 ## Phase 5: the effect library and content
 
+**Status: done.** Every school's roster exists as code built-ins with placeholder numbers, built from the
+effects below, and Verify Spell Content checks the rosters, casts every spell on a real rig, and checks each
+new effect, status and controller. Decisions and deviations:
+
+- **Decided: Divine Star is stopped by walls.** It hunts the healthiest enemy in combat.
+- **Decided: Elemental Chaos picks uniformly, repeats allowed.** It casts two other uncommon Elemental spells.
+- **Defaults taken for the questions left open,** each a placeholder to revisit in play:
+  - **Superego Death:** the death mark is not copied onto the halves, so one mark cannot become two
+    executes. Hitting a split enemy gives bonus psi outside the rate limit.
+  - **Assume Identity:** "the last enemy" counts the room. The enemy returns to its own side afterwards.
+  - **Repulse:** standing still, it goes backwards from facing. It inverts horizontal momentum only, the
+    camera does not turn, and it keeps Dash's invulnerability.
+  - **Force of Will:** shots go back along their own path, and psi is spent only when something is
+    reflected.
+  - **Superid:** it holds fire with no target.
+  - **Invisibility:** melee breaks it, as shooting and casting do.
+  - **Space Hammer:** no knockback.
+  - **Stitched Monstrosity:** a recast is refused while one is out.
+  - **Lich Guise:** it swaps with raised zombies only.
+  - **Nether Smoke:** not a hazard, and it does not block sight.
+  - **Nether Wall:** 6 by 3.5 metres for 8 seconds.
+  - **Soul Storm:** its kills grant the ordinary soul, not a second one.
+  - **Torment:** psychic only.
+  - **Corpse Explosion:** it counts every recorded death.
+- **Blink passes through walls** to the furthest walkable floor, and Spider Legs took its designed name,
+  Spider Gravity. Both changes reach the assets through migrations.
+- **Spell statuses.**
+  - **Plague:** a plagued enemy that dies rises as your zombie and passes the plague on. One that simply
+    wears off raises nothing.
+  - **Withered:** it finishes elites too, and never the player.
+  - **Foretold:** it dodges the next direct hit, never a tick.
+  - **Unleashed:** it runs Superid's auto-fire, infinite ammo and swap lock.
+  - **Phased:** it hides the player and makes them immune.
+- **Controllers that outlive a cast.** Tethers, the kraken, Soul Storm, desecrated ground, whirlpools, route
+  markers and delayed chains are cleared with the room. Banished enemies keep their own timer.
+- **Animal forms are possessable bodies.** Damage to them comes off the player's health, and any spell key
+  ends the form. Their strikes come from the front of the body at chest height, since a cone from a tall
+  lizard's mouth passes over anything at its snout.
+- **Blood Scent** draws a marker over every enemy in screen space, through walls, rather than a silhouette
+  shader.
+
+The table below is the list this phase started from.
+
 With the foundations in place, most spells become data: effect chains authored in spell assets. These
 new effects are still needed.
 
@@ -761,36 +804,13 @@ fill the rest of the offer, so a roster of only Petty cast spells still offers a
 
 These are unresolved in the design doc, grouped by the phase they block.
 
-**Phase 2, enemy AI**
-
-- Superego Death: whether the death mark copies onto both halves.
-- Assume Identity: whether "only one enemy left" means the room or the floor. `RoomRuntime` already
-  counts per room. Also what happens to the controlled enemy when control ends.
-
-**Phase 3, world systems**
-
-- Stitched Monstrosity: whether recasting with one out refuses or replaces it.
-- Lich Guise: whether the Stitched Monstrosity and plague zombies are swap targets.
-- Nether Wall's size and duration.
-- Nether Smoke: whether it blocks enemy sight, and whether it counts as a hazard.
-
-**Phase 4, player systems**
+Phase 5 took a placeholder default for every question below that blocked building a spell; they are listed
+under Phase 5 above and stay open to play. What is still genuinely undecided:
 
 - Assume Identity: which keys an enemy's attacks go on when it has more than five, and whether a Gazer's
   rise and fall want their own keys. The framework binds attacks in order to left click, right click, Q,
   E and F, and flight to Space and Control.
-- Repulse: which way it goes when standing still, whether vertical momentum inverts, whether the camera
-  turns, and whether it keeps Dash's invulnerability.
-- Force of Will: where reflected shots go, and whether a charge is spent with nothing to reflect.
-- Superid: what it does with no target in sight.
-- Superego Death: whether hitting a split enemy gives bonus charge outside the rate limit.
-- Invisibility: whether melee breaks it.
-- Space Hammer: whether it knocks back.
-
-**Phase 5, content**
-
-- Divine Star: whether it passes through walls.
-- Elemental Chaos: whether its random pick is weighted.
+- Every number on every school spell. All are placeholders.
 - Numbers for Conflux, the Blood Debt and Divine Knowledge's rungs, with the fourth rung deferred.
 
 **Deferred on purpose:** spell swapping confined to special floors, the one-class-per-school loadout
