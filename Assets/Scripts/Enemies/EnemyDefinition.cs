@@ -7,6 +7,13 @@ namespace Gunspire
     public enum BodyShape { Humanoid, Eyeball }
 
     /// <summary>
+    /// How close an attack is delivered. Enemies have attacks rather than guns and spells, so silence
+    /// stops their ranged attacks and disarm stops their melee ones. Stored as an integer in assets:
+    /// append, never reorder.
+    /// </summary>
+    public enum AttackReach { Ranged, Melee }
+
+    /// <summary>
     /// One attack, as data. Mirrors the usage rules on <see cref="AbilityAttack"/>; the component
     /// is built from this at spawn.
     ///
@@ -26,6 +33,9 @@ namespace Gunspire
         public float InitialDelay = 0.6f;
         public bool RequiresLineOfSight = true;
         public int Priority;
+
+        [Tooltip("Melee attacks are stopped by disarm, ranged attacks by silence.")]
+        public AttackReach Reach = AttackReach.Ranged;
 
         [Header("Ability")]
         public DamageType DamageType = DamageType.Energy;

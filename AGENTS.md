@@ -50,7 +50,7 @@ Everything lives under **Gunspire** in the menu bar.
 | Generate assets from the code rosters | Create **Weapon / Spell / Boon / Enemy / Familiar / Starting Loadout** Assets |
 | Read a roster as a table | Log **Weapon Balance / Spell / Boon / Enemy / Familiar / Loadout / Sound** Table |
 | Check things resolve | Verify Enemy Roster, Log Valid Ids, Log Missing Icons |
-| Check the rules hold | Verify Stats / Debuffs / Combat Core / Spell Slots / Holster / Shot Spread / Perception / Wall Zip Math / Maze Generator / Maze Navigation |
+| Check the rules hold | Verify Stats / Debuffs / Combat Core / Enemy AI / Spell Slots / Holster / Shot Spread / Perception / Wall Zip Math / Maze Generator / Maze Navigation |
 | Run every check at once | Verify All - also works from batch mode with `-executeMethod Gunspire.EditorTools.VerifyAll.Run` |
 | Migrate authored assets | Migrations / 1 - Report, 2 - Apply, 3 - Verify Nothing Pending |
 | Older one-off migrations, already applied | Sync Alt Fires To Assets, Sync Perception To Assets, Migrate Damage Types |

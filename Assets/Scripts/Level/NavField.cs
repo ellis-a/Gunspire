@@ -195,6 +195,106 @@ namespace Gunspire
             return result;
         }
 
+        /// <summary>
+        /// Which way to move to get further from the player: up the field instead of down it, so a
+        /// feared enemy runs through the maze rather than into the nearest wall. This only means
+        /// "away from the player"; fear from anything else uses <see cref="AwayFrom"/>. Zero at a
+        /// dead end, where there is nowhere further to go.
+        /// </summary>
+        public Vector3 FleeDirection(Vector3 from)
+        {
+            if (!IsBuilt) return Vector3.zero;
+
+            Vector2Int cursor = WorldToCell(from);
+            if (Steps(cursor) < 0 && !TryNearestWalkable(cursor, out cursor)) return Vector3.zero;
+            if (Steps(cursor) < 0) return Vector3.zero;
+
+            Vector3 aim = from;
+            for (int i = 0; i < Lookahead; i++)
+            {
+                Vector2Int next = Uphill(cursor);
+                if (next == cursor) break;
+
+                cursor = next;
+                Vector3 candidate = CellCentre(cursor.x, cursor.y);
+                if (IsClearLine(from, candidate)) aim = candidate;
+            }
+
+            Vector3 delta = aim - from;
+            delta.y = 0f;
+            return delta.sqrMagnitude > 0.0004f ? delta.normalized : Vector3.zero;
+        }
+
+        /// <summary>The neighbour furthest from the player, or the cell itself at a dead end.</summary>
+        private Vector2Int Uphill(Vector2Int cell)
+        {
+            int best = Steps(cell);
+            Vector2Int result = cell;
+
+            for (int i = 0; i < Neighbours.Length; i++)
+            {
+                Vector2Int next = cell + Neighbours[i];
+                int steps = Steps(next);
+                if (steps < 0 || steps <= best) continue;
+
+                if (Neighbours[i].x != 0 && Neighbours[i].y != 0
+                    && (!IsWalkable(cell.x + Neighbours[i].x, cell.y)
+                        || !IsWalkable(cell.x, cell.y + Neighbours[i].y)))
+                    continue;
+
+                best = steps;
+                result = next;
+            }
+
+            return result;
+        }
+
+        /// <summary>
+        /// One step toward the walkable neighbouring cell furthest from a point, for fleeing something
+        /// that is not the player. The field only measures distance to the player, so this looks one
+        /// cell ahead rather than along a route - enough to keep a fleeing enemy out of the walls.
+        /// </summary>
+        public Vector3 AwayFrom(Vector3 from, Vector3 threat)
+        {
+            if (!IsBuilt) return Vector3.zero;
+
+            Vector2Int cell = WorldToCell(from);
+            if (!IsWalkable(cell.x, cell.y) && !TryNearestWalkable(cell, out cell)) return Vector3.zero;
+
+            var flatThreat = new Vector3(threat.x, _origin.y, threat.z);
+            float here = Vector3.Distance(CellCentre(cell.x, cell.y), flatThreat);
+
+            // Scored by distance gained per metre walked, not by distance alone. A diagonal cell is
+            // always a little further from the threat than the one straight back, so picking the
+            // furthest cell would send a fleeing enemy zig-zagging sideways across open ground.
+            float bestRate = 0f;
+            Vector2Int result = cell;
+
+            for (int i = 0; i < Neighbours.Length; i++)
+            {
+                Vector2Int next = cell + Neighbours[i];
+                if (!IsWalkable(next.x, next.y)) continue;
+
+                if (Neighbours[i].x != 0 && Neighbours[i].y != 0
+                    && (!IsWalkable(cell.x + Neighbours[i].x, cell.y)
+                        || !IsWalkable(cell.x, cell.y + Neighbours[i].y)))
+                    continue;
+
+                float stepLength = CellSize * (Neighbours[i].x != 0 && Neighbours[i].y != 0 ? 1.41421f : 1f);
+                float rate = (Vector3.Distance(CellCentre(next.x, next.y), flatThreat) - here) / stepLength;
+                if (rate <= bestRate) continue;
+
+                bestRate = rate;
+                result = next;
+            }
+
+            if (result == cell) return Vector3.zero;
+
+            Vector3 delta = CellCentre(result.x, result.y) - from;
+            delta.y = 0f;
+            return delta.sqrMagnitude > 0.0004f ? delta.normalized : Vector3.zero;
+        }
+
         /// <summary>Spirals outward for somewhere an agent could actually stand.</summary>
         public bool TryNearestWalkable(Vector2Int from, out Vector2Int result)
         {
@@ -247,10 +347,11 @@ namespace Gunspire
         {
             if (!IsBuilt) return;
 
-            PlayerRig rig = PlayerRig.Instance;
-            if (rig == null) return;
+            // Built from whichever body the player is in, so possession moves the chase with it.
+            Transform body = TargetRegistry.PlayerBody.Transform;
+            if (body == null) return;
 
-            Vector2Int cell = WorldToCell(rig.transform.position);
+            Vector2Int cell = WorldToCell(body.position);
             if (cell == _source) return;
 
             Rebuild(cell);

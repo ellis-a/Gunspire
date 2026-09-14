@@ -20,6 +20,7 @@ namespace Gunspire.EditorTools
             "Gunspire/Verify Stats",
             "Gunspire/Verify Debuffs",
             "Gunspire/Verify Combat Core",
+            "Gunspire/Verify Enemy AI",
             "Gunspire/Verify Spell Slots",
             "Gunspire/Verify Holster",
             "Gunspire/Verify Shot Spread",

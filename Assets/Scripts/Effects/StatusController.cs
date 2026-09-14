@@ -34,13 +34,40 @@ namespace Gunspire
         /// </summary>
         public bool IsFrozen => Stacks(StatusId.Frost) >= FrostStatus.FullStacks;
 
-        /// <summary>True while the entity should not be allowed to move or attack.</summary>
-        public bool IsControlImpaired => IsFrozen || IsAsleep;
+        /// <summary>True while the entity can neither move nor act: frozen, asleep or stunned.</summary>
+        public bool IsControlImpaired => IsFrozen || IsAsleep || IsStunned;
 
         public bool IsAsleep => Has(StatusId.Sleep);
 
         /// <summary>Cannot see. An enemy keeps fighting wherever it last saw its target.</summary>
         public bool IsBlind => Has(StatusId.Blind);
+
+        /// <summary>A snare at full strength.</summary>
+        public bool IsStunned => SnareStatus.Stuns(Find(StatusId.Snare));
+
+        public bool IsFeared => Has(StatusId.Fear);
+        public bool IsSilenced => Has(StatusId.Silence);
+        public bool IsDisarmed => Has(StatusId.Disarm);
+        public bool IsConfused => Has(StatusId.Confusion);
+
+        /// <summary>Whether it may move at all. A snare short of a stun only slows.</summary>
+        public bool CanMove => !IsControlImpaired;
+
+        /// <summary>
+        /// Whether it may start an attack of the given reach. Fear stops every attack. Silence stops
+        /// ranged attacks and disarm stops melee, since enemies have attacks rather than spells and guns.
+        /// </summary>
+        public bool CanAttack(AttackReach reach)
+        {
+            if (IsControlImpaired || IsFeared) return false;
+            return reach == AttackReach.Melee ? !IsDisarmed : !IsSilenced;
+        }
+
+        /// <summary>
+        /// Held still by something outside time, such as banishment: durations and ticks stop where
+        /// they are, and the modifiers the statuses own stay in place.
+        /// </summary>
+        public bool Paused { get; set; }
 
         public bool IsEthereal => Has(StatusId.Ethereal);
 
@@ -73,9 +100,11 @@ namespace Gunspire
         private Vector3 _lastPosition;
         private bool _hasLastPosition;
 
-        private void Update()
+        private void Update() => Tick(Time.deltaTime);
+
+        /// <summary>One step of decay and ticks. Update calls it every frame; public so tooling can step time.</summary>
+        public void Tick(float dt)
         {
-            float dt = Time.deltaTime;
 
             if (dt > 0f)
             {
@@ -84,7 +113,7 @@ namespace Gunspire
                 _hasLastPosition = true;
             }
 
-            if (_active.Count == 0) return;
+            if (Paused || _active.Count == 0) return;
 
             // Copy first: a tick can kill the entity, which clears the live list.
             _scratch.Clear();
@@ -135,7 +164,12 @@ namespace Gunspire
 
         // ---------------------------------------------------------------- mutation
 
-        public void Apply(in StatusApplication app, GameObject source, Team sourceTeam)
+        /// <summary>
+        /// Puts a status on this entity, or tops up the one already running. Elites take the status's
+        /// shorter elite duration unless <paramref name="scaleForElite"/> is off, which copying a
+        /// status that was already scaled needs.
+        /// </summary>
+        public void Apply(in StatusApplication app, GameObject source, Team sourceTeam, bool scaleForElite = true)
         {
             if (Health != null && !Health.IsAlive) return;
 
@@ -150,7 +184,8 @@ namespace Gunspire
             if (cleanses != null)
                 for (int i = 0; i < cleanses.Length; i++) Remove(cleanses[i]);
 
-            float duration = app.Duration * (Health != null && Health.IsElite ? def.EliteDurationScale : 1f);
+            float duration = app.Duration
+                             * (scaleForElite && Health != null && Health.IsElite ? def.EliteDurationScale : 1f);
 
             ActiveStatus existing = Find(app.Id);
             if (existing != null)
@@ -162,6 +197,14 @@ namespace Gunspire
                 existing.Source = source;
                 existing.SourceSheet = sourceSheet;
                 existing.SourceTeam = sourceTeam;
+
+                // A top-up without a source keeps the last known position, rather than forgetting it.
+                if (source != null)
+                {
+                    existing.SourcePosition = source.transform.position;
+                    existing.HasSourcePosition = true;
+                }
+
                 RebuildModifiers(existing);
                 Changed?.Invoke();
                 return;
@@ -176,7 +219,9 @@ namespace Gunspire
                 Magnitude = app.Magnitude,
                 Source = source,
                 SourceSheet = sourceSheet,
-                SourceTeam = sourceTeam
+                SourceTeam = sourceTeam,
+                SourcePosition = source != null ? source.transform.position : Vector3.zero,
+                HasSourcePosition = source != null
             };
 
             _active.Add(status);
@@ -203,6 +248,32 @@ namespace Gunspire
 
                 ActiveStatus s = _active[i];
                 if (s.Def.EndsOnDamage && !AppliedBy(appliedByHit, s.Def.Id)) RemoveInstance(s);
+            }
+        }
+
+        /// <summary>
+        /// Applies every status another entity has, as it stands right now, credited to the same
+        /// appliers. Durations are already scaled for whoever carries them, so they are not scaled
+        /// again. <paramref name="skip"/> leaves out statuses the copy should not inherit.
+        /// </summary>
+        public void CopyFrom(StatusController other, Predicate<StatusId> skip = null)
+        {
+            if (other == null) return;
+
+            for (int i = 0; i < other._active.Count; i++)
+            {
+                ActiveStatus s = other._active[i];
+                if (skip != null && skip(s.Def.Id)) continue;
+
+                Apply(new StatusApplication(s.Def.Id, s.Remaining, s.Stacks, s.Magnitude),
+                    s.Source, s.SourceTeam, scaleForElite: false);
+
+                ActiveStatus copied = Find(s.Def.Id);
+                if (copied != null && s.HasSourcePosition)
+                {
+                    copied.SourcePosition = s.SourcePosition;
+                    copied.HasSourcePosition = true;
+                }
             }
         }
 

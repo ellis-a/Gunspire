@@ -1647,9 +1647,9 @@ Still as before:
   kill, not a farm.
 - **Both halves are silenced and disarmed** for a moment, and both count as split enemies for the
   bonus charge.
-- **Silence and disarm on enemies need a definition.** Enemies have no guns and no spells, only
-  attacks. Disarm could mean ranged attacks and silence ability attacks, or both could simply mean
-  unable to attack briefly. Worth defining once for every enemy use of silence and disarm.
+- **Decided: on enemies, silence stops ranged attacks and disarm stops melee attacks.** Enemies have
+  no guns and no spells, only attacks, so every attack is tagged with its reach and the split holds for
+  every enemy use of either.
 - **Open: does striking a split enemy give bonus charge outside the limit,** like the mimic? If not,
   its extra charge adds nothing when you are already charging at the cap.
 

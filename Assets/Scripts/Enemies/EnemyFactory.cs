@@ -41,7 +41,61 @@ namespace Gunspire
             ApplyAffinity(enemy, def);
             AttachAttacks(enemy, def, floor, elite);
 
+            enemy.Definition = def;
+            enemy.Floor = floor;
             return enemy;
+        }
+
+        // ---------------------------------------------------------------- copies
+
+        /// <summary>
+        /// A second enemy made from a live one, as Superego Death splits a target: the same archetype,
+        /// floor and elite flag, the same maximum and current health, its statuses as they stand, its
+        /// alertness and its side. Registered with the room the original belongs to, or that room would
+        /// clear and open its exit while the copy is still alive.
+        ///
+        /// <paramref name="skipStatus"/> leaves out statuses the copy should not inherit, so whether a
+        /// death mark carries onto both halves can be settled by the spell rather than here.
+        /// </summary>
+        public static EnemyController Copy(EnemyController original, Vector3 position,
+            System.Predicate<StatusId> skipStatus = null)
+        {
+            if (original == null || original.Definition == null) return null;
+
+            Health source = original.Health;
+            bool elite = source != null && source.IsElite;
+
+            EnemyController copy = Spawn(original.Definition, position, original.Floor, elite);
+            if (copy == null) return null;
+
+            // Spawn lifts a flier to its hover height; a copy starts exactly where it is asked to.
+            copy.transform.position = position;
+            copy.DisplayName = original.DisplayName;
+
+            Health health = copy.Health;
+            if (source != null && health != null)
+            {
+                // The sheet decides the maximum in play and the fallback does in tooling, so set both.
+                if (copy.Sheet != null) copy.Sheet.SetBaseOverride(Attr.MaxHealth, source.Max);
+                health.ConfigureMaxHealth(source.Max, refill: true);
+                health.SetCurrent(source.Current);
+            }
+
+            if (original.Status != null && copy.Status != null)
+                copy.Status.CopyFrom(original.Status, skipStatus);
+
+            // A confused original's neutral attacks come from its confusion, which the copy now has
+            // and will switch on for itself; copying the team as well would outlive the confusion.
+            if (source != null && source.Team != Team.Enemy) copy.SetSide(source.Team);
+            else if (original.Status == null || !original.Status.IsConfused) copy.SetAttackTeam(original.Team);
+
+            if (original.IsAlerted) copy.Alert();
+
+            RoomRuntime room = RoomRuntime.Holding(original);
+            if (room == null && GameDirector.Instance != null) room = GameDirector.Instance.CurrentRoom;
+            if (room != null) room.Register(copy);
+
+            return copy;
         }
 
         // ---------------------------------------------------------------- chassis

@@ -104,6 +104,37 @@ namespace Gunspire
             return hits;
         }
 
+        /// <summary>
+        /// Adds velocity to whatever moves the target, enemy or player. Knockback and pulls both land
+        /// here; a pull is only knockback pointed inward.
+        /// </summary>
+        public static void Shove(Transform target, Vector3 velocity)
+        {
+            if (target == null) return;
+
+            var enemy = target.GetComponent<EnemyController>();
+            if (enemy != null)
+            {
+                enemy.AddImpulse(velocity);
+                return;
+            }
+
+            var motor = target.GetComponent<PlayerMotor>();
+            if (motor != null) motor.AddImpulse(velocity);
+        }
+
+        /// <summary>A pull toward a point along the ground, for Collapse Space and Fathomless Gate.</summary>
+        public static void PullToward(Transform target, Vector3 point, float speed)
+        {
+            if (target == null) return;
+
+            Vector3 toward = point - target.position;
+            toward.y = 0f;
+            if (toward.sqrMagnitude < 0.0001f) return;
+
+            Shove(target, toward.normalized * speed);
+        }
+
         /// <summary>Everything alive on the given team inside a cone. Used by cone spells and melee sweeps.</summary>
         public static List<IDamageable> ConeTargets(Vector3 origin, Vector3 forward, float range,
             float halfAngleDegrees, int layerMask)

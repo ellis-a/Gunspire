@@ -28,12 +28,29 @@ namespace Gunspire
 
         public void Register(EnemyController enemy)
         {
-            if (enemy == null) return;
+            if (enemy == null || _enemies.Contains(enemy)) return;
             _enemies.Add(enemy);
             EnemiesAtStart = Mathf.Max(EnemiesAtStart, _enemies.Count);
 
             Health health = enemy.Health;
             if (health != null) health.Died += info => Unregister(enemy);
+        }
+
+        /// <summary>
+        /// Still counted by this room. A hidden enemy stays counted, which is what keeps a room with a
+        /// banished enemy in it from clearing.
+        /// </summary>
+        public bool Contains(EnemyController enemy) => _enemies.Contains(enemy);
+
+        /// <summary>The room an enemy is registered with, or null. Found by search, since only copies ask.</summary>
+        public static RoomRuntime Holding(EnemyController enemy)
+        {
+            if (enemy == null) return null;
+
+            foreach (RoomRuntime room in FindObjectsByType<RoomRuntime>(FindObjectsSortMode.None))
+                if (room.Contains(enemy)) return room;
+
+            return null;
         }
 
         private void Unregister(EnemyController enemy)

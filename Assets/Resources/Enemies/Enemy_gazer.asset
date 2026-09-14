@@ -29,6 +29,7 @@ MonoBehaviour:
     SightRange: 34
     SightHalfAngle: 140
     HearingRange: 4
+    Ethereal: 0
     Flying: 1
     HoverHeight: 3.6
     EyeHeight: 0.55
@@ -54,6 +55,7 @@ MonoBehaviour:
       InitialDelay: 0.6
       RequiresLineOfSight: 1
       Priority: 0
+      Reach: 0
       DamageType: 3
       Category: 0
       Tint: {r: 1, g: 0.4, b: 0.35, a: 1}
@@ -69,6 +71,7 @@ MonoBehaviour:
       InitialDelay: 0.6
       RequiresLineOfSight: 1
       Priority: 1
+      Reach: 0
       DamageType: 3
       Category: 0
       Tint: {r: 1, g: 0.3, b: 0.25, a: 1}

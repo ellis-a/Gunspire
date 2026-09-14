@@ -29,6 +29,7 @@ MonoBehaviour:
     SightRange: 22
     SightHalfAngle: 60
     HearingRange: 16
+    Ethereal: 0
     Flying: 0
     HoverHeight: 3.2
     EyeHeight: 0
@@ -54,6 +55,7 @@ MonoBehaviour:
       InitialDelay: 0.6
       RequiresLineOfSight: 1
       Priority: 0
+      Reach: 0
       DamageType: 1
       Category: 0
       Tint: {r: 0.6, g: 0.45, b: 1, a: 1}
@@ -70,6 +72,7 @@ MonoBehaviour:
       InitialDelay: 0.6
       RequiresLineOfSight: 1
       Priority: 1
+      Reach: 0
       DamageType: 1
       Category: 0
       Tint: {r: 0.75, g: 0.8, b: 1, a: 1}
@@ -86,6 +89,7 @@ MonoBehaviour:
       InitialDelay: 0.6
       RequiresLineOfSight: 1
       Priority: 1
+      Reach: 0
       DamageType: 1
       Category: 0
       Tint: {r: 1, g: 0.48, b: 0.15, a: 1}
@@ -100,6 +104,7 @@ MonoBehaviour:
       InitialDelay: 0.6
       RequiresLineOfSight: 1
       Priority: 2
+      Reach: 0
       DamageType: 3
       Category: 0
       Tint: {r: 0.55, g: 0.9, b: 0.35, a: 1}
@@ -250,7 +255,6 @@ MonoBehaviour:
         FalloffFromPoint: 0
         FalloffRadius: 6
         MinFraction: 0.4
-        UseSmashPower: 0
         PerStatPoint: 0
         ScaleStat: 0
         OnlyOncePerCast: 0

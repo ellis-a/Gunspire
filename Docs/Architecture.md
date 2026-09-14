@@ -315,6 +315,33 @@ the live weapon once.
 
 ## Phase 2: statuses and enemy AI
 
+**Status: done.** Verify Enemy AI checks every item below against real components. Decisions and
+deviations:
+
+- **Decided: silence and disarm split by reach.** Every enemy attack is tagged melee or ranged; silence
+  stops ranged attacks and disarm stops melee ones. The hound's lunge is the one melee attack today, and
+  a migration wrote the tag onto the enemy assets. On the player both still do nothing until 4.3.
+- **Decided: familiars are not minions yet.** They stay collateral that never pulls aggro.
+  `TargetRegistry` holds the player's body and anything registered as a minion, which nothing is until
+  the Phase 3 framework.
+- **Target choice** keeps the current target unless another is at least 2m closer. Elites take the
+  player's body whenever they can walk to it. A confused enemy also considers other enemies in sight.
+- **Perceived position** generalises what Blind already did: it freezes while blind or while the target
+  is hidden from sight. Hearing ignores noises from anything hidden from hearing.
+- **Minion sightings are checked once a second;** the player's body every frame.
+- **Control hooks live on `StatusController`** as `CanMove` and `CanAttack(reach)`. Snare and stun are
+  one status, stunning at magnitude 1. Fear and stuns last half as long on elites. Fear adds 25% move
+  speed as a placeholder. Silence and disarm cancel a forbidden attack mid wind-up, as fear cancels any.
+- **Fear remembers where its source stood,** so a despawned tentacle still leaves something to flee.
+  Fear from the player's body climbs the flow field; fear from anything else steps away one cell at a
+  time.
+- **Hazards are a registry,** and lingering zones register themselves. `Combat.PullToward` is the pull.
+- **Hiding** keeps the enemy registered with its room and pauses its statuses and attack timers.
+  Revealing onto a spot that has become a wall moves it to the nearest open cell; landing on another body
+  waits for Phase 4.
+- **Copies take a filter** for statuses they should not inherit, so whether Superego Death copies the
+  death mark is the spell's call. Plague and Torment remain planned statuses.
+
 ### 2.1 Who enemies consider the player
 
 **Customers: Assume Identity, minions, invisibility.**
@@ -637,7 +664,6 @@ These are unresolved in the design doc, grouped by the phase they block.
 
 **Phase 2, enemy AI**
 
-- What silence and disarm mean for enemies.
 - Superego Death: whether the death mark copies onto both halves.
 - Assume Identity: whether "only one enemy left" means the room or the floor. `RoomRuntime` already
   counts per room. Also what happens to the controlled enemy when control ends.

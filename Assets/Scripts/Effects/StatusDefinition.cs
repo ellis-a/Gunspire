@@ -16,6 +16,13 @@ namespace Gunspire
         public Team SourceTeam;
 
         /// <summary>
+        /// Where the applier stood when it landed. Fear runs from this rather than from the source
+        /// object, which a despawning tentacle would leave null.
+        /// </summary>
+        public Vector3 SourcePosition;
+        public bool HasSourcePosition;
+
+        /// <summary>
         /// The applier's sheet, cached when the effect lands so periodic damage can pick up
         /// their per-school bonuses without a component lookup every tick.
         /// </summary>

@@ -75,7 +75,8 @@ namespace Gunspire.EditorTools
             new SpellRetune(),
             new BoonStatText(),
             new LoadoutRetiredSpells(),
-            new RetireLegacySpells()
+            new RetireLegacySpells(),
+            new EnemyAttackReach()
         };
 
         [MenuItem("Gunspire/Migrations/1 - Report")]
@@ -146,6 +147,7 @@ namespace Gunspire.EditorTools
                 SpellLibrary.Reload();
                 BoonLibrary.Reload();
                 LoadoutLibrary.Reload();
+                EnemyLibrary.Reload();
             }
 
             log.AppendLine(total == 0

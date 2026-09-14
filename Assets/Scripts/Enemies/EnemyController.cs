@@ -4,9 +4,12 @@ using UnityEngine;
 namespace Gunspire
 {
     /// <summary>
-    /// Enemy brain and body. Keeps its preferred distance from the player, strafes so it is
-    /// not a static target, and hands off to whichever <see cref="AbilityAttack"/> is in range
-    /// and off cooldown. No navmesh: rooms are open arenas and steering is enough.
+    /// Enemy brain and body. Keeps its preferred distance from what it is fighting, strafes so it is
+    /// not a static target, and hands off to whichever <see cref="AbilityAttack"/> is in range and off
+    /// cooldown. No navmesh: rooms are open arenas and steering is enough.
+    ///
+    /// What it fights comes from <see cref="TargetRegistry"/>, and what it may do from its statuses:
+    /// whether it can move, which attacks it may start, and whether it is running away instead.
     /// </summary>
     [RequireComponent(typeof(CharacterController))]
     public class EnemyController : MonoBehaviour, IAbilityOwner
@@ -20,6 +23,10 @@ namespace Gunspire
 
         [Header("Identity")]
         public string DisplayName = "Cultist";
+
+        /// <summary>What it was built from and on which floor, so it can be copied. Set by the factory.</summary>
+        public EnemyDefinition Definition { get; set; }
+        public int Floor { get; set; } = 1;
 
         [Header("Spacing")]
         public float PreferredRange = 12f;
@@ -68,12 +75,14 @@ namespace Gunspire
         /// </summary>
         public bool IsAlerted { get; private set; }
 
-        public Health Health { get; private set; }
-        public CharacterSheet Sheet { get; private set; }
-        public StatusController Status { get; private set; }
+        // Resolved lazily as well as in Awake, so tooling can drive an enemy that never woke.
+        public Health Health => _health != null ? _health : (_health = GetComponent<Health>());
+        public CharacterSheet Sheet => _sheet != null ? _sheet : (_sheet = GetComponent<CharacterSheet>());
+        public StatusController Status => _status != null ? _status : (_status = GetComponent<StatusController>());
+
         /// <summary>
-        /// Where it believes its target is. The target itself, except while blind, when it is a
-        /// fixed point where it last saw them.
+        /// Where it believes its target is. The target itself, except while it cannot perceive
+        /// them, when it is a fixed point where it last did.
         /// </summary>
         public Transform Target { get; private set; }
 
@@ -81,9 +90,14 @@ namespace Gunspire
         /// <see cref="IAbilityOwner"/>; enemies have no prefab, so nothing serializes it.</summary>
         public Transform Muzzle { get; set; }
 
+        private Health _health;
+        private CharacterSheet _sheet;
+        private StatusController _status;
+
         private Team _attackTeam = Team.Enemy;
         private CharacterController _controller;
         private readonly List<AbilityAttack> _attacks = new List<AbilityAttack>();
+        private readonly List<AbilityAttack> _attackScratch = new List<AbilityAttack>();
         private Vector3 _velocity;
         private Vector3 _externalVelocity;
         private float _strafeTimer;
@@ -97,10 +111,24 @@ namespace Gunspire
         private readonly List<Vector3> _patrol = new List<Vector3>();
         private int _patrolIndex;
 
-        // Who it is really fighting, and the stand-in point it fights instead while blind.
-        private Transform _liveTarget;
+        // Who it is really fighting, and the stand-in point it fights instead when it cannot perceive them.
+        private TargetRegistry.Entry _liveEntry;
         private Transform _lastSeen;
         private bool _lastSeenFixed;
+        private readonly List<TargetRegistry.Entry> _candidates = new List<TargetRegistry.Entry>();
+
+        /// <summary>Minions are looked for once a second rather than every frame; a room can hold many.</summary>
+        private const float MinionSightInterval = 1f;
+        private float _minionSightTimer;
+
+        private bool _wasFeared;
+        private bool _wasConfused;
+        private Team _teamBeforeConfusion = Team.Enemy;
+
+        // What Hide switched off, so Reveal turns back on exactly that and nothing more.
+        private readonly List<Renderer> _hiddenRenderers = new List<Renderer>();
+        private readonly List<Collider> _hiddenColliders = new List<Collider>();
+        private readonly List<AbilityAttack> _hiddenAttacks = new List<AbilityAttack>();
 
         public bool IsAttacking
         {
@@ -116,12 +144,15 @@ namespace Gunspire
             ? float.MaxValue
             : Vector3.Distance(Flat(transform.position), Flat(Target.position));
 
+        /// <summary>Knockback and pulls still being worked off. Read by tooling.</summary>
+        public Vector3 ExternalVelocity => _externalVelocity;
+
         private void Awake()
         {
             _controller = GetComponent<CharacterController>();
-            Health = GetComponent<Health>();
-            Sheet = GetComponent<CharacterSheet>();
-            Status = GetComponent<StatusController>();
+            _health = GetComponent<Health>();
+            _sheet = GetComponent<CharacterSheet>();
+            _status = GetComponent<StatusController>();
 
             if (Muzzle == null) Muzzle = transform;
             _strafeSign = Random.value < 0.5f ? -1 : 1;
@@ -166,23 +197,32 @@ namespace Gunspire
 
         private void Update()
         {
-            if (Health != null && !Health.IsAlive) return;
+            if (IsHidden || (Health != null && !Health.IsAlive)) return;
+
+            float dt = Time.deltaTime;
+            SyncStatusEffects();
 
             bool impaired = Status != null && Status.IsControlImpaired;
 
             if (!IsAlerted)
             {
-                if (!impaired && CanSeePlayer()) Alert();
+                if (!impaired && NoticesSomething()) Alert();
                 else
                 {
-                    UpdateIdle(Time.deltaTime, impaired);
+                    UpdateIdle(dt, impaired);
                     return;
                 }
             }
 
-            _retargetTimer -= Time.deltaTime;
-            if (_liveTarget == null || _retargetTimer <= 0f) AcquireTarget();
-            UpdatePerceivedTarget();
+            _retargetTimer -= dt;
+            if (_liveEntry == null || !_liveEntry.IsAlive || _retargetTimer <= 0f) AcquireTarget();
+            else UpdatePerceivedTarget();
+
+            if (!impaired && Status != null && Status.IsFeared)
+            {
+                Flee(dt);
+                return;
+            }
 
             if (!impaired)
             {
@@ -204,17 +244,67 @@ namespace Gunspire
         /// <summary>
         /// Moves the whole enemy to a side: its attacks, what can hurt it, and its physics layer.
         /// Assume Identity moves a controlled enemy to the player's side and back. This changes
-        /// only what can hurt what; who it and the other enemies choose to fight is Phase 2.1.
+        /// only what can hurt what; who it and the other enemies choose to fight is the registry's.
         /// </summary>
         public void SetSide(Team team)
         {
             _attackTeam = team;
-
-            // Looked up rather than read from the cached property, which is only filled in Awake.
-            var health = GetComponent<Health>();
-            if (health != null) health.Team = team;
-
+            if (Health != null) Health.Team = team;
             Layers.SetRecursively(gameObject, Layers.BodyLayerFor(team));
+        }
+
+        // ---------------------------------------------------------------- statuses
+
+        /// <summary>
+        /// Reacts to statuses landing and lifting. Fear alerts it and cancels whatever attack was
+        /// winding up, rather than letting a slam that started a frame earlier still land. Silence
+        /// and disarm cancel the kind of attack they forbid. Confusion puts its attacks on the
+        /// neutral team until it lifts. Called every frame; public so tooling can drive it.
+        /// </summary>
+        public void SyncStatusEffects()
+        {
+            StatusController status = Status;
+            if (status == null) return;
+
+            bool feared = status.IsFeared;
+            if (feared && !_wasFeared)
+            {
+                Alert();
+                CancelAttacks(null);
+            }
+            _wasFeared = feared;
+
+            if (status.IsSilenced || status.IsDisarmed) CancelAttacks(status);
+
+            bool confused = status.IsConfused;
+            if (confused != _wasConfused)
+            {
+                if (confused)
+                {
+                    _teamBeforeConfusion = _attackTeam;
+                    _attackTeam = Team.Neutral;
+                }
+                else
+                {
+                    _attackTeam = _teamBeforeConfusion;
+                }
+
+                _wasConfused = confused;
+
+                // Friend and foe just changed, so look again now rather than at the next retarget.
+                _retargetTimer = 0f;
+            }
+        }
+
+        /// <summary>Stops executing attacks: every one, or only those the given statuses forbid.</summary>
+        private void CancelAttacks(StatusController forbiddenBy)
+        {
+            GetComponents(_attackScratch);
+            for (int i = 0; i < _attackScratch.Count; i++)
+            {
+                AbilityAttack attack = _attackScratch[i];
+                if (forbiddenBy == null || !forbiddenBy.CanAttack(attack.Reach)) attack.Cancel();
+            }
         }
 
         // ---------------------------------------------------------------- perception
@@ -228,16 +318,35 @@ namespace Gunspire
         }
 
         /// <summary>
-        /// A cone in front, out to the sight range, with a wall check. Fliers included - looking
-        /// down from above is still looking.
+        /// The player's body is watched every frame. Minions are only looked for at an interval,
+        /// since a room can hold many and a sight check for each, every frame, for every enemy adds up.
         /// </summary>
-        private bool CanSeePlayer()
+        private bool NoticesSomething()
         {
-            PlayerRig player = PlayerRig.Instance;
-            if (player == null || player.Health == null || !player.Health.IsAlive) return false;
+            if (Status != null && Status.IsBlind) return false;
+            if (CanSee(TargetRegistry.PlayerBody)) return true;
+
+            _minionSightTimer -= Time.deltaTime;
+            if (_minionSightTimer > 0f) return false;
+            _minionSightTimer = MinionSightInterval;
+
+            IReadOnlyList<TargetRegistry.Entry> minions = TargetRegistry.Minions;
+            for (int i = 0; i < minions.Count; i++)
+                if (CanSee(minions[i])) return true;
+
+            return false;
+        }
+
+        /// <summary>
+        /// A cone in front, out to the sight range, with a wall check. Fliers included - looking down
+        /// from above is still looking. Nothing hidden from sight is ever seen, and nothing is seen blind.
+        /// </summary>
+        public bool CanSee(TargetRegistry.Entry entry)
+        {
+            if (entry == null || !entry.IsAlive || entry.HiddenFromSight) return false;
             if (Status != null && Status.IsBlind) return false;
 
-            Vector3 to = player.transform.position - transform.position;
+            Vector3 to = entry.Transform.position - transform.position;
             if (to.sqrMagnitude > SightRange * SightRange) return false;
 
             // Measured flat, so standing directly above or below something does not slip out of
@@ -246,12 +355,7 @@ namespace Gunspire
             if (flatTo.sqrMagnitude < 0.01f) return true;
             if (Vector3.Angle(Flat(transform.forward), flatTo) > SightHalfAngle) return false;
 
-            Transform previous = Target;
-            Target = player.transform;
-            bool visible = HasLineOfSight();
-            if (!IsAlerted) Target = previous;
-
-            return visible;
+            return HasLineOfSightTo(entry.Transform.position);
         }
 
         /// <summary>
@@ -262,11 +366,13 @@ namespace Gunspire
         private void OnNoise(Vector3 position, float loudness)
         {
             if (IsAlerted || this == null) return;
-            if (Health != null && !Health.IsAlive) return;
+            if (IsHidden || (Health != null && !Health.IsAlive)) return;
 
             // Asleep, nothing is noticed. Enemies cannot be un-alerted, so sleep suspends
             // perception rather than resetting it, and waking restores it as it was.
             if (Status != null && Status.IsAsleep) return;
+
+            if (TargetRegistry.IsInaudibleAt(position)) return;
 
             // Shock deadens hearing, which is what makes it worth putting on something that has
             // not noticed you yet rather than only on something already shooting at you.
@@ -278,18 +384,18 @@ namespace Gunspire
         /// <summary>
         /// How far a sound actually has to travel to get here - around walls, not through them.
         ///
-        /// The navigation flow field is a breadth-first sweep outward from the player through
+        /// The navigation flow field is a breadth-first sweep outward from the player's body through
         /// walkable space, so the step count already sitting in this enemy's own cell is exactly
-        /// that distance. It only answers for the player's position, though, so a noise made
+        /// that distance. It only answers for that body's position, though, so a noise made
         /// anywhere else falls back to a straight line.
         /// </summary>
         private float TravelDistanceTo(Vector3 point)
         {
             NavField field = NavField.Current;
-            PlayerRig player = PlayerRig.Instance;
+            Transform body = TargetRegistry.PlayerBody.Transform;
 
-            if (field != null && field.IsBuilt && player != null
-                && (point - player.transform.position).sqrMagnitude < 4f)
+            if (field != null && field.IsBuilt && body != null
+                && (point - body.position).sqrMagnitude < 4f)
             {
                 int steps = field.StepsAt(transform.position);
                 if (steps >= 0) return steps * NavField.CellSize;
@@ -298,27 +404,77 @@ namespace Gunspire
             return Vector3.Distance(transform.position, point);
         }
 
+        // ---------------------------------------------------------------- targeting
+
+        /// <summary>Picks and perceives a target now rather than at the next retarget. For tooling and redirects.</summary>
+        public void RefreshTarget() => AcquireTarget();
+
         private void AcquireTarget()
         {
             _retargetTimer = 1f;
-            PlayerRig player = PlayerRig.Instance;
-            _liveTarget = player != null && player.Health != null && player.Health.IsAlive
-                ? player.transform
-                : null;
+
+            CollectCandidates(_candidates);
+            bool elite = Health != null && Health.IsElite;
+
+            _liveEntry = TargetRegistry.Choose(transform.position,
+                _liveEntry != null ? _liveEntry.Transform : null, elite, _candidates, CanReach);
+
             UpdatePerceivedTarget();
         }
 
         /// <summary>
-        /// A blind enemy keeps fighting the spot it last saw its target: it faces it, walks at it
-        /// and shoots at it, while the player is free to be anywhere else. Aim, movement, attack
-        /// range and line of sight all read <see cref="Target"/>, so swapping in a fixed point
-        /// is the whole effect.
+        /// The registry's hostiles, plus, while confused, every other enemy within sight range - it
+        /// cannot tell friend from foe, so its own kind are fair game.
+        /// </summary>
+        private void CollectCandidates(List<TargetRegistry.Entry> into)
+        {
+            TargetRegistry.Collect(into);
+            if (Status == null || !Status.IsConfused) return;
+
+            Collider[] found = Physics.OverlapSphere(transform.position, SightRange, Layers.EnemyMask,
+                QueryTriggerInteraction.Ignore);
+
+            for (int i = 0; i < found.Length; i++)
+            {
+                Health other = found[i].GetComponentInParent<Health>();
+                if (other == null || other == Health || !other.IsAlive || Contains(into, other.transform)) continue;
+                into.Add(new TargetRegistry.Entry { Transform = other.transform, Health = other });
+            }
+        }
+
+        private static bool Contains(List<TargetRegistry.Entry> entries, Transform transform)
+        {
+            for (int i = 0; i < entries.Count; i++)
+                if (entries[i].Transform == transform) return true;
+            return false;
+        }
+
+        /// <summary>Whether it could walk to a target, for an elite deciding between the player's body and a minion.</summary>
+        private bool CanReach(TargetRegistry.Entry entry)
+        {
+            NavField field = NavField.Current;
+            if (Flying || field == null || !field.IsBuilt || entry == null || entry.Transform == null) return true;
+            if (field.IsClearLine(transform.position, entry.Transform.position)) return true;
+
+            // The field is built outward from the player's body, so it only knows routes to that.
+            return !entry.IsPlayerBody || field.StepsAt(transform.position) >= 0;
+        }
+
+        /// <summary>
+        /// Perception holds while it can see its target: not blind, and the target not hidden from
+        /// sight. While it holds, the target is the target. When it breaks, the enemy keeps fighting a
+        /// fixed point where it last perceived them - facing it, walking at it and shooting at it -
+        /// while they are free to be anywhere else. Aim, movement, attack range and line of sight all
+        /// read <see cref="Target"/>, so swapping in that point is the whole effect.
         /// </summary>
         private void UpdatePerceivedTarget()
         {
-            if (_liveTarget == null || Status == null || !Status.IsBlind)
+            Transform live = _liveEntry != null && _liveEntry.IsAlive ? _liveEntry.Transform : null;
+            bool perceiving = live != null && !_liveEntry.HiddenFromSight && (Status == null || !Status.IsBlind);
+
+            if (live == null || perceiving)
             {
-                Target = _liveTarget;
+                Target = live;
                 _lastSeenFixed = false;
                 return;
             }
@@ -327,7 +483,7 @@ namespace Gunspire
 
             if (!_lastSeenFixed)
             {
-                _lastSeen.position = _liveTarget.position;
+                _lastSeen.position = live.position;
                 _lastSeenFixed = true;
             }
 
@@ -350,6 +506,7 @@ namespace Gunspire
             for (int i = 0; i < _attacks.Count; i++)
             {
                 AbilityAttack attack = _attacks[i];
+                if (Status != null && !Status.CanAttack(attack.Reach)) continue;
                 if (!attack.CanUse(distance, los)) continue;
                 if (attack.Priority > bestPriority)
                 {
@@ -361,12 +518,12 @@ namespace Gunspire
             if (best != null) best.Begin();
         }
 
-        public bool HasLineOfSight()
-        {
-            if (Target == null) return false;
+        public bool HasLineOfSight() => Target != null && HasLineOfSightTo(Target.position);
 
+        public bool HasLineOfSightTo(Vector3 position)
+        {
             Vector3 from = EyePosition;
-            Vector3 to = Target.position + Vector3.up * 1.0f;
+            Vector3 to = position + Vector3.up * 1.0f;
             Vector3 delta = to - from;
             float distance = delta.magnitude;
             if (distance < 0.5f) return true;
@@ -456,6 +613,7 @@ namespace Gunspire
                 }
 
                 desired += Separation();
+                desired += HazardPush();
                 desired = AvoidWalls(desired);
 
                 if (desired.sqrMagnitude > 1f) desired.Normalize();
@@ -464,6 +622,50 @@ namespace Gunspire
 
             ApplyMotion(desired, dt, 1f);
         }
+
+        private void Flee(float dt)
+        {
+            Vector3 desired = FleeDirection() + Separation() + HazardPush();
+            desired = AvoidWalls(desired);
+            if (desired.sqrMagnitude > 1f) desired.Normalize();
+
+            FaceMovement(desired, dt);
+            ApplyMotion(desired, dt, 1f);
+        }
+
+        /// <summary>
+        /// Away from whatever scared it. Fear from the player's body climbs the flow field, which
+        /// only measures distance to that body, so it runs through the maze rather than into the
+        /// nearest wall. Fear from anything else is fled one step at a time from where that thing
+        /// stood when the fear landed, since it may be gone by now.
+        /// </summary>
+        public Vector3 FleeDirection()
+        {
+            ActiveStatus fear = Status != null ? Status.Find(StatusId.Fear) : null;
+            Transform body = TargetRegistry.PlayerBody.Transform;
+
+            bool fromBody = fear == null || !fear.HasSourcePosition
+                            || (fear.Source != null && body != null && fear.Source.transform == body);
+
+            Vector3 threat = fromBody
+                ? (body != null ? body.position : transform.position + transform.forward)
+                : fear.SourcePosition;
+
+            NavField field = NavField.Current;
+            if (!Flying && field != null && field.IsBuilt)
+            {
+                Vector3 route = fromBody
+                    ? field.FleeDirection(transform.position)
+                    : field.AwayFrom(transform.position, threat);
+
+                if (route.sqrMagnitude > 0.001f) return route;
+            }
+
+            Vector3 away = Flat(transform.position - threat);
+            return away.sqrMagnitude > 0.001f ? away.normalized : Flat(-transform.forward).normalized;
+        }
+
+        private Vector3 HazardPush() => Hazards.PushAt(transform.position, Health != null ? Health.Team : Team.Enemy);
 
         /// <summary>
         /// Turns a wish direction into actual movement. Shared by fighting and idling so a
@@ -520,6 +722,9 @@ namespace Gunspire
 
                 FaceMovement(desired, dt);
             }
+
+            // Even something standing guard steps out of a fire rather than burning in place.
+            if (!impaired) desired += HazardPush();
 
             ApplyMotion(desired, dt, idleSpeedFraction);
         }
@@ -579,6 +784,95 @@ namespace Gunspire
             transform.rotation = Quaternion.Slerp(transform.rotation, wanted, TurnSpeed * dt);
         }
 
+        // ---------------------------------------------------------------- hiding
+
+        /// <summary>True while banished or otherwise taken out of the world without being destroyed.</summary>
+        public bool IsHidden { get; private set; }
+
+        /// <summary>
+        /// Takes the enemy out of the world without deleting it: no body, no collisions, no
+        /// behaviour, and out of every check that finds things through physics. Its statuses and
+        /// attack timers pause where they stand. It stays registered with its room, which is what
+        /// keeps a room holding a banished enemy from clearing and opening its exit.
+        /// </summary>
+        public void Hide()
+        {
+            if (IsHidden) return;
+            IsHidden = true;
+
+            _hiddenAttacks.Clear();
+            foreach (AbilityAttack attack in GetComponents<AbilityAttack>())
+            {
+                attack.Cancel();
+                if (!attack.enabled) continue;
+                attack.enabled = false;
+                _hiddenAttacks.Add(attack);
+            }
+
+            _hiddenRenderers.Clear();
+            foreach (Renderer renderer in GetComponentsInChildren<Renderer>(true))
+            {
+                if (!renderer.enabled) continue;
+                renderer.enabled = false;
+                _hiddenRenderers.Add(renderer);
+            }
+
+            _hiddenColliders.Clear();
+            foreach (Collider body in GetComponentsInChildren<Collider>(true))
+            {
+                if (!body.enabled) continue;
+                body.enabled = false;
+                _hiddenColliders.Add(body);
+            }
+
+            if (Status != null) Status.Paused = true;
+
+            _velocity = Vector3.zero;
+            _externalVelocity = Vector3.zero;
+        }
+
+        /// <summary>
+        /// Brings a hidden enemy back exactly as it was, at the given point or where it left. A spot
+        /// that has since become a wall moves it to the nearest open cell. Landing on top of another
+        /// body waits for the shared landing check in Phase 4.
+        /// </summary>
+        public void Reveal(Vector3? at = null)
+        {
+            if (!IsHidden) return;
+
+            Vector3 position = at ?? transform.position;
+
+            NavField field = NavField.Current;
+            if (!Flying && field != null && field.IsBuilt)
+            {
+                Vector2Int cell = field.WorldToCell(position);
+                if (!field.IsWalkable(cell.x, cell.y) && field.TryNearestWalkable(cell, out Vector2Int open))
+                {
+                    Vector3 centre = field.CellCentre(open.x, open.y);
+                    position = new Vector3(centre.x, position.y, centre.z);
+                }
+            }
+
+            // The character controller is still switched off, so nothing undoes this move.
+            transform.position = position;
+
+            for (int i = 0; i < _hiddenColliders.Count; i++)
+                if (_hiddenColliders[i] != null) _hiddenColliders[i].enabled = true;
+            for (int i = 0; i < _hiddenRenderers.Count; i++)
+                if (_hiddenRenderers[i] != null) _hiddenRenderers[i].enabled = true;
+            for (int i = 0; i < _hiddenAttacks.Count; i++)
+                if (_hiddenAttacks[i] != null) _hiddenAttacks[i].enabled = true;
+
+            _hiddenColliders.Clear();
+            _hiddenRenderers.Clear();
+            _hiddenAttacks.Clear();
+
+            if (Status != null) Status.Paused = false;
+            IsHidden = false;
+        }
+
+        // ---------------------------------------------------------------- flight and steering
+
         /// <summary>
         /// Holds station above whatever is below, rather than falling. Seeks the altitude
         /// through velocity instead of snapping to it, so knockback can still shove a flier
@@ -622,7 +916,7 @@ namespace Gunspire
             return direction.sqrMagnitude > 0.001f;
         }
 
-        /// <summary>Used by lunges and knockback.</summary>
+        /// <summary>Used by lunges, knockback and pulls.</summary>
         public void AddImpulse(Vector3 impulse) => _externalVelocity += impulse;
 
         /// <summary>Keeps a pack from collapsing into one point.</summary>

@@ -470,6 +470,7 @@ namespace Gunspire
         private Material _material;
         private Color _color;
         private DamageOrigin _origin;
+        private Hazards.Hazard _hazard;
 
         public static LingeringZone Spawn(Vector3 point, float radius, float duration, float damagePerTick,
             float tickInterval, DamageType damageType, Team team, GameObject source,
@@ -494,11 +495,16 @@ namespace Gunspire
             zone._color = color;
             zone._origin = origin;
 
+            // A patch that hurts is somewhere the other side would rather not stand.
+            zone._hazard = Hazards.Register(go.transform, radius, team);
+
             var renderer = disc.GetComponent<MeshRenderer>();
             if (renderer != null) zone._material = renderer.material;
 
             return zone;
         }
+
+        private void OnDestroy() => Hazards.Unregister(_hazard);
 
         private void Update()
         {

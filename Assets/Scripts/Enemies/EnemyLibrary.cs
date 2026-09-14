@@ -151,6 +151,7 @@ namespace Gunspire
                     new AttackDefinition
                     {
                         Name = "Lunge", DamageType = DamageType.Kinetic, Tint = Palette.EnemyMelee,
+                        Reach = AttackReach.Melee,
                         MinRange = 0f, MaxRange = 4.6f, Cooldown = 1.9f, Priority = 0,
                         Sequence =
                         {

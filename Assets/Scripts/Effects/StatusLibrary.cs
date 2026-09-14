@@ -30,11 +30,11 @@ namespace Gunspire
 
             // Planned: named so every id resolves, with no behaviour until the systems they need
             // exist. Verify Debuffs lists them, so nobody mistakes one for a finished effect.
-            Register(new PlannedStatus(StatusId.Snare, "Snared", "Slowed, or held still at full strength.", new Color(0.55f, 0.45f, 0.3f)));
-            Register(new PlannedStatus(StatusId.Silence, "Silenced", "Cannot cast spells.", new Color(0.6f, 0.6f, 0.75f)));
-            Register(new PlannedStatus(StatusId.Disarm, "Disarmed", "Cannot shoot.", new Color(0.75f, 0.6f, 0.45f)));
-            Register(new PlannedStatus(StatusId.Fear, "Feared", "Flees faster, and cannot attack.", new Color(0.55f, 0.3f, 0.7f)));
-            Register(new PlannedStatus(StatusId.Confusion, "Confused", "Cannot tell friend from foe.", new Color(0.9f, 0.55f, 0.85f)));
+            Register(new SnareStatus());
+            Register(new SilenceStatus());
+            Register(new DisarmStatus());
+            Register(new FearStatus());
+            Register(new ConfusionStatus());
             Register(new PlannedStatus(StatusId.Plague, "Plagued", "Rises as a zombie on death, and spreads the plague.", new Color(0.5f, 0.65f, 0.25f)));
             Register(new PlannedStatus(StatusId.Torment, "Tormented", "Takes damage over time.", new Color(0.8f, 0.35f, 0.6f)));
         }
@@ -87,6 +87,26 @@ namespace Gunspire
 
         public static StatusApplication Blind(float seconds = 4f)
             => new StatusApplication(StatusId.Blind, seconds, 1, 1f);
+
+        /// <summary>Magnitude is the slow, from nothing to everything. Use <see cref="Stun"/> for full strength.</summary>
+        public static StatusApplication Snare(float seconds = 3f, float slow = 0.4f)
+            => new StatusApplication(StatusId.Snare, seconds, 1, Mathf.Clamp01(slow));
+
+        public static StatusApplication Stun(float seconds = 1.5f)
+            => new StatusApplication(StatusId.Snare, seconds, 1, SnareStatus.StunMagnitude);
+
+        /// <summary>Keep these short: a fleeing enemy is out of a short-range build's reach.</summary>
+        public static StatusApplication Fear(float seconds = 3f)
+            => new StatusApplication(StatusId.Fear, seconds, 1, 1f);
+
+        public static StatusApplication Silence(float seconds = 3f)
+            => new StatusApplication(StatusId.Silence, seconds, 1, 1f);
+
+        public static StatusApplication Disarm(float seconds = 3f)
+            => new StatusApplication(StatusId.Disarm, seconds, 1, 1f);
+
+        public static StatusApplication Confusion(float seconds = 5f)
+            => new StatusApplication(StatusId.Confusion, seconds, 1, 1f);
     }
 
     // -------------------------------------------------------------------------------- control
@@ -119,6 +139,93 @@ namespace Gunspire
         public override string Description => "Cannot see, and aims where it last saw its target.";
         public override Color Tint => new Color(0.25f, 0.25f, 0.3f);
         public override int MaxStacks => 1;
+    }
+
+    /// <summary>
+    /// Snare and stun as one status. The magnitude is the slow, from nothing to everything, and at
+    /// full strength the target is held still and cannot act - a stun. Two statuses would have had
+    /// to be kept from contradicting each other.
+    /// </summary>
+    public class SnareStatus : StatusDefinition
+    {
+        public const float StunMagnitude = 1f;
+
+        public override StatusId Id => StatusId.Snare;
+        public override string DisplayName => "Snared";
+        public override string Description => "Slowed. At full strength, stunned: cannot move or act.";
+        public override Color Tint => new Color(0.55f, 0.45f, 0.3f);
+        public override int MaxStacks => 1;
+
+        /// <summary>Control bends elites rather than exempting them: a shorter stun, not none.</summary>
+        public override float EliteDurationScale => 0.5f;
+
+        public static bool Stuns(ActiveStatus s) => s != null && s.Magnitude >= StunMagnitude;
+
+        public override void BuildModifiers(StatusController c, ActiveStatus s)
+        {
+            c.AddModifier(s, StatModifier.Percent(Attr.MoveSpeed, -Mathf.Clamp01(s.Magnitude), s));
+        }
+    }
+
+    /// <summary>
+    /// Runs from whatever caused it, faster than it walks, and cannot attack. Landing it alerts the
+    /// enemy and cancels any attack already winding up, so a slam that began a frame earlier does
+    /// not still land.
+    /// </summary>
+    public class FearStatus : StatusDefinition
+    {
+        /// <summary>How much faster a feared enemy runs. A first guess.</summary>
+        public const float SpeedBonus = 0.25f;
+
+        public override StatusId Id => StatusId.Fear;
+        public override string DisplayName => "Feared";
+        public override string Description => "Flees faster, and cannot attack.";
+        public override Color Tint => new Color(0.55f, 0.3f, 0.7f);
+        public override int MaxStacks => 1;
+        public override float EliteDurationScale => 0.5f;
+
+        public override void BuildModifiers(StatusController c, ActiveStatus s)
+        {
+            c.AddModifier(s, StatModifier.Percent(Attr.MoveSpeed, SpeedBonus, s));
+        }
+    }
+
+    /// <summary>
+    /// No spells. Enemies have attacks rather than spells, so on an enemy it stops ranged attacks:
+    /// bolts, beams, breaths and blasts. Disarm takes the melee half.
+    /// </summary>
+    public class SilenceStatus : StatusDefinition
+    {
+        public override StatusId Id => StatusId.Silence;
+        public override string DisplayName => "Silenced";
+        public override string Description => "Cannot cast spells or use ranged attacks.";
+        public override Color Tint => new Color(0.6f, 0.6f, 0.75f);
+        public override int MaxStacks => 1;
+    }
+
+    /// <summary>No guns. On an enemy, which carries none, it stops melee attacks instead.</summary>
+    public class DisarmStatus : StatusDefinition
+    {
+        public override StatusId Id => StatusId.Disarm;
+        public override string DisplayName => "Disarmed";
+        public override string Description => "Cannot shoot or use melee attacks.";
+        public override Color Tint => new Color(0.75f, 0.6f, 0.45f);
+        public override int MaxStacks => 1;
+    }
+
+    /// <summary>
+    /// Cannot tell friend from foe: its attacks go out on the neutral team, so they land on its own
+    /// kind and the player alike, and it picks targets from both. A direct hit snaps it out of it,
+    /// though not the hit that applied it and not a status tick.
+    /// </summary>
+    public class ConfusionStatus : StatusDefinition
+    {
+        public override StatusId Id => StatusId.Confusion;
+        public override string DisplayName => "Confused";
+        public override string Description => "Cannot tell friend from foe. A hit snaps it out.";
+        public override Color Tint => new Color(0.9f, 0.55f, 0.85f);
+        public override int MaxStacks => 1;
+        public override bool EndsOnDamage => true;
     }
 
     // -------------------------------------------------------------------------------- ice

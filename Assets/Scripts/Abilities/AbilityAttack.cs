@@ -24,6 +24,9 @@ namespace Gunspire
         public bool RequiresLineOfSight = true;
         public int Priority = 0;
 
+        /// <summary>Melee attacks are stopped by disarm, ranged attacks by silence.</summary>
+        public AttackReach Reach = AttackReach.Ranged;
+
         [Header("Ability")]
         public DamageType DamageType = DamageType.Energy;
         public SpellType Category = SpellType.Attack;
@@ -91,6 +94,20 @@ namespace Gunspire
             StartCoroutine(RunSequence());
         }
 
+        /// <summary>
+        /// Stops the attack mid-sequence, as fear does. What the sequence already put into the world
+        /// owns its own lifetime - a beam retires itself once nothing keeps it, a telegraph or a
+        /// blast runs out on its own - so stopping the coroutine leaves nothing stranded.
+        /// </summary>
+        public void Cancel()
+        {
+            if (!IsExecuting) return;
+
+            StopAllCoroutines();
+            if (_context != null) _context.EndCast();
+            IsExecuting = false;
+        }
+
         private IEnumerator RunSequence()
         {
             _context.TargetTransform = _owner.Target;
@@ -127,6 +144,7 @@ namespace Gunspire
             attack.InitialDelay = def.InitialDelay;
             attack.RequiresLineOfSight = def.RequiresLineOfSight;
             attack.Priority = def.Priority;
+            attack.Reach = def.Reach;
 
             attack.Sequence = new List<AbilityEffect>(def.Sequence);
             return attack;
