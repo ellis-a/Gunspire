@@ -55,6 +55,15 @@ namespace Gunspire
         public virtual StatusId[] Cleanses => null;
 
         /// <summary>
+        /// Direct damage ends this status. Never the hit that applied it, and never a status tick,
+        /// so a sleeping enemy that is also burning stays asleep.
+        /// </summary>
+        public virtual bool EndsOnDamage => false;
+
+        /// <summary>Duration multiplier on an elite. Control effects bend elites rather than exempting them.</summary>
+        public virtual float EliteDurationScale => 1f;
+
+        /// <summary>
         /// This status as a caster with the given spell power applies it. Power strengthens a
         /// spell's statuses by the same multiplier it strengthens the spell's damage, applied to
         /// whichever number is this status's amount.

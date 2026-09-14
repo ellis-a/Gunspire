@@ -95,7 +95,8 @@ and one melee. The third cast slot is new. Capping the count at four means one s
 for a second school: four Bestial spells plus one Death spell still gives a bear, and a small soul
 pool besides.
 
-- **Decided: the third cast slot is bound to G, for now.** Nothing else in the game uses G.
+- **Decided: the third cast slot is bound to F.** Interact moved from F to X, and weapon swapping
+  from X to C, to make room. The mouse wheel still swaps guns.
 - **Building it.** `SpellBook.SlotCount` and its key list define the cast slots, so the third slot
   is mostly a number and a key. The HUD draws each slot and loadouts name a starting slot index,
   so both need checking.

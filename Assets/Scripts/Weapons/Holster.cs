@@ -20,7 +20,7 @@ namespace Gunspire
         public const int SlotCount = 2;
 
         /// <summary>Keys that swap, alongside the mouse wheel.</summary>
-        public static readonly KeyCode SwapKey = KeyCode.X;
+        public static readonly KeyCode SwapKey = KeyCode.C;
 
         public Weapon Weapon;
 

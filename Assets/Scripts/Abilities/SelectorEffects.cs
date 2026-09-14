@@ -76,6 +76,52 @@ namespace Gunspire
     }
 
     /// <summary>
+    /// The one target closest to the reticle by angle, within reach and in sight. A quick
+    /// single-target pick for an instant spell: forgiving enough that aim need not be
+    /// pixel-perfect, and never something behind a wall.
+    /// </summary>
+    [System.Serializable]
+    public class SelectNearestAimedEffect : SelectorEffect
+    {
+        public float Range = 30f;
+        public float MaxAngle = 12f;
+
+        public override bool Execute(AbilityContext ctx)
+        {
+            ctx.Targets.Clear();
+            ctx.Point = ctx.Origin + ctx.Forward * Range;
+
+            Collider[] found = Physics.OverlapSphere(ctx.Origin, Range, ctx.TargetMask,
+                QueryTriggerInteraction.Ignore);
+
+            IDamageable best = null;
+            float bestAngle = MaxAngle;
+
+            for (int i = 0; i < found.Length; i++)
+            {
+                IDamageable target = Combat.FindDamageable(found[i]);
+                if (target == null || !target.IsAlive || target.Team == ctx.Team) continue;
+
+                Vector3 center = AbilityContext.CenterOf(target);
+                float angle = Vector3.Angle(ctx.Forward, center - ctx.Origin);
+                if (angle > bestAngle || !ctx.HasLineOfSight(ctx.Origin, center)) continue;
+
+                best = target;
+                bestAngle = angle;
+            }
+
+            if (best != null)
+            {
+                ctx.Targets.Add(best);
+                ctx.Point = AbilityContext.CenterOf(best);
+            }
+            return true;
+        }
+
+        public override string Describe() => string.Format("the enemy nearest your aim within {0:0}m", Range);
+    }
+
+    /// <summary>
     /// Traces the aim line and parks <see cref="AbilityContext.Point"/> where it lands, so a
     /// later effect can detonate there. Falls back to maximum range against open sky.
     /// </summary>

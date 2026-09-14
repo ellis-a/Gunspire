@@ -25,6 +25,8 @@ namespace Gunspire
             Register(new MarkStatus());
             Register(new DeathmarkStatus());
             Register(new EtherealStatus());
+            Register(new SleepStatus());
+            Register(new BlindStatus());
 
             // Planned: named so every id resolves, with no behaviour until the systems they need
             // exist. Verify Debuffs lists them, so nobody mistakes one for a finished effect.
@@ -32,9 +34,7 @@ namespace Gunspire
             Register(new PlannedStatus(StatusId.Silence, "Silenced", "Cannot cast spells.", new Color(0.6f, 0.6f, 0.75f)));
             Register(new PlannedStatus(StatusId.Disarm, "Disarmed", "Cannot shoot.", new Color(0.75f, 0.6f, 0.45f)));
             Register(new PlannedStatus(StatusId.Fear, "Feared", "Flees faster, and cannot attack.", new Color(0.55f, 0.3f, 0.7f)));
-            Register(new PlannedStatus(StatusId.Blind, "Blinded", "Cannot see, and aims where it last saw its target.", new Color(0.25f, 0.25f, 0.3f)));
             Register(new PlannedStatus(StatusId.Confusion, "Confused", "Cannot tell friend from foe.", new Color(0.9f, 0.55f, 0.85f)));
-            Register(new PlannedStatus(StatusId.Sleep, "Asleep", "Does nothing until it wakes.", new Color(0.5f, 0.6f, 0.9f)));
             Register(new PlannedStatus(StatusId.Plague, "Plagued", "Rises as a zombie on death, and spreads the plague.", new Color(0.5f, 0.65f, 0.25f)));
             Register(new PlannedStatus(StatusId.Torment, "Tormented", "Takes damage over time.", new Color(0.8f, 0.35f, 0.6f)));
         }
@@ -80,6 +80,45 @@ namespace Gunspire
 
         public static StatusApplication Ethereal(float seconds = 5f)
             => new StatusApplication(StatusId.Ethereal, seconds, 1, 1f);
+
+        /// <summary>Ten seconds by design. Halved on elites, and broken by direct damage.</summary>
+        public static StatusApplication Sleep(float seconds = 10f)
+            => new StatusApplication(StatusId.Sleep, seconds, 1, 1f);
+
+        public static StatusApplication Blind(float seconds = 4f)
+            => new StatusApplication(StatusId.Blind, seconds, 1, 1f);
+    }
+
+    // -------------------------------------------------------------------------------- control
+
+    /// <summary>
+    /// Does nothing until it wakes: no moving, no attacking, no noticing anything. Direct damage
+    /// wakes it, but not the hit that put it to sleep and not the ticks of its other statuses,
+    /// and the damage that wakes it alerts it the ordinary way.
+    /// </summary>
+    public class SleepStatus : StatusDefinition
+    {
+        public override StatusId Id => StatusId.Sleep;
+        public override string DisplayName => "Asleep";
+        public override string Description => "Does nothing until it wakes. Damage wakes it.";
+        public override Color Tint => new Color(0.5f, 0.6f, 0.9f);
+        public override int MaxStacks => 1;
+        public override bool EndsOnDamage => true;
+        public override float EliteDurationScale => 0.5f;
+    }
+
+    /// <summary>
+    /// Cannot see. An enemy that has not noticed you cannot spot you, though it can still hear
+    /// you, and one already fighting keeps aiming at the spot it last saw you. Unlike sleep,
+    /// damage does not end it.
+    /// </summary>
+    public class BlindStatus : StatusDefinition
+    {
+        public override StatusId Id => StatusId.Blind;
+        public override string DisplayName => "Blinded";
+        public override string Description => "Cannot see, and aims where it last saw its target.";
+        public override Color Tint => new Color(0.25f, 0.25f, 0.3f);
+        public override int MaxStacks => 1;
     }
 
     // -------------------------------------------------------------------------------- ice

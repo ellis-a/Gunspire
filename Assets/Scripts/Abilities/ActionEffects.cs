@@ -31,6 +31,31 @@ namespace Gunspire
         public override string Describe() => "applies " + Status;
     }
 
+    /// <summary>
+    /// Puts this cast's statuses straight onto everything selected, with no hit at all. For
+    /// spells that only afflict: no damage number, no hit flash, and nothing a hit would set off.
+    /// </summary>
+    [System.Serializable]
+    public class ApplyPayloadEffect : AbilityEffect
+    {
+        public override bool Execute(AbilityContext ctx)
+        {
+            if (ctx.Payload.Count == 0) return true;
+
+            for (int i = 0; i < ctx.Targets.Count; i++)
+            {
+                IDamageable target = ctx.Targets[i];
+                if (target == null || !target.IsAlive || target.Transform == null) continue;
+
+                var status = target.Transform.GetComponent<StatusController>();
+                if (status != null) status.ApplyAll(ctx.Payload, ctx.Caster, ctx.Team);
+            }
+            return true;
+        }
+
+        public override string Describe() => null;
+    }
+
     /// <summary>Damages everything a selector picked out.</summary>
     [System.Serializable]
     public class DealDamageEffect : AbilityEffect

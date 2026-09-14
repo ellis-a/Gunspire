@@ -22,6 +22,17 @@ namespace Gunspire
     }
 
     /// <summary>
+    /// How a hit was delivered, where that changes what it does. Only status ticks are told apart
+    /// so far, which is what sleep needs; the other origins arrive with Phase 1.1 of
+    /// Docs/Architecture.md.
+    /// </summary>
+    public enum DamageOrigin
+    {
+        Direct,
+        StatusTick
+    }
+
+    /// <summary>
     /// Everything a hit needs to know. Built by the attacker, consumed by <see cref="Health"/>.
     /// Pass by 'in' - it is a fat struct and gets thrown around a lot.
     /// </summary>
@@ -36,6 +47,7 @@ namespace Gunspire
         public Vector3 Knockback;
         public bool IsCrit;
         public bool CanCrit;
+        public DamageOrigin Origin;
 
         public List<StatusApplication> Statuses;
 

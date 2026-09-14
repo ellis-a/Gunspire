@@ -64,7 +64,7 @@ namespace Gunspire
 
             var rect = new Rect(Screen.width * 0.5f - 280f, Screen.height * 0.5f + 60f, 560f, 28f);
             UIStyles.Fill(rect, UIStyles.PanelSoft);
-            UIStyles.Text(rect, "[F]  " + prompt, UIStyles.Center, UIStyles.Ink);
+            UIStyles.Text(rect, "[" + PlayerCombat.InteractKey + "]  " + prompt, UIStyles.Center, UIStyles.Ink);
         }
 
         // ---------------------------------------------------------------- bottom left

@@ -455,7 +455,8 @@ Smoke, Nether Wall.**
 
 ### 4.1 Slots and spell levels
 
-- **Three cast slots.** `SpellBook.SlotCount` becomes 3, with G as the third key. The HUD already draws
+- **Three cast slots. Done:** `SpellBook.SlotCount` is 3, with F as the third key; interact moved to X and
+  weapon swap to C, and Verify Spell Slots fails if two actions share a key. The HUD already draws
   however many slots the spell book defines. Loadouts name a starting slot index and need checking.
 - **Movement and melee spells gain levels.** `PlayerCombat` always casts the melee spell at level 1, and
   `SpellLibrary.Offerable` treats movement and melee spells as straight swaps. Customer: Dash's charges.
@@ -570,6 +571,23 @@ new effects are still needed.
 **Suggested content order:** Petty spells first, since they need only the instant ray and sleep, and
 they are the starter kits every run uses. Then the school whose foundations are furthest along, and
 the mythics and Aetherics' time spells last.
+
+**Petty spells: built.** Dart, Orb, Sleep, Dazzle, Shock and Rot are code built-ins with placeholder
+numbers and a level cap of 3. They pulled small slices of earlier phases forward:
+
+- **Sleep and blind have behaviour.** A sleeping enemy cannot move, attack or notice anything, and is
+  half as long asleep when elite. A blind enemy cannot spot you, and one already fighting keeps
+  fighting a fixed point where it last saw you, standing in for the perceived position of 2.2.
+- **A damage origin, for ticks only** (1.1). Status ticks are marked so they do not wake a sleeper.
+- **Statuses that end on damage** (1.5), skipping the applying hit and ticks.
+- **A per-status elite duration multiplier** (2.4).
+- **A nearest-to-aim selector** for Dazzle, in place of the instant ray.
+- **An effect that applies statuses with no hit,** for Shock, Rot and Dazzle.
+- **A hit with no damage no longer executes.** It cannot spend a death mark or a mark, or shatter full
+  frost, so a sleep bolt is not a finishing blow.
+
+Not yet: the one-Petty-per-offer rule. With only Petty cast spells in the roster, it would shrink every
+offer to a single card.
 
 ---
 

@@ -146,9 +146,15 @@ namespace Gunspire
         {
             return new List<Spell>
             {
-                // No cast spells until the designed ones are built. The spells from before the
-                // school designs were retired, and the editor's RetiredSpells lists them so none
+                // Cast slots. Only the Petty spells so far. The spells from before the school
+                // designs were retired, and the editor's RetiredSpells lists them so none
                 // quietly comes back.
+                Dart(),
+                Orb(),
+                Sleep(),
+                Dazzle(),
+                Shock(),
+                Rot(),
 
                 // Shift slot.
                 Dash(),
@@ -159,6 +165,168 @@ namespace Gunspire
                 Bash()
             };
         }
+
+        // ---------------------------------------------------------------- cast: Petty
+
+        // Filler and starter spells that belong to no school, so they feed no mastery. Every
+        // number here is a first guess that has not been tuned in play.
+
+        private static Spell Dart() => new Spell
+        {
+            Id = "dart",
+            School = SpellSchool.Petty,
+            DisplayName = "Dart",
+            ShortName = "DART",
+            Description = "A quick bolt that flies straight and hits hard for its price.",
+            Type = SpellType.Attack,
+            DamageType = DamageType.Kinetic,
+            Rarity = Rarity.Common,
+            ManaCost = 8f,
+            Cooldown = 1.2f,
+            MaxLevel = 3,
+            OnCast =
+            {
+                new SpawnProjectileEffect { Damage = 22f, Speed = 70f, Radius = 0.12f, Lifetime = 2.5f }
+            }
+        };
+
+        private static Spell Orb() => new Spell
+        {
+            Id = "orb",
+            School = SpellSchool.Petty,
+            DisplayName = "Orb",
+            ShortName = "ORB",
+            Description = "Lob a crackling orb that bursts where it lands.",
+            Type = SpellType.Attack,
+            DamageType = DamageType.Energy,
+            Rarity = Rarity.Common,
+            ManaCost = 18f,
+            Cooldown = 5f,
+            MaxLevel = 3,
+            OnCast =
+            {
+                new SpawnProjectileEffect
+                {
+                    // The orb itself carries nothing; the burst is the whole spell.
+                    Damage = 0f,
+                    Speed = 24f,
+                    Gravity = 12f,
+                    Radius = 0.3f,
+                    Lifetime = 4f,
+                    OnHit =
+                    {
+                        new SelectSphereEffect { Radius = 3.5f, AroundPoint = true, ScaleRadiusWithLevel = true },
+                        new DealDamageEffect { Amount = 30f, FalloffFromPoint = true, FalloffRadius = 3.5f, MinFraction = 0.4f },
+                        new VfxSphereEffect { Diameter = 1.4f, Alpha = 0.5f, Lifetime = 0.25f, GrowPerSecond = 9f }
+                    }
+                }
+            }
+        };
+
+        private static Spell Sleep() => new Spell
+        {
+            Id = "sleep",
+            School = SpellSchool.Petty,
+            DisplayName = "Sleep",
+            ShortName = "SLEP",
+            Description = "A soft bolt that puts one enemy to sleep for ten seconds. Any damage wakes it.",
+            Type = SpellType.Control,
+            DamageType = DamageType.Energy,
+            Rarity = Rarity.Common,
+            ManaCost = 16f,
+            Cooldown = 12f,
+            MaxLevel = 3,
+            GrowthPerLevel = 0f,
+            NoiseMultiplier = 0.3f,
+            TintOverride = new Color(0.5f, 0.6f, 0.9f),
+            OnCast =
+            {
+                // No damage, as designed. A hit with nothing in it only delivers the sleep, so it
+                // neither alerts the target nor sets off a death mark.
+                new StatusPayloadEffect { Status = StatusId.Sleep, Duration = 10f, Stacks = 1, Magnitude = 1f },
+                new SpawnProjectileEffect { Damage = 0f, Speed = 40f, Radius = 0.2f, Lifetime = 3f }
+            }
+        };
+
+        private static Spell Dazzle() => new Spell
+        {
+            Id = "dazzle",
+            School = SpellSchool.Petty,
+            DisplayName = "Dazzle",
+            ShortName = "DAZL",
+            Description = "A flash in one enemy's eyes. It loses sight of you, and keeps fighting " +
+                          "wherever it last saw you.",
+            Type = SpellType.Control,
+            DamageType = DamageType.Energy,
+            Rarity = Rarity.Common,
+            ManaCost = 14f,
+            Cooldown = 10f,
+            MaxLevel = 3,
+            GrowthPerLevel = 0f,
+            LevelUpNote = "and a longer blind",
+            NoiseMultiplier = 0.5f,
+            TintOverride = new Color(1f, 0.95f, 0.7f),
+            OnCast =
+            {
+                new SelectNearestAimedEffect { Range = 30f, MaxAngle = 12f },
+                new StatusPayloadEffect { Status = StatusId.Blind, Duration = 4f, DurationPerLevel = 0.5f, Stacks = 1, Magnitude = 1f },
+                new ApplyPayloadEffect(),
+                new VfxLineToTargetsEffect(),
+                new VfxOnTargetsEffect { Size = new Vector3(1f, 1f, 1f), Alpha = 0.6f, Lifetime = 0.25f }
+            }
+        };
+
+        private static Spell Shock() => new Spell
+        {
+            Id = "shock",
+            School = SpellSchool.Petty,
+            DisplayName = "Shock",
+            ShortName = "SHCK",
+            Description = "A crackling fan in front of you. Shocked enemies take more damage and hear far less.",
+            Type = SpellType.Control,
+            DamageType = DamageType.Energy,
+            Rarity = Rarity.Uncommon,
+            ManaCost = 20f,
+            Cooldown = 7f,
+            MaxLevel = 3,
+            GrowthPerLevel = 0f,
+            LevelUpNote = "and one more stack",
+            TintOverride = new Color(0.7f, 0.75f, 1f),
+            OnCast =
+            {
+                new SelectConeEffect { Range = 11f, HalfAngle = 30f },
+                new StatusPayloadEffect { Status = StatusId.Shock, Duration = 5f, Stacks = 1, StacksPerLevel = 1f, Magnitude = 0.12f },
+                new ApplyPayloadEffect(),
+                new VfxConeEffect { Range = 11f, HalfAngle = 30f },
+                new VfxShardsEffect { Range = 11f, SpreadDegrees = 30f }
+            }
+        };
+
+        private static Spell Rot() => new Spell
+        {
+            Id = "rot",
+            School = SpellSchool.Petty,
+            DisplayName = "Rot",
+            ShortName = "ROT",
+            Description = "A breath of rot. Poisoned enemies cannot hold their aim, though standing " +
+                          "still shakes it off faster.",
+            Type = SpellType.Control,
+            DamageType = DamageType.Necrotic,
+            Rarity = Rarity.Uncommon,
+            ManaCost = 20f,
+            Cooldown = 7f,
+            MaxLevel = 3,
+            GrowthPerLevel = 0f,
+            LevelUpNote = "and one more stack",
+            TintOverride = new Color(0.55f, 0.9f, 0.35f),
+            OnCast =
+            {
+                new SelectConeEffect { Range = 11f, HalfAngle = 30f },
+                new StatusPayloadEffect { Status = StatusId.Poison, Duration = 7f, Stacks = 3, StacksPerLevel = 1f, Magnitude = 1.4f },
+                new ApplyPayloadEffect(),
+                new VfxConeEffect { Range = 11f, HalfAngle = 30f }
+            }
+        };
 
         // ---------------------------------------------------------------- movement
 

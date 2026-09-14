@@ -70,6 +70,10 @@ namespace Gunspire
         public Health Health { get; private set; }
         public CharacterSheet Sheet { get; private set; }
         public StatusController Status { get; private set; }
+        /// <summary>
+        /// Where it believes its target is. The target itself, except while blind, when it is a
+        /// fixed point where it last saw them.
+        /// </summary>
         public Transform Target { get; private set; }
 
         /// <summary>Set by the factory once the body is built. A property so it satisfies
@@ -90,6 +94,11 @@ namespace Gunspire
         private float _idlePause;
         private readonly List<Vector3> _patrol = new List<Vector3>();
         private int _patrolIndex;
+
+        // Who it is really fighting, and the stand-in point it fights instead while blind.
+        private Transform _liveTarget;
+        private Transform _lastSeen;
+        private bool _lastSeenFixed;
 
         public bool IsAttacking
         {
@@ -141,6 +150,7 @@ namespace Gunspire
         {
             if (Health != null) Health.Damaged -= OnDamaged;
             Noise.Heard -= OnNoise;
+            if (_lastSeen != null) Destroy(_lastSeen.gameObject);
         }
 
         private void OnDamaged(DamageInfo info, float amount)
@@ -169,7 +179,8 @@ namespace Gunspire
             }
 
             _retargetTimer -= Time.deltaTime;
-            if (Target == null || _retargetTimer <= 0f) AcquireTarget();
+            if (_liveTarget == null || _retargetTimer <= 0f) AcquireTarget();
+            UpdatePerceivedTarget();
 
             if (!impaired)
             {
@@ -198,6 +209,7 @@ namespace Gunspire
         {
             PlayerRig player = PlayerRig.Instance;
             if (player == null || player.Health == null || !player.Health.IsAlive) return false;
+            if (Status != null && Status.IsBlind) return false;
 
             Vector3 to = player.transform.position - transform.position;
             if (to.sqrMagnitude > SightRange * SightRange) return false;
@@ -225,6 +237,10 @@ namespace Gunspire
         {
             if (IsAlerted || this == null) return;
             if (Health != null && !Health.IsAlive) return;
+
+            // Asleep, nothing is noticed. Enemies cannot be un-alerted, so sleep suspends
+            // perception rather than resetting it, and waking restores it as it was.
+            if (Status != null && Status.IsAsleep) return;
 
             // Shock deadens hearing, which is what makes it worth putting on something that has
             // not noticed you yet rather than only on something already shooting at you.
@@ -260,9 +276,36 @@ namespace Gunspire
         {
             _retargetTimer = 1f;
             PlayerRig player = PlayerRig.Instance;
-            Target = player != null && player.Health != null && player.Health.IsAlive
+            _liveTarget = player != null && player.Health != null && player.Health.IsAlive
                 ? player.transform
                 : null;
+            UpdatePerceivedTarget();
+        }
+
+        /// <summary>
+        /// A blind enemy keeps fighting the spot it last saw its target: it faces it, walks at it
+        /// and shoots at it, while the player is free to be anywhere else. Aim, movement, attack
+        /// range and line of sight all read <see cref="Target"/>, so swapping in a fixed point
+        /// is the whole effect.
+        /// </summary>
+        private void UpdatePerceivedTarget()
+        {
+            if (_liveTarget == null || Status == null || !Status.IsBlind)
+            {
+                Target = _liveTarget;
+                _lastSeenFixed = false;
+                return;
+            }
+
+            if (_lastSeen == null) _lastSeen = new GameObject(name + " LastSeen").transform;
+
+            if (!_lastSeenFixed)
+            {
+                _lastSeen.position = _liveTarget.position;
+                _lastSeenFixed = true;
+            }
+
+            Target = _lastSeen;
         }
 
         // ---------------------------------------------------------------- attacking

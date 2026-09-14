@@ -16,18 +16,18 @@ namespace Gunspire
     }
 
     /// <summary>
-    /// The player spell slots and the level of every spell learned. Two slots for now
-    /// (Q and E); the slot count is data, so adding a third key later means changing
-    /// <see cref="SlotCount"/> and the key list.
+    /// The player spell slots and the level of every spell learned. Three slots, on Q, E and F;
+    /// the slot count is data, so changing it means changing <see cref="SlotCount"/> and the
+    /// key and label lists together. Verify Spell Slots checks they agree.
     ///
     /// Levels are keyed by spell id rather than by slot, so a spell keeps its level if it is
-    /// moved to the other slot.
+    /// moved to another slot.
     /// </summary>
     public class SpellBook : MonoBehaviour
     {
-        public const int SlotCount = 2;
-        public static readonly KeyCode[] SlotKeys = { KeyCode.Q, KeyCode.E };
-        public static readonly string[] SlotLabels = { "Q", "E" };
+        public const int SlotCount = 3;
+        public static readonly KeyCode[] SlotKeys = { KeyCode.Q, KeyCode.E, KeyCode.F };
+        public static readonly string[] SlotLabels = { "Q", "E", "F" };
 
         private readonly Spell[] _slots = new Spell[SlotCount];
         private readonly float[] _cooldowns = new float[SlotCount];
@@ -203,7 +203,7 @@ namespace Gunspire
             for (int i = 0; i < SlotCount; i++) _cooldowns[i] = 0f;
         }
 
-        /// <summary>Forgets every spell and empties both slots, for the start of a fresh run.</summary>
+        /// <summary>Forgets every spell and empties every slot, for the start of a fresh run.</summary>
         public void ResetBook()
         {
             _known.Clear();

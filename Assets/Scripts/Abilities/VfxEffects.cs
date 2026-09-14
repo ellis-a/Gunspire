@@ -130,6 +130,29 @@ namespace Gunspire
         }
     }
 
+    /// <summary>A brief line from the caster to each selected target, for spells that land instantly.</summary>
+    [System.Serializable]
+    public class VfxLineToTargetsEffect : VfxEffect
+    {
+        public float Width = 0.08f;
+        public float Lifetime = 0.18f;
+
+        public override bool Execute(AbilityContext ctx)
+        {
+            // Started ahead of and below the eye, or a line drawn from the camera is edge-on
+            // and all but invisible to the one person meant to see it.
+            Vector3 from = ctx.Origin + ctx.Forward * 0.6f + Vector3.down * 0.25f;
+
+            for (int i = 0; i < ctx.Targets.Count; i++)
+            {
+                IDamageable target = ctx.Targets[i];
+                if (target == null || target.Transform == null) continue;
+                Combat.SpawnTracer(from, AbilityContext.CenterOf(target), ctx.Tint, Width, Lifetime);
+            }
+            return true;
+        }
+    }
+
     /// <summary>A shape on every selected target, such as the ice around a frozen enemy.</summary>
     [System.Serializable]
     public class VfxOnTargetsEffect : VfxEffect

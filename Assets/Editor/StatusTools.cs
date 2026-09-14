@@ -30,12 +30,14 @@ namespace Gunspire.EditorTools
             CheckBleedEndsOnHeal(problems);
             CheckBurnAndFrostCoexist(problems);
             CheckPowerScalesStatuses(problems);
+            CheckSleep(problems);
+            CheckStatusOnlyHit(problems);
 
             string planned = PlannedStatuses();
 
             if (problems.Count == 0)
             {
-                Debug.Log("Debuffs: burn, frost, poison, shock, bleed, deathmark and ethereal "
+                Debug.Log("Debuffs: burn, frost, poison, shock, bleed, sleep, deathmark and ethereal "
                           + "all behave as specified, and spell power strengthens them.\n  no problems." + planned);
                 return;
             }
@@ -396,6 +398,77 @@ namespace Gunspire.EditorTools
                 else if (Mathf.Abs(fortify.Magnitude - 0.1f * power) > 0.0005f)
                     problems.Add("a self-cast Fortify landed at " + fortify.Magnitude.ToString("0.####")
                                  + ", expected " + (0.1f * power).ToString("0.####"));
+            }
+            finally { Object.DestroyImmediate(go); }
+        }
+
+        /// <summary>
+        /// Sleep holds an enemy until real damage lands. The hit that applied it and the ticks of
+        /// its other statuses must not wake it, a direct hit must, and elites sleep half as long.
+        /// </summary>
+        private static void CheckSleep(List<string> problems)
+        {
+            GameObject go = Subject(Team.Enemy, 1000f);
+            try
+            {
+                var status = go.GetComponent<StatusController>();
+                var health = go.GetComponent<Health>();
+
+                health.TakeDamage(DamageInfo.Create(10f, DamageType.Energy, Team.Player, null)
+                    .WithStatus(StatusLibrary.Sleep()));
+
+                if (!status.IsAsleep)
+                {
+                    problems.Add("a damaging hit that applied sleep woke its own target");
+                    return;
+                }
+
+                if (!status.IsControlImpaired)
+                    problems.Add("a sleeping enemy is not control impaired, so it can still move and attack");
+
+                status.Apply(StatusLibrary.Burn(amount: 20f), null, Team.Player);
+                ActiveStatus burn = status.Find(StatusId.Burn);
+                if (burn != null) burn.Def.OnTick(status, burn);
+                if (!status.IsAsleep) problems.Add("a burn tick woke a sleeping enemy");
+
+                Hit(go, 5f, DamageType.Kinetic);
+                if (status.IsAsleep) problems.Add("a direct hit did not wake a sleeping enemy");
+            }
+            finally { Object.DestroyImmediate(go); }
+
+            GameObject elite = Subject(Team.Enemy, 1000f, elite: true);
+            try
+            {
+                var status = elite.GetComponent<StatusController>();
+                status.Apply(StatusLibrary.Sleep(10f), null, Team.Player);
+
+                ActiveStatus sleep = status.Find(StatusId.Sleep);
+                if (sleep == null) problems.Add("sleep did not apply to an elite");
+                else if (Mathf.Abs(sleep.Duration - 5f) > 0.01f)
+                    problems.Add("an elite slept for " + sleep.Duration.ToString("0.#") + "s of 10, expected half");
+            }
+            finally { Object.DestroyImmediate(elite); }
+        }
+
+        /// <summary>
+        /// A hit that carries statuses but no damage is a delivery, not a blow. It must land its
+        /// statuses without spending a death mark, or a sleep bolt becomes a finishing move.
+        /// </summary>
+        private static void CheckStatusOnlyHit(List<string> problems)
+        {
+            GameObject go = Subject(Team.Enemy, 500f);
+            try
+            {
+                var status = go.GetComponent<StatusController>();
+                var health = go.GetComponent<Health>();
+
+                status.Apply(StatusLibrary.Deathmark(), null, Team.Player);
+                health.TakeDamage(DamageInfo.Create(0f, DamageType.Energy, Team.Player, null)
+                    .WithStatus(StatusLibrary.Sleep()));
+
+                if (!health.IsAlive) problems.Add("a hit with no damage executed a death-marked enemy");
+                if (!status.Has(StatusId.Deathmark)) problems.Add("a hit with no damage spent a death mark");
+                if (!status.IsAsleep) problems.Add("a hit with no damage did not deliver its sleep");
             }
             finally { Object.DestroyImmediate(go); }
         }

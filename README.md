@@ -31,12 +31,14 @@ supports it; if you ever see `InvalidOperationException` from `Input.GetKey`, ch
 |---|---|
 | `WASD` | Move (Quake-style air control — strafing keeps momentum) |
 | `Space` | Jump (coyote time + input buffering) |
-| `Shift` | Movement ability — Dash by default; Blink, Sprint, Aegis Stance or Spider Legs once found |
+| `Shift` | Movement spell — Dash by default; Blink or Spider Legs once found |
 | `LMB` | Fire |
-| `RMB` / `V` | Melee bash (Strength-scaled, breaks reinforced objects) |
+| `RMB` | Alt fire, on guns that have one |
+| `V` | Melee spell — Bash by default |
 | `R` | Reload |
-| `Q` / `E` | Spell slots. A run opens with one spell on E and Q empty |
-| `F` | Interact (pickups, shrines, exit portal) |
+| `Q` / `E` / `F` | Spell slots. A run opens with all three empty; the first spell is chosen after the first floor |
+| `X` | Interact (pickups, shrines, exit portal) |
+| `C` / wheel | Swap guns |
 | `Tab` | Character sheet (hold) |
 | `Esc` | Pause |
 | `1`–`3` | Pick a boon / route card |

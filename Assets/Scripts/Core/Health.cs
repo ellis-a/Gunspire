@@ -198,12 +198,14 @@ namespace Gunspire
 
                 amount *= Mathf.Max(0f, 1f - GetResistance(info.Type));
 
-                if (Status != null) amount *= 1f + Status.ConsumeMark();
+                if (Status != null && info.Amount > 0f) amount *= 1f + Status.ConsumeMark();
 
                 if (_sheet != null) amount *= _sheet.Get(Attr.DamageTaken);
             }
 
-            if (Status != null && TryExecute(in info)) return;
+            // A hit with no damage in it only delivers statuses. Letting it spend a death mark,
+            // shatter frost or use up a mark would make a sleep bolt a finishing blow.
+            if (Status != null && info.Amount > 0f && TryExecute(in info)) return;
 
             if (Status != null && info.Statuses != null)
                 Status.ApplyAll(info.Statuses, info.Source, info.SourceTeam);
@@ -211,6 +213,10 @@ namespace Gunspire
             if (amount <= 0f) return;
 
             Current = Mathf.Max(0f, Current - amount);
+
+            // After the damage lands, so the hit that applied sleep does not also end it, and
+            // never from a status's own tick, so a sleeping enemy on fire stays asleep.
+            if (Status != null && info.Origin != DamageOrigin.StatusTick) Status.EndOnDamage(info.Statuses);
 
             Damaged?.Invoke(info, amount);
             AnyDamaged?.Invoke(this, info, amount);

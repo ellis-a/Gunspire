@@ -8,6 +8,11 @@ namespace Gunspire
     /// </summary>
     public class PlayerCombat : MonoBehaviour
     {
+        /// <summary>Keys read here. Named, so Verify Spell Slots can prove no two actions share one.</summary>
+        public static readonly KeyCode InteractKey = KeyCode.X;
+        public static readonly KeyCode MeleeKey = KeyCode.V;
+        public static readonly KeyCode ReloadKey = KeyCode.R;
+
         [Header("Weapon swapping")]
         /// <summary>Shortest gap between wheel-driven swaps, so one flick is one swap.</summary>
         [SerializeField] private float scrollSwapInterval = 0.18f;
@@ -112,7 +117,7 @@ namespace Gunspire
             if (Weapon != null)
             {
                 bool alt = Input.GetMouseButton(1);
-                Weapon.HandleInput(Input.GetMouseButton(0), alt, Input.GetKeyDown(KeyCode.R));
+                Weapon.HandleInput(Input.GetMouseButton(0), alt, Input.GetKeyDown(ReloadKey));
 
                 if (Input.GetMouseButtonDown(1)) ReportAltFire();
                 ApplyZoom();
@@ -127,9 +132,9 @@ namespace Gunspire
             // Right click is alt fire now, so the bash lives on V alone - it was already
             // bound there, and sharing a button with a gun's second trigger is worse than
             // moving it.
-            if (Input.GetKeyDown(KeyCode.V)) TryBash();
+            if (Input.GetKeyDown(MeleeKey)) TryBash();
 
-            if (Input.GetKeyDown(KeyCode.F) && _focus != null && _focus.CanInteract(gameObject))
+            if (Input.GetKeyDown(InteractKey) && _focus != null && _focus.CanInteract(gameObject))
                 _focus.Interact(gameObject);
         }
 
@@ -298,7 +303,7 @@ namespace Gunspire
         // ---------------------------------------------------------------- swapping
 
         /// <summary>
-        /// X, or a flick of the wheel either way. With only two guns there is no next and
+        /// C, or a flick of the wheel either way. With only two guns there is no next and
         /// previous to tell apart, so both directions do the same thing.
         ///
         /// The wheel is rate-limited because one physical notch does not reliably arrive as one

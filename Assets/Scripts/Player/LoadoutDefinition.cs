@@ -35,10 +35,10 @@ namespace Gunspire
         [Tooltip("Melee-slot spell id. Everyone opens with Bash.")]
         public string MeleeSpellId = SpellLibrary.DefaultMeleeId;
 
-        [Tooltip("The one spell a run opens with, bound to E. Q starts empty and is filled at a shrine.")]
+        [Tooltip("A cast spell the run opens with, in the slot below. Leave empty to open with none.")]
         public string SpellId = string.Empty;
 
-        [Tooltip("Which slot the starting spell goes in. 0 is Q, 1 is E.")]
+        [Tooltip("Which slot the starting spell goes in. 0 is Q, 1 is E, 2 is F.")]
         public int SpellSlot = 1;
 
         /// <summary>Card colour on the selection screen. Leave clear to take the gun's school.</summary>

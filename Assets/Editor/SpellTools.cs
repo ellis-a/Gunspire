@@ -111,6 +111,7 @@ namespace Gunspire.EditorTools
                     if (spell.Slot != slot) problems.Add(spell.Id + " leaked into the " + slot + " offer pool");
             }
 
+            CheckKeys(problems);
             CheckDefault(problems, SpellLibrary.DefaultMovementId, SpellSlot.Movement);
             CheckDefault(problems, SpellLibrary.DefaultMeleeId, SpellSlot.Melee);
 
@@ -135,6 +136,41 @@ namespace Gunspire.EditorTools
             report.AppendLine("  " + problems.Count + " PROBLEMS:");
             for (int i = 0; i < problems.Count && i < 25; i++) report.AppendLine("    " + problems[i]);
             Debug.LogError(report.ToString());
+        }
+
+        /// <summary>
+        /// Every player key belongs to one action, and the spell book's keys, labels and slot count
+        /// agree. Two actions on one key do not fail to build: one quietly stops working, or both
+        /// fire at once.
+        /// </summary>
+        private static void CheckKeys(List<string> problems)
+        {
+            if (SpellBook.SlotKeys.Length != SpellBook.SlotCount || SpellBook.SlotLabels.Length != SpellBook.SlotCount)
+                problems.Add("the spell book has " + SpellBook.SlotCount + " slots, " + SpellBook.SlotKeys.Length
+                             + " keys and " + SpellBook.SlotLabels.Length + " labels");
+
+            var owners = new Dictionary<KeyCode, string>();
+            for (int i = 0; i < SpellBook.SlotKeys.Length; i++)
+            {
+                Claim(problems, owners, SpellBook.SlotKeys[i], "spell slot " + (i + 1));
+                if (i < SpellBook.SlotLabels.Length && SpellBook.SlotLabels[i] != SpellBook.SlotKeys[i].ToString())
+                    problems.Add("spell slot " + (i + 1) + " is on " + SpellBook.SlotKeys[i]
+                                 + " but labelled \"" + SpellBook.SlotLabels[i] + "\"");
+            }
+
+            Claim(problems, owners, MovementController.ActivateKey, "the movement spell");
+            Claim(problems, owners, PlayerCombat.MeleeKey, "melee");
+            Claim(problems, owners, PlayerCombat.InteractKey, "interact");
+            Claim(problems, owners, PlayerCombat.ReloadKey, "reload");
+            Claim(problems, owners, Holster.SwapKey, "weapon swap");
+        }
+
+        private static void Claim(List<string> problems, Dictionary<KeyCode, string> owners, KeyCode key, string action)
+        {
+            if (owners.TryGetValue(key, out string other))
+                problems.Add(key + " is bound to both " + other + " and " + action);
+            else
+                owners[key] = action;
         }
 
         private static void CheckDefault(List<string> problems, string id, SpellSlot slot)

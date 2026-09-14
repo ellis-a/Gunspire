@@ -35,7 +35,12 @@ namespace Gunspire
         public bool IsFrozen => Stacks(StatusId.Frost) >= FrostStatus.FullStacks;
 
         /// <summary>True while the entity should not be allowed to move or attack.</summary>
-        public bool IsControlImpaired => IsFrozen;
+        public bool IsControlImpaired => IsFrozen || IsAsleep;
+
+        public bool IsAsleep => Has(StatusId.Sleep);
+
+        /// <summary>Cannot see. An enemy keeps fighting wherever it last saw its target.</summary>
+        public bool IsBlind => Has(StatusId.Blind);
 
         public bool IsEthereal => Has(StatusId.Ethereal);
 
@@ -145,12 +150,14 @@ namespace Gunspire
             if (cleanses != null)
                 for (int i = 0; i < cleanses.Length; i++) Remove(cleanses[i]);
 
+            float duration = app.Duration * (Health != null && Health.IsElite ? def.EliteDurationScale : 1f);
+
             ActiveStatus existing = Find(app.Id);
             if (existing != null)
             {
                 existing.Stacks = Mathf.Clamp(existing.Stacks + Mathf.Max(1, app.Stacks), 1, def.MaxStacks);
-                existing.Duration = Mathf.Max(existing.Duration, app.Duration);
-                existing.Remaining = Mathf.Max(existing.Remaining, app.Duration);
+                existing.Duration = Mathf.Max(existing.Duration, duration);
+                existing.Remaining = Mathf.Max(existing.Remaining, duration);
                 existing.Magnitude = Mathf.Max(existing.Magnitude, app.Magnitude);
                 existing.Source = source;
                 existing.SourceSheet = sourceSheet;
@@ -164,8 +171,8 @@ namespace Gunspire
             {
                 Def = def,
                 Stacks = Mathf.Clamp(Mathf.Max(1, app.Stacks), 1, def.MaxStacks),
-                Duration = app.Duration,
-                Remaining = app.Duration,
+                Duration = duration,
+                Remaining = duration,
                 Magnitude = app.Magnitude,
                 Source = source,
                 SourceSheet = sourceSheet,
@@ -182,6 +189,29 @@ namespace Gunspire
         {
             if (apps == null) return;
             for (int i = 0; i < apps.Count; i++) Apply(apps[i], source, sourceTeam);
+        }
+
+        /// <summary>
+        /// Ends every status that direct damage breaks, except any the same hit just applied.
+        /// Health calls this once damage has landed, and never for a status tick.
+        /// </summary>
+        public void EndOnDamage(List<StatusApplication> appliedByHit)
+        {
+            for (int i = _active.Count - 1; i >= 0; i--)
+            {
+                if (i >= _active.Count) continue;
+
+                ActiveStatus s = _active[i];
+                if (s.Def.EndsOnDamage && !AppliedBy(appliedByHit, s.Def.Id)) RemoveInstance(s);
+            }
+        }
+
+        private static bool AppliedBy(List<StatusApplication> apps, StatusId id)
+        {
+            if (apps == null) return false;
+            for (int i = 0; i < apps.Count; i++)
+                if (apps[i].Id == id) return true;
+            return false;
         }
 
         public void Remove(StatusId id)
@@ -237,6 +267,7 @@ namespace Gunspire
 
             DamageInfo info = DamageInfo.Create(amount, type, s.SourceTeam, s.Source);
             info.CanCrit = false;
+            info.Origin = DamageOrigin.StatusTick;
             info.HitPoint = transform.position + Vector3.up;
             info.HitNormal = Vector3.up;
             Health.TakeDamage(info);
