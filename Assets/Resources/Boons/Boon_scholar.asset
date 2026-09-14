@@ -15,8 +15,9 @@ MonoBehaviour:
   Boon:
     Id: scholar
     Name: Scholar
-    Description: +3 Intellect.
+    Description: +3 Power.
     Rarity: 3
+    Icon: {fileID: 0}
     MaxLevel: 3
     Effects:
     - rid: 5643702087564918834

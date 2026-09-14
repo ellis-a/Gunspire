@@ -29,17 +29,33 @@ namespace Gunspire.EditorTools
             CheckPlayerIsNeverExecuted(problems);
             CheckBleedEndsOnHeal(problems);
             CheckBurnAndFrostCoexist(problems);
+            CheckPowerScalesStatuses(problems);
+
+            string planned = PlannedStatuses();
 
             if (problems.Count == 0)
             {
                 Debug.Log("Debuffs: burn, frost, poison, shock, bleed, deathmark and ethereal "
-                          + "all behave as specified.\n  no problems.");
+                          + "all behave as specified, and spell power strengthens them.\n  no problems." + planned);
                 return;
             }
 
             var report = new StringBuilder("Debuffs: " + problems.Count + " PROBLEMS:\n");
             for (int i = 0; i < problems.Count && i < 25; i++) report.AppendLine("    " + problems[i]);
-            Debug.LogError(report.ToString());
+            Debug.LogError(report.ToString() + planned);
+        }
+
+        /// <summary>
+        /// Registered statuses that have no behaviour yet. Listed rather than failed, so the
+        /// registry check can pass without anyone mistaking a name for a finished effect.
+        /// </summary>
+        private static string PlannedStatuses()
+        {
+            var names = new List<string>();
+            foreach (StatusId id in System.Enum.GetValues(typeof(StatusId)))
+                if (StatusLibrary.Get(id) is PlannedStatus) names.Add(id.ToString());
+
+            return names.Count == 0 ? "" : "\n  planned, no behaviour yet: " + string.Join(", ", names);
         }
 
         // ---------------------------------------------------------------- helpers
@@ -313,6 +329,94 @@ namespace Gunspire.EditorTools
                 }
                 finally { Object.DestroyImmediate(go); }
             }
+        }
+
+        /// <summary>
+        /// A spell's statuses land stronger with spell power, by the multiplier its damage gets,
+        /// on whichever number each status counts as its amount. Duration never grows, and an
+        /// ability that is not a spell never scales at all.
+        ///
+        /// The rule for each status is written out here rather than read back from the
+        /// definitions, so a status that quietly stops scaling, or starts, is caught.
+        /// </summary>
+        private static void CheckPowerScalesStatuses(List<string> problems)
+        {
+            var scalesMagnitude = new HashSet<StatusId>
+            {
+                StatusId.Burn, StatusId.Bleed, StatusId.Poison, StatusId.Shock,
+                StatusId.Weaken, StatusId.Haste, StatusId.Fortify, StatusId.Mark
+            };
+            var scalesStacks = new HashSet<StatusId> { StatusId.Frost };
+
+            const float duration = 4f;
+            const int stacks = 20;
+            const float magnitude = 5f;
+
+            var go = new GameObject("Caster");
+            try
+            {
+                var sheet = go.AddComponent<CharacterSheet>();
+                sheet.SetBaseStat(StatType.Power, 30);
+                var ctx = new AbilityContext { Caster = go, Sheet = sheet, Status = go.AddComponent<StatusController>() };
+
+                float power = sheet.Get(Attr.SpellPower);
+                if (power < 1.5f)
+                {
+                    problems.Add("spell power at Power 30 is only " + power.ToString("0.###")
+                                 + ", too close to 1 to prove anything scales");
+                    return;
+                }
+
+                foreach (StatusId id in System.Enum.GetValues(typeof(StatusId)))
+                {
+                    var effect = new StatusPayloadEffect
+                    {
+                        Status = id, Duration = duration, Stacks = stacks, Magnitude = magnitude
+                    };
+
+                    int wantStacks = scalesStacks.Contains(id) ? Mathf.RoundToInt(stacks * power) : stacks;
+                    float wantMagnitude = scalesMagnitude.Contains(id) ? magnitude * power : magnitude;
+
+                    ExpectStatus(problems, id + " from a spell", Cast(ctx, effect, isSpell: true),
+                        duration, wantStacks, wantMagnitude);
+                    ExpectStatus(problems, id + " from an ability that is not a spell", Cast(ctx, effect, isSpell: false),
+                        duration, stacks, magnitude);
+                }
+
+                // Self-cast buffs take the same rule through their own effect.
+                ctx.Begin(DamageType.Energy, SpellType.Ward, Color.white, 1, 1f, isSpell: true);
+                new SelfStatusEffect
+                {
+                    Status = StatusId.Fortify, Duration = 5f, DurationPerLevel = 0f, Stacks = 1, Magnitude = 0.1f
+                }.Execute(ctx);
+
+                ActiveStatus fortify = ctx.Status.Find(StatusId.Fortify);
+                if (fortify == null)
+                    problems.Add("a self-cast Fortify did not apply");
+                else if (Mathf.Abs(fortify.Magnitude - 0.1f * power) > 0.0005f)
+                    problems.Add("a self-cast Fortify landed at " + fortify.Magnitude.ToString("0.####")
+                                 + ", expected " + (0.1f * power).ToString("0.####"));
+            }
+            finally { Object.DestroyImmediate(go); }
+        }
+
+        private static StatusApplication Cast(AbilityContext ctx, StatusPayloadEffect effect, bool isSpell)
+        {
+            ctx.Begin(DamageType.Energy, SpellType.Attack, Color.white, 1, 1f, isSpell);
+            effect.Execute(ctx);
+            return ctx.Payload[ctx.Payload.Count - 1];
+        }
+
+        private static void ExpectStatus(List<string> problems, string what, StatusApplication got,
+            float duration, int stacks, float magnitude)
+        {
+            if (Mathf.Abs(got.Duration - duration) > 0.0005f)
+                problems.Add(what + ": duration " + got.Duration.ToString("0.###") + ", expected " + duration);
+            if (got.Stacks != stacks)
+                problems.Add(what + ": " + got.Stacks + " stacks, expected " + stacks);
+            if (Mathf.Abs(got.Magnitude - magnitude) > 0.0005f)
+                problems.Add(what + ": magnitude " + got.Magnitude.ToString("0.####")
+                             + ", expected " + magnitude.ToString("0.####"));
         }
     }
 }

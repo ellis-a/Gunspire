@@ -54,6 +54,31 @@ namespace Gunspire
         /// </summary>
         public virtual StatusId[] Cleanses => null;
 
+        /// <summary>
+        /// This status as a caster with the given spell power applies it. Power strengthens a
+        /// spell's statuses by the same multiplier it strengthens the spell's damage, applied to
+        /// whichever number is this status's amount.
+        ///
+        /// Unchanged by default, so a status with no amount to grow, like a mark that either
+        /// lands or does not, never quietly scales. Every override is a straight one-to-one
+        /// mapping for now: a point of burn is not worth a point of damage or a stack of frost,
+        /// and each is expected to get its own curve once play shows what it should be.
+        /// </summary>
+        public virtual StatusApplication Empower(StatusApplication app, float spellPower) => app;
+
+        protected static StatusApplication ScaleMagnitude(StatusApplication app, float spellPower)
+        {
+            app.Magnitude *= spellPower;
+            return app;
+        }
+
+        /// <summary>Rounded, so a status with only a few stacks needs a real gain in power to earn another.</summary>
+        protected static StatusApplication ScaleStacks(StatusApplication app, float spellPower)
+        {
+            app.Stacks = Mathf.Max(1, Mathf.RoundToInt(app.Stacks * spellPower));
+            return app;
+        }
+
         /// <summary>Rebuild the stat modifiers for the current stack count. Called on apply and on every restack.</summary>
         public virtual void BuildModifiers(StatusController c, ActiveStatus s) { }
 

@@ -15,12 +15,15 @@ namespace Gunspire
         /// <summary>One line on what this build wants you to do.</summary>
         public string Description = string.Empty;
 
+        // Stored by field name. These were renamed by the asset migration rather than with
+        // FormerlySerializedAs on purpose: an unmigrated asset falls back to the baseline of 10,
+        // instead of carrying across an old value that would now sit seven points too low.
         [Header("Core stats")]
-        public int Strength = 5;
-        public int Intellect = 5;
-        public int Agility = 5;
-        public int Vitality = 5;
-        public int Luck = 5;
+        public int Dexterity = CharacterSheet.Baseline;
+        public int Power = CharacterSheet.Baseline;
+        public int Athletics = CharacterSheet.Baseline;
+        public int Endurance = CharacterSheet.Baseline;
+        public int Luck = CharacterSheet.Baseline;
 
         [Header("Equipment")]
         [Tooltip("Id from WeaponLibrary. This gun is also excluded from world drops.")]
@@ -33,7 +36,7 @@ namespace Gunspire
         public string MeleeSpellId = SpellLibrary.DefaultMeleeId;
 
         [Tooltip("The one spell a run opens with, bound to E. Q starts empty and is filled at a shrine.")]
-        public string SpellId = "cone_of_cold";
+        public string SpellId = string.Empty;
 
         [Tooltip("Which slot the starting spell goes in. 0 is Q, 1 is E.")]
         public int SpellSlot = 1;
@@ -45,15 +48,15 @@ namespace Gunspire
         {
             switch (stat)
             {
-                case StatType.Strength: return Strength;
-                case StatType.Intellect: return Intellect;
-                case StatType.Agility: return Agility;
-                case StatType.Vitality: return Vitality;
+                case StatType.Dexterity: return Dexterity;
+                case StatType.Power: return Power;
+                case StatType.Athletics: return Athletics;
+                case StatType.Endurance: return Endurance;
                 default: return Luck;
             }
         }
 
-        public int TotalStatPoints => Strength + Intellect + Agility + Vitality + Luck;
+        public int TotalStatPoints => Dexterity + Power + Athletics + Endurance + Luck;
 
         public Color Tint
         {
@@ -68,8 +71,8 @@ namespace Gunspire
         /// <summary>Human-readable stat line for the selection card.</summary>
         public string StatLine()
         {
-            return string.Format("STR {0}   INT {1}   AGI {2}   VIT {3}   LCK {4}",
-                Strength, Intellect, Agility, Vitality, Luck);
+            return string.Format("DEX {0}   POW {1}   ATH {2}   END {3}   LCK {4}",
+                Dexterity, Power, Athletics, Endurance, Luck);
         }
 
         public LoadoutDefinition Clone() => (LoadoutDefinition)MemberwiseClone();

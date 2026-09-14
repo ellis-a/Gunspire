@@ -160,7 +160,7 @@ namespace Gunspire
             DamageInfo template = DamageInfo.Create(BlinkDetonationDamage * ctx.Power,
                 DamageType.Energy, Team.Player, ctx.Caster);
             template.CanCrit = false;
-            template = template.WithStatuses(SpellStatuses);
+            template = template.WithStatuses(ctx.EmpowerAll(SpellStatuses));
 
             Combat.Explode(position + Vector3.up * 0.9f, 5.5f, template, Layers.PlayerHitMask, 0.4f, 6f);
 

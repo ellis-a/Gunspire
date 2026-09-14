@@ -51,7 +51,7 @@ namespace Gunspire
         public bool IsSustained => Sustain != null && Sustain.Exists;
 
         /// <summary>
-        /// Whether casting this spends one of the Agility-scaled dash charges, which the HUD
+        /// Whether casting this spends one of the dash charges, which the HUD
         /// draws as pips instead of a cooldown. Read off the effect chain rather than kept as a
         /// second flag beside it, so an authored spell that drops in a dash gets the pips too.
         /// </summary>

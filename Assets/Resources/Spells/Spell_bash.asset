@@ -16,13 +16,15 @@ MonoBehaviour:
     Id: bash
     DisplayName: Bash
     ShortName: BASH
-    Description: A close swing that scales on Strength. The smash power behind it
-      is what opens reinforced barriers, so it stays useful with nothing to hit.
+    Description: A quick, close swing. Cheap enough to fall back on when everything
+      else is spent.
     ManaCost: 4
     Cooldown: 0.7
+    NoiseMultiplier: 1
     Rarity: 0
     Type: 0
     DamageType: 0
+    School: 7
     Slot: 2
     Sustain:
       ManaPerSecond: 0
@@ -52,13 +54,12 @@ MonoBehaviour:
     - rid: 5643702153244311558
       type: {class: DealDamageEffect, ns: Gunspire, asm: Assembly-CSharp}
       data:
-        Amount: 10
+        Amount: 20.5
         CanCrit: 1
-        Knockback: 6
+        Knockback: 0
         FalloffFromPoint: 0
         FalloffRadius: 6
         MinFraction: 0.4
-        UseSmashPower: 1
-        PerStatPoint: 3.5
+        PerStatPoint: 0
         ScaleStat: 0
         OnlyOncePerCast: 0

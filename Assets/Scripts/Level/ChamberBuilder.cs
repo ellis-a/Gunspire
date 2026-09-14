@@ -192,17 +192,13 @@ namespace Gunspire
                             sx * offset + rng.Range(-1.5f, 1.5f), 0.55f,
                             sz * offset + rng.Range(-1.5f, 1.5f));
 
-                        bool reinforced = rng.Chance(0.3f);
-                        Color colour = reinforced ? new Color(0.35f, 0.36f, 0.42f) : Palette.Crate;
-
-                        GameObject crate = Build.Cube(parent, reinforced ? "ReinforcedCrate" : "Crate",
-                            spot, new Vector3(1.1f, 1.1f, 1.1f), MaterialLibrary.Lit(colour, 0.1f),
+                        GameObject crate = Build.Cube(parent, "Crate",
+                            spot, new Vector3(1.1f, 1.1f, 1.1f), MaterialLibrary.Lit(Palette.Crate, 0.1f),
                             collider: true, layer: Layers.Prop);
 
                         var smashable = crate.AddComponent<Smashable>();
-                        smashable.Hardness = reinforced ? 6f + node.Floor : 0f;
-                        smashable.MaxHealth = reinforced ? 60f : 25f;
-                        smashable.BodyColor = colour;
+                        smashable.MaxHealth = 25f;
+                        smashable.BodyColor = Palette.Crate;
                     }
                 }
             }

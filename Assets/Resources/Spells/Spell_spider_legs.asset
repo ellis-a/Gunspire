@@ -21,9 +21,11 @@ MonoBehaviour:
       straight back down onto it, not away.
     ManaCost: 20
     Cooldown: 6
+    NoiseMultiplier: 1
     Rarity: 2
     Type: 1
     DamageType: 1
+    School: 1
     Slot: 1
     Sustain:
       ManaPerSecond: 11

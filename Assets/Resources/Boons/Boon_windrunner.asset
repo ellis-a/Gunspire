@@ -15,8 +15,9 @@ MonoBehaviour:
   Boon:
     Id: windrunner
     Name: Windrunner
-    Description: +3 Agility.
+    Description: +3 Athletics.
     Rarity: 3
+    Icon: {fileID: 0}
     MaxLevel: 3
     Effects:
     - rid: 5643702087564918835

@@ -74,6 +74,14 @@ namespace Gunspire.EditorTools
             var counts = new Dictionary<SpellSlot, int>();
             var seen = new Dictionary<string, string>();
 
+            // Every slot is reported, so an empty pool reads as a zero rather than going missing.
+            foreach (SpellSlot slot in System.Enum.GetValues(typeof(SpellSlot))) counts[slot] = 0;
+
+            // A retired spell comes back either as a re-added built-in or as an asset restored
+            // from an old branch. Either way it would be offered at shrines again.
+            foreach (string id in RetiredSpells.Ids)
+                if (SpellLibrary.Get(id) != null) problems.Add("retired spell \"" + id + "\" is back in the roster");
+
             foreach (Spell spell in SpellLibrary.All)
             {
                 counts.TryGetValue(spell.Slot, out int n);

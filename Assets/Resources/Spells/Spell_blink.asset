@@ -20,9 +20,11 @@ MonoBehaviour:
       the first wall rather than dropping you inside it.
     ManaCost: 16
     Cooldown: 4
-    Rarity: 1
+    NoiseMultiplier: 1
+    Rarity: 0
     Type: 1
     DamageType: 1
+    School: 6
     Slot: 1
     Sustain:
       ManaPerSecond: 0
@@ -47,8 +49,9 @@ MonoBehaviour:
     - rid: 5643702153244311553
       type: {class: SweepForwardEffect, ns: Gunspire, asm: Assembly-CSharp}
       data:
-        BaseDistance: 9
-        PerIntellect: 0.18
+        BaseDistance: 9.54
+        PerStatPoint: 0
+        ScaleStat: 1
         MaxDistance: 22
         MinDistance: 0.4
         PitchDownLimit: -0.25

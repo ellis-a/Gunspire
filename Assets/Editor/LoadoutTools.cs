@@ -67,14 +67,14 @@ namespace Gunspire.EditorTools
 
         /// <summary>
         /// Prints the loadouts side by side. They are meant to be balanced against each other
-        /// - the same 25 stat points and guns tuned to roughly the same damage - and that is
+        /// - the same stat budget and guns tuned to roughly the same damage - and that is
         /// only checkable by comparing them, which reading three object initializers is not.
         /// </summary>
         [MenuItem("Gunspire/Log Loadout Table")]
         public static void LogLoadoutTable()
         {
             var text = new System.Text.StringBuilder();
-            text.AppendLine("id            name          STR INT AGI VIT LCK  pts  gun            move    spell");
+            text.AppendLine("id            name          DEX POW ATH END LCK  pts  gun            move    spell");
 
             IReadOnlyList<LoadoutDefinition> all = LoadoutLibrary.All;
             for (int i = 0; i < all.Count; i++)
@@ -82,7 +82,7 @@ namespace Gunspire.EditorTools
                 LoadoutDefinition l = all[i];
                 text.AppendLine(string.Format(
                     "{0,-13} {1,-13} {2,3} {3,3} {4,3} {5,3} {6,3} {7,4}  {8,-14} {9,-7} {10}",
-                    l.Id, l.DisplayName, l.Strength, l.Intellect, l.Agility, l.Vitality, l.Luck,
+                    l.Id, l.DisplayName, l.Dexterity, l.Power, l.Athletics, l.Endurance, l.Luck,
                     l.TotalStatPoints, l.WeaponId, l.MovementAbilityId, l.SpellId));
             }
 

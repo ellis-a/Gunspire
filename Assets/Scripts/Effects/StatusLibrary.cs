@@ -25,6 +25,18 @@ namespace Gunspire
             Register(new MarkStatus());
             Register(new DeathmarkStatus());
             Register(new EtherealStatus());
+
+            // Planned: named so every id resolves, with no behaviour until the systems they need
+            // exist. Verify Debuffs lists them, so nobody mistakes one for a finished effect.
+            Register(new PlannedStatus(StatusId.Snare, "Snared", "Slowed, or held still at full strength.", new Color(0.55f, 0.45f, 0.3f)));
+            Register(new PlannedStatus(StatusId.Silence, "Silenced", "Cannot cast spells.", new Color(0.6f, 0.6f, 0.75f)));
+            Register(new PlannedStatus(StatusId.Disarm, "Disarmed", "Cannot shoot.", new Color(0.75f, 0.6f, 0.45f)));
+            Register(new PlannedStatus(StatusId.Fear, "Feared", "Flees faster, and cannot attack.", new Color(0.55f, 0.3f, 0.7f)));
+            Register(new PlannedStatus(StatusId.Blind, "Blinded", "Cannot see, and aims where it last saw its target.", new Color(0.25f, 0.25f, 0.3f)));
+            Register(new PlannedStatus(StatusId.Confusion, "Confused", "Cannot tell friend from foe.", new Color(0.9f, 0.55f, 0.85f)));
+            Register(new PlannedStatus(StatusId.Sleep, "Asleep", "Does nothing until it wakes.", new Color(0.5f, 0.6f, 0.9f)));
+            Register(new PlannedStatus(StatusId.Plague, "Plagued", "Rises as a zombie on death, and spreads the plague.", new Color(0.5f, 0.65f, 0.25f)));
+            Register(new PlannedStatus(StatusId.Torment, "Tormented", "Takes damage over time.", new Color(0.8f, 0.35f, 0.6f)));
         }
 
         private static void Register(StatusDefinition def) => Map[def.Id] = def;
@@ -90,6 +102,10 @@ namespace Gunspire
         public override Color Tint => new Color(0.55f, 0.85f, 1f);
         public override int MaxStacks => FullStacks;
 
+        /// <summary>The slow per stack is fixed, so the stack count is the amount.</summary>
+        public override StatusApplication Empower(StatusApplication app, float spellPower)
+            => ScaleStacks(app, spellPower);
+
         public override void BuildModifiers(StatusController c, ActiveStatus s)
         {
             float slow = Mathf.Clamp01(SlowPerStack * s.Stacks);
@@ -116,6 +132,9 @@ namespace Gunspire
         public override int MaxStacks => 1;
         public override float TickInterval => 0.5f;
 
+        public override StatusApplication Empower(StatusApplication app, float spellPower)
+            => ScaleMagnitude(app, spellPower);
+
         public override void OnTick(StatusController c, ActiveStatus s)
         {
             c.DealTickDamage(s, s.Magnitude, DamageType.Energy);
@@ -141,6 +160,9 @@ namespace Gunspire
         public override int MaxStacks => 5;
         public override float TickInterval => 0.5f;
 
+        public override StatusApplication Empower(StatusApplication app, float spellPower)
+            => ScaleMagnitude(app, spellPower);
+
         public override void OnTick(StatusController c, ActiveStatus s)
         {
             c.DealTickDamage(s, s.Magnitude * s.Stacks * TickInterval, DamageType.Kinetic);
@@ -161,6 +183,9 @@ namespace Gunspire
         public override string Description => "Aim sways. Falls off twice as fast while standing still.";
         public override Color Tint => new Color(0.55f, 0.9f, 0.35f);
         public override int MaxStacks => 6;
+
+        public override StatusApplication Empower(StatusApplication app, float spellPower)
+            => ScaleMagnitude(app, spellPower);
 
         /// <summary>Standing still shakes it off twice as fast.</summary>
         public override float DecayScale(StatusController c, ActiveStatus s)
@@ -192,6 +217,10 @@ namespace Gunspire
         public override Color Tint => new Color(0.7f, 0.75f, 1f);
         public override int MaxStacks => 3;
 
+        /// <summary>Only the damage amplification grows. Deafness stays per stack.</summary>
+        public override StatusApplication Empower(StatusApplication app, float spellPower)
+            => ScaleMagnitude(app, spellPower);
+
         public override void BuildModifiers(StatusController c, ActiveStatus s)
         {
             c.AddModifier(s, StatModifier.Percent(Attr.DamageTaken, s.Magnitude * s.Stacks, s));
@@ -215,6 +244,9 @@ namespace Gunspire
         public override Color Tint => new Color(0.6f, 0.45f, 0.7f);
         public override int MaxStacks => 3;
 
+        public override StatusApplication Empower(StatusApplication app, float spellPower)
+            => ScaleMagnitude(app, spellPower);
+
         public override void BuildModifiers(StatusController c, ActiveStatus s)
         {
             c.AddModifier(s, StatModifier.Percent(Attr.DamageDealt, -s.Magnitude * s.Stacks, s));
@@ -229,6 +261,9 @@ namespace Gunspire
         public override Color Tint => new Color(1f, 0.9f, 0.4f);
         public override int MaxStacks => 5;
         public override bool IsDebuff => false;
+
+        public override StatusApplication Empower(StatusApplication app, float spellPower)
+            => ScaleMagnitude(app, spellPower);
 
         public override void BuildModifiers(StatusController c, ActiveStatus s)
         {
@@ -245,6 +280,10 @@ namespace Gunspire
         public override int MaxStacks => 3;
         public override bool IsDebuff => false;
 
+        /// <summary>Damage taken is clamped on the sheet, so a huge ward still cannot heal you.</summary>
+        public override StatusApplication Empower(StatusApplication app, float spellPower)
+            => ScaleMagnitude(app, spellPower);
+
         public override void BuildModifiers(StatusController c, ActiveStatus s)
         {
             c.AddModifier(s, StatModifier.Percent(Attr.DamageTaken, -s.Magnitude * s.Stacks, s));
@@ -259,6 +298,9 @@ namespace Gunspire
         public override string Description => "The next hit deals bonus damage.";
         public override Color Tint => new Color(1f, 0.35f, 0.45f);
         public override int MaxStacks => 1;
+
+        public override StatusApplication Empower(StatusApplication app, float spellPower)
+            => ScaleMagnitude(app, spellPower);
     }
 
     /// <summary>
@@ -292,5 +334,31 @@ namespace Gunspire
         public override string Description => "Immune to kinetic damage. Everything else hits twice as hard.";
         public override Color Tint => new Color(0.7f, 0.9f, 0.95f);
         public override int MaxStacks => 1;
+    }
+
+    /// <summary>
+    /// A status with a name, a colour and a place in the enum, but no behaviour yet. Applying
+    /// one does nothing beyond showing up. It exists so the id resolves and assets can refer to
+    /// it; the behaviour arrives with the systems it depends on.
+    /// </summary>
+    public class PlannedStatus : StatusDefinition
+    {
+        private readonly StatusId _id;
+        private readonly string _name;
+        private readonly string _description;
+        private readonly Color _tint;
+
+        public PlannedStatus(StatusId id, string name, string description, Color tint)
+        {
+            _id = id;
+            _name = name;
+            _description = description;
+            _tint = tint;
+        }
+
+        public override StatusId Id => _id;
+        public override string DisplayName => _name;
+        public override string Description => _description;
+        public override Color Tint => _tint;
     }
 }

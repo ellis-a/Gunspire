@@ -15,8 +15,9 @@ MonoBehaviour:
   Boon:
     Id: second_wind
     Name: Second Wind
-    Description: +2 Vitality, and heal to full right now.
+    Description: +2 Endurance, and heal to full right now.
     Rarity: 1
+    Icon: {fileID: 0}
     MaxLevel: 3
     Effects:
     - rid: 5643702087564918803

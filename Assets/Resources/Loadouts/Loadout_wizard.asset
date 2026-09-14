@@ -16,11 +16,11 @@ MonoBehaviour:
     Id: wizard
     DisplayName: Wizard
     Description: Blast your foes away with a shotgun.
-    Strength: 3
-    Intellect: 4
-    Agility: 3
-    Vitality: 3
-    Luck: 3
+    Dexterity: 10
+    Power: 11
+    Athletics: 10
+    Endurance: 10
+    Luck: 10
     WeaponId: shotgun
     MovementAbilityId: blink
     SpellId: 

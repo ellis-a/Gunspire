@@ -2,13 +2,9 @@ using UnityEngine;
 
 namespace Gunspire
 {
-    /// <summary>
-    /// Breakable scenery. Reinforced pieces need enough Strength behind the blow, which is
-    /// what makes a melee bash from a strong wizard worth having.
-    /// </summary>
+    /// <summary>Breakable scenery. Any damage chips at it, whatever dealt it.</summary>
     public class Smashable : MonoBehaviour, IDamageable
     {
-        public float Hardness = 0f;        // required SmashPower; 0 means any damage works
         public float MaxHealth = 30f;
         public Color BodyColor = Palette.Crate;
         public bool DropsReward = true;
@@ -25,13 +21,6 @@ namespace Gunspire
         public void TakeDamage(in DamageInfo info)
         {
             if (_broken) return;
-
-            if (Hardness > 0f && info.SmashPower < Hardness)
-            {
-                // Not strong enough: it rings and holds.
-                Combat.SpawnImpact(info.HitPoint, info.HitNormal, new Color(1f, 0.9f, 0.6f), 0.2f);
-                return;
-            }
 
             _health -= Mathf.Max(1f, info.Amount);
             if (_health <= 0f) Break(info);
@@ -62,11 +51,6 @@ namespace Gunspire
             if (Random.value < 0.55f) OrbPickup.SpawnHealth(at, 18f);
             else OrbPickup.SpawnMana(at, 30f);
         }
-
-        /// <summary>Prompt shown by the HUD when the object needs more Strength than the player has.</summary>
-        public string RequirementText => Hardness > 0f
-            ? "Reinforced - Strength " + Hardness.ToString("0") + " to smash"
-            : null;
     }
 
     /// <summary>A floating orb that tops the player up on contact.</summary>
@@ -447,10 +431,10 @@ namespace Gunspire
         {
             switch (stat)
             {
-                case StatType.Strength: return new Color(1f, 0.45f, 0.35f);
-                case StatType.Intellect: return new Color(0.55f, 0.65f, 1f);
-                case StatType.Agility: return new Color(0.5f, 1f, 0.7f);
-                case StatType.Vitality: return new Color(1f, 0.35f, 0.55f);
+                case StatType.Dexterity: return new Color(1f, 0.45f, 0.35f);
+                case StatType.Power: return new Color(0.55f, 0.65f, 1f);
+                case StatType.Athletics: return new Color(0.5f, 1f, 0.7f);
+                case StatType.Endurance: return new Color(1f, 0.35f, 0.55f);
                 default: return new Color(1f, 0.85f, 0.4f);
             }
         }

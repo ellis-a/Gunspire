@@ -205,8 +205,8 @@ namespace Gunspire
                 Rarity.Uncommon, 4,
                 new OnKillEffect { CooldownReduction = 0.6f });
 
-            Add("second_wind", "Second Wind", "+2 Vitality, and heal to full right now.", Rarity.Uncommon, 3,
-                new ModifyStatEffect { Stat = StatType.Vitality, Points = 2 },
+            Add("second_wind", "Second Wind", "+2 Endurance, and heal to full right now.", Rarity.Uncommon, 3,
+                new ModifyStatEffect { Stat = StatType.Endurance, Points = 2 },
                 new FullHealEffect());
 
             Add("fleet", "Fleet", "+1 dash charge.", Rarity.Uncommon, 3,
@@ -317,14 +317,14 @@ namespace Gunspire
         private static void BuildMythic()
         {
             Add("titan_grip", "Titan Grip",
-                "+3 Strength. Heavier blows, and heavier things you can break.", Rarity.Mythic, 3,
-                new ModifyStatEffect { Stat = StatType.Strength, Points = 3 });
+                "+3 Dexterity. Tighter spread, less recoil and faster reloads.", Rarity.Mythic, 3,
+                new ModifyStatEffect { Stat = StatType.Dexterity, Points = 3 });
 
-            Add("scholar", "Scholar", "+3 Intellect.", Rarity.Mythic, 3,
-                new ModifyStatEffect { Stat = StatType.Intellect, Points = 3 });
+            Add("scholar", "Scholar", "+3 Power.", Rarity.Mythic, 3,
+                new ModifyStatEffect { Stat = StatType.Power, Points = 3 });
 
-            Add("windrunner", "Windrunner", "+3 Agility.", Rarity.Mythic, 3,
-                new ModifyStatEffect { Stat = StatType.Agility, Points = 3 });
+            Add("windrunner", "Windrunner", "+3 Athletics.", Rarity.Mythic, 3,
+                new ModifyStatEffect { Stat = StatType.Athletics, Points = 3 });
 
             Add("fortune", "Fortune", "+3 Luck. Better crits, and far better things on offer.",
                 Rarity.Mythic, 3,

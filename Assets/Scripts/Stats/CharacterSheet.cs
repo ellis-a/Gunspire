@@ -12,12 +12,22 @@ namespace Gunspire
     /// </summary>
     public class CharacterSheet : MonoBehaviour
     {
+        /// <summary>
+        /// Every stat's normal value. Each formula below reads as "the value at the baseline,
+        /// plus so much per point either side of it".
+        ///
+        /// The formulas were rebased when the stats were reworked so that nothing changed for an
+        /// existing character. Every old loadout opened at 3 in each stat, so a stat of 10 now
+        /// gives exactly what 3 used to, and every authored loadout moved up by 7.
+        /// </summary>
+        public const int Baseline = 10;
+
         [Header("Core stats")]
-        [SerializeField] private int strength = 5;
-        [SerializeField] private int intellect = 5;
-        [SerializeField] private int agility = 5;
-        [SerializeField] private int vitality = 5;
-        [SerializeField] private int luck = 5;
+        [SerializeField] private int dexterity = Baseline;
+        [SerializeField] private int power = Baseline;
+        [SerializeField] private int athletics = Baseline;
+        [SerializeField] private int endurance = Baseline;
+        [SerializeField] private int luck = Baseline;
 
         private readonly Dictionary<StatType, int> _coreBonus = new Dictionary<StatType, int>();
         private readonly Dictionary<Attr, float> _baseOverrides = new Dictionary<Attr, float>();
@@ -44,10 +54,10 @@ namespace Gunspire
             int b;
             switch (stat)
             {
-                case StatType.Strength: b = strength; break;
-                case StatType.Intellect: b = intellect; break;
-                case StatType.Agility: b = agility; break;
-                case StatType.Vitality: b = vitality; break;
+                case StatType.Dexterity: b = dexterity; break;
+                case StatType.Power: b = power; break;
+                case StatType.Athletics: b = athletics; break;
+                case StatType.Endurance: b = endurance; break;
                 default: b = luck; break;
             }
             _coreBonus.TryGetValue(stat, out int bonus);
@@ -58,10 +68,10 @@ namespace Gunspire
         {
             switch (stat)
             {
-                case StatType.Strength: strength = value; break;
-                case StatType.Intellect: intellect = value; break;
-                case StatType.Agility: agility = value; break;
-                case StatType.Vitality: vitality = value; break;
+                case StatType.Dexterity: dexterity = value; break;
+                case StatType.Power: power = value; break;
+                case StatType.Athletics: athletics = value; break;
+                case StatType.Endurance: endurance = value; break;
                 default: luck = value; break;
             }
             MarkDirty();
@@ -219,39 +229,53 @@ namespace Gunspire
         {
             if (_baseOverrides.TryGetValue(attr, out float over)) return over;
 
-            int str = GetStat(StatType.Strength);
-            int wit = GetStat(StatType.Intellect);
-            int agi = GetStat(StatType.Agility);
-            int vit = GetStat(StatType.Vitality);
-            int lck = GetStat(StatType.Luck);
+            // Distance from the baseline, so each formula is its normal value plus a step.
+            int dex = GetStat(StatType.Dexterity) - Baseline;
+            int pow = GetStat(StatType.Power) - Baseline;
+            int ath = GetStat(StatType.Athletics) - Baseline;
+            int end = GetStat(StatType.Endurance) - Baseline;
+            int lck = GetStat(StatType.Luck) - Baseline;
 
             switch (attr)
             {
-                case Attr.MaxHealth:        return 80f + vit * 12f;
-                case Attr.HealthRegen:      return vit * 0.04f;
-                case Attr.MaxMana:          return 80f + wit * 8f;
-                case Attr.ManaRegen:        return 5f + wit * 0.8f;
+                case Attr.MaxHealth:        return 116f + end * 12f;
 
-                case Attr.MoveSpeed:        return 7.0f + agi * 0.18f;
-                case Attr.JumpHeight:       return 1.25f + agi * 0.06f;
-                case Attr.AirControl:       return 0.35f + agi * 0.015f;
-                case Attr.DashCharges:      return 1f + Mathf.Floor(agi / 6f);
-                case Attr.DashSpeed:        return 22f + agi * 0.30f;
+                // No base regeneration. Any healing closes a bleed, so a passive trickle would
+                // make bleeding pointless; regeneration comes only from boons and effects.
+                case Attr.HealthRegen:      return 0f;
+
+                case Attr.MaxMana:          return 104f + pow * 8f;
+                case Attr.ManaRegen:        return 7.4f + end * 0.8f;
+
+                case Attr.MoveSpeed:        return 7.54f + ath * 0.18f;
+                case Attr.JumpHeight:       return 1.43f + ath * 0.06f;
+                case Attr.AirControl:       return 0.395f + ath * 0.015f;
+
+                // Dash charges belong to the Dash spell's level once movement spells can level.
+                case Attr.DashCharges:      return 1f;
+                case Attr.DashSpeed:        return 22f;
 
                 case Attr.DamageDealt:      return 1f;
-                case Attr.GunDamage:        return 1f + str * 0.025f;
-                case Attr.SpellPower:       return 1f + wit * 0.045f;
+
+                // A gun's damage and fire rate come from the gun alone. Boons can still move
+                // them; no stat does.
+                case Attr.GunDamage:        return 1f;
+                case Attr.AttackSpeed:      return 1f;
+
+                case Attr.SpellPower:       return 1.135f + pow * 0.045f;
                 case Attr.DamageTaken:      return 1f;
                 case Attr.HealingReceived:  return 1f;
 
-                case Attr.CooldownRate:     return 1f + wit * 0.020f;
-                case Attr.AttackSpeed:      return 1f + agi * 0.012f;
-                case Attr.ReloadSpeed:      return 1f + agi * 0.020f;
+                case Attr.CooldownRate:     return 1.06f + ath * 0.02f;
+                case Attr.ReloadSpeed:      return 1.06f + dex * 0.02f;
+                case Attr.Spread:           return 1f - dex * 0.03f;
+                case Attr.Recoil:           return 1f - dex * 0.03f;
 
-                case Attr.CritChance:       return 0.03f + lck * 0.012f;
-                case Attr.CritDamage:       return 1.75f + lck * 0.020f;
-                case Attr.SmashPower:       return str;
+                case Attr.CritChance:       return 0.066f + lck * 0.012f;
+                case Attr.CritDamage:       return 1.75f;
+                case Attr.SmashPower:       return 0f;
                 case Attr.Lifesteal:        return 0f;
+                case Attr.GravityScale:     return 1f;
             }
             return 0f;
         }
@@ -276,6 +300,9 @@ namespace Gunspire
                 case Attr.SpellPower:      return Mathf.Max(0.05f, v);
                 case Attr.GunDamage:       return Mathf.Max(0.05f, v);
                 case Attr.DamageDealt:     return Mathf.Max(0.05f, v);
+                case Attr.Spread:          return Mathf.Clamp(v, 0.25f, 2f);
+                case Attr.Recoil:          return Mathf.Clamp(v, 0.25f, 2f);
+                case Attr.GravityScale:    return Mathf.Max(0f, v);
                 default:                   return v;
             }
         }
@@ -285,22 +312,21 @@ namespace Gunspire
         {
             switch (stat)
             {
-                case StatType.Strength:
-                    return string.Format("Gun damage +{0:0}%   Smash power {1:0}",
-                        (Get(Attr.GunDamage) - 1f) * 100f, Get(Attr.SmashPower));
-                case StatType.Intellect:
-                    return string.Format("Spell power +{0:0}%   Cooldown rate +{1:0}%   Mana {2:0}",
-                        (Get(Attr.SpellPower) - 1f) * 100f, (Get(Attr.CooldownRate) - 1f) * 100f, Get(Attr.MaxMana));
-                case StatType.Agility:
-                    return string.Format("Speed {0:0.0}   Jump {1:0.00}m   Dashes {2:0}",
-                        Get(Attr.MoveSpeed), Get(Attr.JumpHeight), Get(Attr.DashCharges));
-                case StatType.Vitality:
-                    return string.Format("Health {0:0}   Regen {1:0.00}/s",
-                        Get(Attr.MaxHealth), Get(Attr.HealthRegen));
+                case StatType.Dexterity:
+                    return string.Format("Spread {0:0}%   Recoil {1:0}%   Reload {2:+0;-0;0}%",
+                        Get(Attr.Spread) * 100f, Get(Attr.Recoil) * 100f, (Get(Attr.ReloadSpeed) - 1f) * 100f);
+                case StatType.Power:
+                    return string.Format("Spell and status power {0:+0;-0;0}%   Mana {1:0}",
+                        (Get(Attr.SpellPower) - 1f) * 100f, Get(Attr.MaxMana));
+                case StatType.Athletics:
+                    return string.Format("Speed {0:0.0}   Jump {1:0.00}m   Cooldown rate {2:+0;-0;0}%",
+                        Get(Attr.MoveSpeed), Get(Attr.JumpHeight), (Get(Attr.CooldownRate) - 1f) * 100f);
+                case StatType.Endurance:
+                    return string.Format("Health {0:0}   Mana regen {1:0.0}/s",
+                        Get(Attr.MaxHealth), Get(Attr.ManaRegen));
                 default:
-                    return string.Format("Crit {0:0}% for {1:0}%   Rare finds x{2:0.00}",
-                        Get(Attr.CritChance) * 100f, Get(Attr.CritDamage) * 100f,
-                        1f + GetStat(StatType.Luck) * Rarities.LuckScaling);
+                    return string.Format("Crit {0:0}%   Rare finds x{1:0.00}",
+                        Get(Attr.CritChance) * 100f, Rarities.LuckFactor(GetStat(StatType.Luck)));
             }
         }
 

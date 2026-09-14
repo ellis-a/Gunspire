@@ -50,7 +50,10 @@ Everything lives under **Gunspire** in the menu bar.
 | Generate assets from the code rosters | Create **Weapon / Spell / Boon / Enemy / Familiar / Starting Loadout** Assets |
 | Read a roster as a table | Log **Weapon Balance / Spell / Boon / Enemy / Familiar / Loadout / Sound** Table |
 | Check things resolve | Verify Enemy Roster, Log Valid Ids, Log Missing Icons |
-| One-off migration | Sync Alt Fires To Assets |
+| Check the rules hold | Verify Stats / Debuffs / Spell Slots / Holster / Shot Spread / Perception / Wall Zip Math / Maze Generator / Maze Navigation |
+| Run every check at once | Verify All - also works from batch mode with `-executeMethod Gunspire.EditorTools.VerifyAll.Run` |
+| Migrate authored assets | Migrations / 1 - Report, 2 - Apply, 3 - Verify Nothing Pending |
+| Older one-off migrations, already applied | Sync Alt Fires To Assets, Sync Perception To Assets, Migrate Damage Types |
 
 The Create items never overwrite an existing asset, so they are safe to re-run and will not
 destroy Inspector tuning.
@@ -84,9 +87,11 @@ asset is the way back to the code value.
 
 **Adding a field to a definition needs a migration.** Existing assets deserialise it to its
 default, so the value you wrote in code never appears. Regenerating the assets would fix it and
-throw away Inspector tuning with it. `WeaponTools.SyncAltFires` is the pattern: copy only the new
-field, only onto assets that do not have it. This has come up three times; a general version is
-worth building if it comes up again.
+throw away Inspector tuning with it. Write a migration instead: `AssetMigrations.cs` holds the
+runner, and `StatReworkMigrations.cs` shows both kinds. A text migration edits the asset file,
+for renamed fields and reinterpreted enum integers; an object migration edits loaded assets, for
+everything else. Key each change to evidence only an unmigrated asset has, such as an old field
+name or an old exact value, so running it twice is harmless.
 
 **Ids are plain strings and the compiler does not check them.** A renamed gun does not fail to
 build, it silently stops appearing. Tooling that resolves ids is the only safety net - add to it

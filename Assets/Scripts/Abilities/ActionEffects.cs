@@ -24,7 +24,7 @@ namespace Gunspire
             int stacks = Stacks + Mathf.FloorToInt(levels * StacksPerLevel);
             float duration = Duration + levels * DurationPerLevel;
 
-            ctx.AddPayload(new StatusApplication(Status, duration, Mathf.Max(1, stacks), Magnitude));
+            ctx.AddPayload(ctx.Empower(new StatusApplication(Status, duration, Mathf.Max(1, stacks), Magnitude)));
             return true;
         }
 
@@ -44,16 +44,13 @@ namespace Gunspire
         public float FalloffRadius = 6f;
         public float MinFraction = 0.4f;
 
-        /// <summary>Strength behind the blow, compared against Smashable hardness.</summary>
-        public bool UseSmashPower;
-
         /// <summary>
-        /// Extra damage per point of <see cref="ScaleStat"/>, on top of <see cref="Amount"/>.
-        /// Zero leaves the damage flat, which is what every spell written before this existed
-        /// wants - and what an asset authored back then deserialises to.
+        /// Extra damage per point of <see cref="ScaleStat"/> above the stat baseline, and less
+        /// below it, on top of <see cref="Amount"/>. Zero leaves the damage flat, which is what
+        /// every built-in uses: spells already scale with Power through spell power.
         /// </summary>
         public float PerStatPoint = 0f;
-        public StatType ScaleStat = StatType.Strength;
+        public StatType ScaleStat = StatType.Power;
 
         /// <summary>
         /// Never strike the same target twice in one cast. A melee swing evaluated over
@@ -63,11 +60,9 @@ namespace Gunspire
 
         public override bool Execute(AbilityContext ctx)
         {
-            float smash = UseSmashPower && ctx.Sheet != null ? ctx.Sheet.Get(Attr.SmashPower) : 0f;
-
             float amount = Amount;
             if (PerStatPoint != 0f && ctx.Sheet != null)
-                amount += ctx.Sheet.GetStat(ScaleStat) * PerStatPoint;
+                amount += (ctx.Sheet.GetStat(ScaleStat) - CharacterSheet.Baseline) * PerStatPoint;
 
             for (int i = 0; i < ctx.Targets.Count; i++)
             {
@@ -89,7 +84,6 @@ namespace Gunspire
                 }
 
                 DamageInfo info = ctx.BuildDamage(amount * ctx.Power * falloff, center, -away, CanCrit);
-                info.SmashPower = smash;
                 if (Knockback > 0f) info.Knockback = away * (Knockback * falloff);
 
                 target.TakeDamage(info);
@@ -115,7 +109,7 @@ namespace Gunspire
             if (ctx.Status == null) return true;
 
             float duration = Duration + (ctx.Level - 1) * DurationPerLevel;
-            ctx.Status.Apply(new StatusApplication(Status, duration, Stacks, Magnitude),
+            ctx.Status.Apply(ctx.Empower(new StatusApplication(Status, duration, Stacks, Magnitude)),
                 ctx.Caster, ctx.Team);
             return true;
         }
@@ -178,7 +172,7 @@ namespace Gunspire
 
     /// <summary>
     /// The player dash: a burst along the movement input with brief invulnerability, spending
-    /// one of the Agility-scaled charges the motor tracks. Aborts with no charges left, which
+    /// one of the charges the motor tracks. Aborts with no charges left, which
     /// refunds the activation.
     /// </summary>
     [System.Serializable]
@@ -520,8 +514,8 @@ namespace Gunspire
     }
 
     /// <summary>
-    /// Chain Lightning. A loop with per-jump retargeting and decay is control flow, which
-    /// does not belong in a data chain, so it stays one bespoke effect.
+    /// An arc that leaps between enemies. A loop with per-jump retargeting and decay is control
+    /// flow, which does not belong in a data chain, so it stays one bespoke effect.
     /// </summary>
     [System.Serializable]
     public class ChainEffect : AbilityEffect

@@ -13,9 +13,9 @@ namespace Gunspire
         private static readonly Collider[] OverlapBuffer = new Collider[64];
 
         /// <summary>
-        /// Global outgoing multiplier for a source. Spells scale on Intellect and guns on
-        /// Strength, then both pick up whatever the sheet grants for that damage school, and
-        /// spells additionally for their category.
+        /// Global outgoing multiplier for a source. Spells scale on spell power, which Power
+        /// raises, and guns on gun damage, which only boons touch. Both then pick up whatever
+        /// the sheet grants for that damage school, and spells additionally for their category.
         /// </summary>
         public static float OutgoingMultiplier(CharacterSheet sheet, bool isSpell, DamageType damageType,
             SpellType spellType = SpellType.Attack)
@@ -102,7 +102,7 @@ namespace Gunspire
             return hits;
         }
 
-        /// <summary>Everything alive on the given team inside a cone. Used by Cone of Cold and melee sweeps.</summary>
+        /// <summary>Everything alive on the given team inside a cone. Used by cone spells and melee sweeps.</summary>
         public static List<IDamageable> ConeTargets(Vector3 origin, Vector3 forward, float range,
             float halfAngleDegrees, int layerMask)
         {

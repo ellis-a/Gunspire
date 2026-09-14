@@ -15,8 +15,9 @@ MonoBehaviour:
   Boon:
     Id: titan_grip
     Name: Titan Grip
-    Description: +3 Strength. Heavier blows, and heavier things you can break.
+    Description: +3 Dexterity. Tighter spread, less recoil and faster reloads.
     Rarity: 3
+    Icon: {fileID: 0}
     MaxLevel: 3
     Effects:
     - rid: 5643702087564918833

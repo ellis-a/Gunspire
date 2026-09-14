@@ -38,6 +38,14 @@ namespace Gunspire
         /// <summary>Outgoing multiplier: sheet bonuses for this school and category, times level growth.</summary>
         public float Power = 1f;
 
+        /// <summary>
+        /// What this cast's statuses are strengthened by: the caster's spell power for a spell,
+        /// and one for anything else. Kept apart from <see cref="Power"/> on purpose. That also
+        /// carries damage-dealt and per-school bonuses, which burn and bleed ticks already pick
+        /// up as they land, so scaling a status by it would count them twice.
+        /// </summary>
+        public float StatusPower = 1f;
+
         /// <summary>Level growth on its own, for effects that scale range or radius rather than damage.</summary>
         public float LevelScale = 1f;
 
@@ -105,6 +113,7 @@ namespace Gunspire
             Tint = tint;
 
             Power = Combat.OutgoingMultiplier(Sheet, isSpell, damageType, category) * levelScale;
+            StatusPower = isSpell && Sheet != null ? Sheet.Get(Attr.SpellPower) : 1f;
 
             Origin = Aim != null
                 ? Aim.position
@@ -116,7 +125,10 @@ namespace Gunspire
             Payload.Clear();
             AlreadyHit.Clear();
             Aborted = false;
-            if (ExtraStatuses != null) Payload.AddRange(ExtraStatuses);
+
+            // Boon statuses ride on the cast, so they are as strong as the cast's own.
+            if (ExtraStatuses != null)
+                for (int i = 0; i < ExtraStatuses.Count; i++) Payload.Add(Empower(ExtraStatuses[i]));
         }
 
         public void EndCast()
@@ -129,6 +141,23 @@ namespace Gunspire
         // ---------------------------------------------------------------- helpers for effects
 
         public void AddPayload(StatusApplication status) => Payload.Add(status);
+
+        /// <summary>A status as this cast delivers it, strengthened by <see cref="StatusPower"/>.</summary>
+        public StatusApplication Empower(StatusApplication status)
+        {
+            StatusDefinition def = StatusLibrary.Get(status.Id);
+            return def != null ? def.Empower(status, StatusPower) : status;
+        }
+
+        /// <summary>A copy of a status list as this cast delivers it. Null stays null.</summary>
+        public List<StatusApplication> EmpowerAll(List<StatusApplication> statuses)
+        {
+            if (statuses == null) return null;
+
+            var list = new List<StatusApplication>(statuses.Count);
+            for (int i = 0; i < statuses.Count; i++) list.Add(Empower(statuses[i]));
+            return list;
+        }
 
         /// <summary>Builds a hit carrying this cast's school, source and status payload.</summary>
         public DamageInfo BuildDamage(float amount, Vector3 point, Vector3 normal, bool canCrit = false)

@@ -21,7 +21,15 @@ namespace Gunspire
         Energy,    // most magic: fire, lightning, lasers
         Psychic,   // attacks on the mind
         Necrotic,  // disease, poison, shadow
-        True       // special: ignores resistance and invulnerability, never rolled as an element
+        True,      // special: ignores resistance and invulnerability, never rolled as an element
+
+        /// <summary>
+        /// What an execute reports its damage as: a frost shatter, a death mark, anything that
+        /// removes a health bar outright. Kept apart from every other type so that effects keyed
+        /// to damage type never mistake a whole health bar for an ordinary hit. Never resisted
+        /// and never rolled as an element.
+        /// </summary>
+        Execute
     }
 
     /// <summary>
@@ -49,8 +57,15 @@ namespace Gunspire
         /// <summary>The mind as a weapon - and as something to be turned.</summary>
         Psionic,
 
-        /// <summary>Turrets, charged ammunition and things bolted onto a gun.</summary>
-        Artifice
+        /// <summary>
+        /// Reality and time warping: holding things out of reality, phasing, folding space and
+        /// bending time. Took Artifice's position when it was renamed, so the stored integer
+        /// kept its meaning.
+        /// </summary>
+        Aetherics,
+
+        /// <summary>Filler and starter spells that belong to no school and count toward no mastery.</summary>
+        Petty
     }
 
     /// <summary>What a spell is for. Boons can buff a whole category at once.</summary>
@@ -86,8 +101,32 @@ namespace Gunspire
         Patrol
     }
 
-    /// <summary>The character sheet's core attributes. Everything else is derived from these.</summary>
-    public enum StatType { Strength, Intellect, Agility, Vitality, Luck }
+    /// <summary>
+    /// The character sheet's core attributes. Everything else is derived from these, and every
+    /// stat's normal value is <see cref="CharacterSheet.Baseline"/>.
+    ///
+    /// Stored as integers in boon assets, so each new stat took the position of the old stat
+    /// closest to it: Dexterity took Strength's, Power took Intellect's, Athletics took
+    /// Agility's and Endurance took Vitality's. A boon that raised Intellect now raises Power
+    /// with nothing in the asset needing to change. Do not reorder.
+    /// </summary>
+    public enum StatType
+    {
+        /// <summary>Bullet spread, recoil and reload speed.</summary>
+        Dexterity,
+
+        /// <summary>Spell damage and maximum mana.</summary>
+        Power,
+
+        /// <summary>Spell cooldowns, movement speed, jump height and air control.</summary>
+        Athletics,
+
+        /// <summary>Maximum health and mana regeneration.</summary>
+        Endurance,
+
+        /// <summary>Reward rarity and crit chance.</summary>
+        Luck
+    }
 
     /// <summary>
     /// Derived values. Boons and status effects add flat/percent modifiers to these
@@ -114,8 +153,17 @@ namespace Gunspire
         ReloadSpeed,
         CritChance,
         CritDamage,
-        SmashPower,       // compared against Smashable.hardness
-        Lifesteal
+        SmashPower,       // unused since reinforced barriers were removed; kept so later members keep their numbers
+        Lifesteal,
+
+        /// <summary>Multiplies a gun's spread. Dexterity lowers it; 1 is the gun as authored.</summary>
+        Spread,
+
+        /// <summary>Multiplies a gun's recoil. Dexterity lowers it; 1 is the gun as authored.</summary>
+        Recoil,
+
+        /// <summary>Multiplies the gravity the player falls and jumps under. 1 is normal.</summary>
+        GravityScale
     }
 
     /// <summary>Status effect identifiers. See <c>StatusLibrary</c> for behaviour.</summary>
@@ -151,7 +199,37 @@ namespace Gunspire
         Deathmark,
 
         /// <summary>Untouchable by kinetic damage, and doubly hurt by everything else.</summary>
-        Ethereal
+        Ethereal,
+
+        // Planned statuses. Registered with names and colours so every id resolves, but with no
+        // behaviour yet - see PlannedStatus in StatusLibrary.
+
+        /// <summary>Slows movement, and holds an ordinary enemy still at full strength.</summary>
+        Snare,
+
+        /// <summary>Cannot cast spells.</summary>
+        Silence,
+
+        /// <summary>Cannot shoot.</summary>
+        Disarm,
+
+        /// <summary>Moves faster and away from the source, and cannot attack.</summary>
+        Fear,
+
+        /// <summary>Cannot see the player, and aims where it last saw them.</summary>
+        Blind,
+
+        /// <summary>Cannot tell friend from foe, and attacks the nearest enemy.</summary>
+        Confusion,
+
+        /// <summary>Does nothing until it wakes, on damage or when the sleep wears off.</summary>
+        Sleep,
+
+        /// <summary>Rises as a zombie on death, and passes the plague on.</summary>
+        Plague,
+
+        /// <summary>Damage over time of any damage type.</summary>
+        Torment
     }
 
     public enum FireMode { Semi, Auto, Burst }

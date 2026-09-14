@@ -108,8 +108,15 @@ namespace Gunspire
     [System.Serializable]
     public class SweepForwardEffect : SelectorEffect
     {
+        /// <summary>Reach for a caster at the stat baseline, before level scaling.</summary>
         public float BaseDistance = 9f;
-        public float PerIntellect = 0.18f;
+
+        /// <summary>
+        /// Extra reach per point of <see cref="ScaleStat"/> above the baseline, and less below it.
+        /// Zero makes the reach fixed, which is what every built-in sweep uses.
+        /// </summary>
+        public float PerStatPoint = 0f;
+        public StatType ScaleStat = StatType.Power;
         public float MaxDistance = 22f;
         public float MinDistance = 0.4f;
         public float PitchDownLimit = -0.25f;
@@ -125,8 +132,9 @@ namespace Gunspire
             if (direction.sqrMagnitude < 0.001f) direction = ctx.Caster.transform.forward;
             direction.Normalize();
 
-            int intellect = ctx.Sheet != null ? ctx.Sheet.GetStat(StatType.Intellect) : 5;
-            float distance = BaseDistance + intellect * PerIntellect;
+            float distance = BaseDistance;
+            if (PerStatPoint != 0f && ctx.Sheet != null)
+                distance += (ctx.Sheet.GetStat(ScaleStat) - CharacterSheet.Baseline) * PerStatPoint;
             if (ScaleWithLevel) distance *= ctx.LevelScale;
             distance = Mathf.Min(MaxDistance, distance);
 

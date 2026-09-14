@@ -155,7 +155,10 @@ namespace Gunspire
             // Say plainly what fills the empty slots, rather than leaving a silent gap. With
             // no starting spell both are empty, and the first one is filled by the guaranteed
             // reward for clearing the first floor - which the card has to promise, or a
-            // spell-less opening looks like the class is missing something.
+            // spell-less opening looks like the class is missing something. With no cast spells
+            // in the roster at all, neither promise holds: the first floor falls back to a boon
+            // and shrines have nothing to offer.
+            bool castSpellsExist = SpellLibrary.ForSlot(SpellSlot.Cast).Count > 0;
             bool first = true;
             for (int i = 0; i < SpellBook.SlotCount; i++)
             {
@@ -163,9 +166,9 @@ namespace Gunspire
 
                 UIStyles.Text(new Rect(x, y, 46f, 18f), SpellBook.SlotLabels[i], UIStyles.Small, UIStyles.Muted);
                 UIStyles.Text(new Rect(x + 48f, y, width - 48f, 18f),
-                    first && spell == null
-                        ? "chosen after the first floor"
-                        : "empty - found at a Rune Shrine",
+                    !castSpellsExist ? "empty"
+                    : first && spell == null ? "chosen after the first floor"
+                    : "empty - found at a Rune Shrine",
                     UIStyles.Small, UIStyles.Muted);
 
                 first = false;

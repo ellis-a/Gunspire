@@ -68,7 +68,7 @@ namespace Gunspire
             sheet.SetBaseOverride(Attr.CritChance, 0f);
 
             // Enemy attack damage is authored directly, so neutralise the stat-derived
-            // multipliers the player gets from Strength and Intellect.
+            // multipliers the player gets, such as spell power from Power.
             sheet.SetBaseOverride(Attr.GunDamage, 1f);
             sheet.SetBaseOverride(Attr.SpellPower, 1f);
 

@@ -21,10 +21,20 @@ namespace Gunspire
     {
         public static readonly Rarity[] All = (Rarity[])Enum.GetValues(typeof(Rarity));
 
-        /// <summary>How much each point of Luck multiplies the non-Common tiers.</summary>
+        /// <summary>How much each point of Luck above <see cref="LuckFloor"/> multiplies the non-Common tiers.</summary>
         public const float LuckScaling = 0.08f;
 
-        /// <summary>Flat chance per roll at zero Luck. Common takes the remainder.</summary>
+        /// <summary>
+        /// Luck at or below this adds nothing. It sits three under the stat baseline of 10
+        /// because the old loadouts rolled at 3 Luck, so a character at the baseline now rolls
+        /// exactly as they did.
+        /// </summary>
+        public const int LuckFloor = 7;
+
+        /// <summary>How much a given Luck multiplies every tier above Common.</summary>
+        public static float LuckFactor(float luck) => 1f + Mathf.Max(0f, luck - LuckFloor) * LuckScaling;
+
+        /// <summary>Flat chance per roll with no Luck bonus. Common takes the remainder.</summary>
         public static float BaseChance(Rarity rarity)
         {
             switch (rarity)
@@ -57,7 +67,7 @@ namespace Gunspire
         /// </summary>
         public static Rarity Roll(Rng rng, float luck, float bonusMultiplier = 1f)
         {
-            float factor = (1f + Mathf.Max(0f, luck) * LuckScaling) * Mathf.Max(0.01f, bonusMultiplier);
+            float factor = LuckFactor(luck) * Mathf.Max(0.01f, bonusMultiplier);
 
             float roll = rng.Value;
             float cursor = 0f;
@@ -105,7 +115,7 @@ namespace Gunspire
         public static float ChanceAtLuck(Rarity rarity, float luck, float bonusMultiplier = 1f)
         {
             if (rarity == Rarity.Common) return 0f;
-            float factor = (1f + Mathf.Max(0f, luck) * LuckScaling) * Mathf.Max(0.01f, bonusMultiplier);
+            float factor = LuckFactor(luck) * Mathf.Max(0.01f, bonusMultiplier);
             return Mathf.Clamp01(BaseChance(rarity) * factor);
         }
     }

@@ -15,7 +15,7 @@ namespace Gunspire
     {
         public static readonly DamageType[] All = (DamageType[])Enum.GetValues(typeof(DamageType));
 
-        /// <summary>Every school except True, which is bookkeeping rather than an element.</summary>
+        /// <summary>Every school except True and Execute, which are bookkeeping rather than elements.</summary>
         public static readonly DamageType[] Elemental = BuildElemental();
 
         private static DamageType[] BuildElemental()
@@ -26,8 +26,11 @@ namespace Gunspire
             return list.ToArray();
         }
 
-        /// <summary>True damage bypasses resistance, vulnerability and invulnerability.</summary>
-        public static bool IsResistable(DamageType type) => type != DamageType.True;
+        /// <summary>
+        /// True damage bypasses resistance, vulnerability and invulnerability. Execute damage is
+        /// never resisted either: it reports a health bar that has already been removed.
+        /// </summary>
+        public static bool IsResistable(DamageType type) => type != DamageType.True && type != DamageType.Execute;
 
         public static string Name(DamageType type)
         {
@@ -37,6 +40,7 @@ namespace Gunspire
                 case DamageType.Energy:   return "Energy";
                 case DamageType.Psychic:  return "Psychic";
                 case DamageType.Necrotic: return "Necrotic";
+                case DamageType.Execute:  return "Execute";
                 default:                  return "True";
             }
         }
@@ -49,6 +53,7 @@ namespace Gunspire
                 case DamageType.Energy:   return new Color(1.00f, 0.58f, 0.20f);
                 case DamageType.Psychic:  return new Color(0.85f, 0.45f, 0.95f);
                 case DamageType.Necrotic: return new Color(0.45f, 0.80f, 0.40f);
+                case DamageType.Execute:  return new Color(0.95f, 0.15f, 0.25f);
                 default:                  return Color.white;
             }
         }

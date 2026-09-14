@@ -229,7 +229,7 @@ namespace Gunspire
                 if (!TryFindSpot(width, depth, 3.2f, rng, occupied, out Vector3 spot, clearance: 2.5f)) continue;
 
                 // A starting wizard jumps 1.55m. Spreading platform heights either side of that
-                // is what makes Agility (and the jump-height boons) open up new routes.
+                // is what makes Athletics (and the jump-height boons) open up new routes.
                 float height = rng.Range(1.2f, 2.6f);
                 Build.Cube(parent, "Platform", spot + Vector3.up * (height - 0.2f),
                     new Vector3(rng.Range(4f, 7f), 0.4f, rng.Range(4f, 7f)),
@@ -247,20 +247,20 @@ namespace Gunspire
             switch (node.Kind)
             {
                 case RoomKind.Combat:
-                    SpawnCrates(parent, width, depth, rng, occupied, rng.Range(3, 6), floor);
+                    SpawnCrates(parent, width, depth, rng, occupied, rng.Range(3, 6));
                     SpawnEnemies(runtime, width, depth, rng, occupied,
                         Mathf.Min(11, 4 + floor), floor, false);
                     break;
 
                 case RoomKind.Elite:
-                    SpawnCrates(parent, width, depth, rng, occupied, rng.Range(2, 4), floor);
+                    SpawnCrates(parent, width, depth, rng, occupied, rng.Range(2, 4));
                     SpawnEnemies(runtime, width, depth, rng, occupied,
                         Mathf.Min(5, 1 + floor / 2), floor, true);
                     SpawnEnemies(runtime, width, depth, rng, occupied, 2, floor, false);
                     break;
 
                 case RoomKind.Treasure:
-                    SpawnCrates(parent, width, depth, rng, occupied, 5, floor, forceReinforced: true);
+                    SpawnCrates(parent, width, depth, rng, occupied, 5);
                     if (TryFindSpot(width, depth, 2f, rng, occupied, out Vector3 vaultSpot, clearance: 2f))
                         WeaponPickup.Spawn(vaultSpot, WeaponLibrary.RollDrop(rng, PlayerLuck(), 1.5f))
                             .transform.SetParent(parent, true);
@@ -281,7 +281,7 @@ namespace Gunspire
                 case RoomKind.Boss:
                     SpawnBoss(runtime, floor);
                     SpawnEnemies(runtime, width, depth, rng, occupied, 2, floor, false);
-                    SpawnCrates(parent, width, depth, rng, occupied, 4, floor);
+                    SpawnCrates(parent, width, depth, rng, occupied, 4);
                     break;
             }
         }
@@ -322,30 +322,19 @@ namespace Gunspire
         }
 
         private static void SpawnCrates(Transform parent, float width, float depth, Rng rng,
-            List<Occupied> occupied, int count, int floor, bool forceReinforced = false)
+            List<Occupied> occupied, int count)
         {
             for (int i = 0; i < count; i++)
             {
                 if (!TryFindSpot(width, depth, 1.2f, rng, occupied, out Vector3 spot, clearance: 1.5f)) continue;
 
-                bool reinforced = forceReinforced || rng.Chance(0.35f);
-                float hardness = reinforced ? 6f + floor : 0f;
-                Color color = reinforced ? new Color(0.35f, 0.36f, 0.42f) : Palette.Crate;
-
-                GameObject crate = Build.Cube(parent, reinforced ? "ReinforcedCrate" : "Crate",
+                GameObject crate = Build.Cube(parent, "Crate",
                     spot + Vector3.up * 0.55f, new Vector3(1.1f, 1.1f, 1.1f),
-                    MaterialLibrary.Lit(color, 0.1f), collider: true, layer: Layers.Prop);
+                    MaterialLibrary.Lit(Palette.Crate, 0.1f), collider: true, layer: Layers.Prop);
 
                 var smashable = crate.AddComponent<Smashable>();
-                smashable.Hardness = hardness;
-                smashable.MaxHealth = reinforced ? 60f : 25f;
-                smashable.BodyColor = color;
-
-                if (reinforced)
-                {
-                    Build.Cube(crate.transform, "Band", Vector3.zero, new Vector3(1.05f, 0.22f, 1.05f),
-                        MaterialLibrary.Emissive(new Color(1f, 0.7f, 0.35f), 1.5f), collider: false);
-                }
+                smashable.MaxHealth = 25f;
+                smashable.BodyColor = Palette.Crate;
             }
         }
 

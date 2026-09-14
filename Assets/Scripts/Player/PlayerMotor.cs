@@ -5,7 +5,7 @@ namespace Gunspire
     /// <summary>
     /// First person movement. Quake-style ground friction plus air acceleration, so
     /// strafing and dashing keep momentum. Speed, jump height and dash charges all come
-    /// off the character sheet, which is how Agility pays out.
+    /// off the character sheet, which is how Athletics pays out.
     /// </summary>
     [RequireComponent(typeof(CharacterController))]
     public class PlayerMotor : MonoBehaviour
@@ -319,7 +319,7 @@ namespace Gunspire
                 float airWish = Mathf.Min(wishSpeed, airWishSpeed);
                 horizontal = Accelerate(horizontal, wishDir, airWish, airAcceleration * airControl, dt);
 
-                vertical += gravity * dt;
+                vertical += Gravity * dt;
             }
 
             _velocity = horizontal + up * vertical;
@@ -442,10 +442,16 @@ namespace Gunspire
             return horizontal + wishDir * accelSpeed;
         }
 
+        /// <summary>
+        /// Gravity with the sheet's scale applied, so anything that lightens the player - a slow
+        /// fall, or buoyancy - changes both the fall and the jump that has to climb against it.
+        /// </summary>
+        private float Gravity => gravity * (_sheet != null ? _sheet.Get(Attr.GravityScale) : 1f);
+
         private void DoJump()
         {
             float height = _sheet != null ? _sheet.Get(Attr.JumpHeight) : 1.4f;
-            float jumpSpeed = Mathf.Sqrt(2f * Mathf.Abs(gravity) * height);
+            float jumpSpeed = Mathf.Sqrt(2f * Mathf.Abs(Gravity) * height);
 
             // Along the current up axis rather than world Y: off a real floor that is straight
             // up as always, but off an attached wall it is away from the surface, with gravity

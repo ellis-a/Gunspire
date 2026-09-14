@@ -17,12 +17,14 @@ MonoBehaviour:
     DisplayName: Dash
     ShortName: DASH
     Description: A short burst in the direction you are moving, with a sliver of
-      invulnerability. Charges recover on their own, and Agility grants more.
+      invulnerability. Charges recover on their own.
     ManaCost: 6
     Cooldown: 0
+    NoiseMultiplier: 1
     Rarity: 0
     Type: 1
     DamageType: 1
+    School: 7
     Slot: 1
     Sustain:
       ManaPerSecond: 0

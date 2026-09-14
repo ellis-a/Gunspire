@@ -99,7 +99,7 @@ namespace Gunspire
             sheet.SetBaseOverride(Attr.CritChance, 0f);
 
             // Familiar damage is authored directly, the same as enemy damage, so the player's
-            // Strength and Intellect must not multiply it a second time through the aura.
+            // stat-derived multipliers must not multiply it a second time through the aura.
             sheet.SetBaseOverride(Attr.GunDamage, 1f);
             sheet.SetBaseOverride(Attr.SpellPower, 1f);
 

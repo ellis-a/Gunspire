@@ -4,7 +4,7 @@ namespace Gunspire
 {
     /// <summary>
     /// Reads the combat half of the player input and drives the gun, the spell slots,
-    /// the Strength-powered melee bash, and interaction.
+    /// the melee spell, and interaction.
     /// </summary>
     public class PlayerCombat : MonoBehaviour
     {
@@ -201,7 +201,7 @@ namespace Gunspire
 
         /// <summary>
         /// Casts whatever is bound to the melee slot. The swing itself is an effect chain like
-        /// any other spell, so its reach, damage, knockback and Strength scaling are all
+        /// any other spell, so its reach, damage and knockback are all
         /// authored on the asset rather than hardcoded here.
         /// </summary>
         private void TryBash()

@@ -40,7 +40,7 @@ namespace Gunspire
     [System.Serializable]
     public class ModifyStatEffect : BoonEffect
     {
-        public StatType Stat = StatType.Strength;
+        public StatType Stat = StatType.Dexterity;
         public int Points = 3;
 
         public override void Apply(RunState run, int level)

@@ -311,9 +311,14 @@ namespace Gunspire
             Vector3 origin = AimOrigin != null ? AimOrigin.position : transform.position;
             Vector3 forward = AimOrigin != null ? AimOrigin.forward : transform.forward;
 
+            // Dexterity steadies the hands: one multiplier on the cone, one on the kick. Applied
+            // here rather than to the definition, so both triggers pick them up.
+            float spreadScale = OwnerSheet != null ? OwnerSheet.Get(Attr.Spread) : 1f;
+            float recoilScale = OwnerSheet != null ? OwnerSheet.Get(Attr.Recoil) : 1f;
+
             for (int i = 0; i < spec.Pellets; i++)
             {
-                Vector3 direction = ApplySpread(forward, spec.SpreadDegrees);
+                Vector3 direction = ApplySpread(forward, spec.SpreadDegrees * spreadScale);
                 if (spec.Delivery == DeliveryKind.Hitscan) FireHitscan(spec, origin, direction);
                 else FireProjectile(spec, origin, direction);
             }
@@ -321,7 +326,8 @@ namespace Gunspire
             MuzzleFlash();
             PlayFireSound();
 
-            if (Look != null) Look.AddRecoil(spec.RecoilPitch, Random.Range(-1f, 1f) * spec.RecoilYaw);
+            if (Look != null)
+                Look.AddRecoil(spec.RecoilPitch * recoilScale, Random.Range(-1f, 1f) * spec.RecoilYaw * recoilScale);
             if (AmmoInMagazine <= 0) StartReload();
         }
 

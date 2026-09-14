@@ -37,9 +37,6 @@ namespace Gunspire
         public bool IsCrit;
         public bool CanCrit;
 
-        /// <summary>Compared against <c>Smashable.Hardness</c>. Guns leave this at zero; a melee bash uses Strength.</summary>
-        public float SmashPower;
-
         public List<StatusApplication> Statuses;
 
         public static DamageInfo Create(float amount, DamageType type, Team team, GameObject source)
