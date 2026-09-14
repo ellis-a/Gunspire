@@ -357,8 +357,9 @@ namespace Gunspire
                 // Shrines roll their own rarity, so a lucky wizard can find a legendary here.
                 if (offerMovement)
                 {
-                    // Movement and melee share the pedestal, and neither slot levels up, so a
-                    // pedestal offering what you already hold would do nothing at all.
+                    // Movement and melee share the pedestal. Offering what you already hold levels it,
+                    // and the offer pool already leaves it out once it is at its cap; without a book to
+                    // ask, a pedestal offering what you hold would do nothing at all.
                     SpellSlot slot = rng.Chance(0.5f) ? SpellSlot.Movement : SpellSlot.Melee;
 
                     Spell held = slot == SpellSlot.Melee
@@ -366,7 +367,8 @@ namespace Gunspire
                         : (movement != null ? movement.Current : null);
 
                     Spell ability = SpellLibrary.RollOffer(rng, book, PlayerLuck(), 1.5f, slot);
-                    if (ability != null && held != null && ability.Id == held.Id) ability = null;
+                    if (ability != null && held != null && ability.Id == held.Id && (book == null || !book.CanTake(ability)))
+                        ability = null;
 
                     if (ability != null)
                         MovementPedestal.Spawn(runeSpot, ability).transform.SetParent(parent, true);

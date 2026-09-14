@@ -25,7 +25,24 @@ namespace Gunspire
         public Camera Camera;
         public Transform CameraPivot;
 
+        public MasteryHost Masteries;
+        public PlayerConcealment Concealment;
+        public PossessionController Possession;
+        public RewindRecorder Rewind;
+        public PlayerBuffs Buffs;
+        public ActionLog Actions;
+        public AutoFireDriver AutoFire;
+
         public AbilityContext SpellContext { get; private set; }
+
+        private bool _menuInputEnabled = true;
+        private bool _controlsSuppressed;
+
+        /// <summary>Whether the game state allows input at all: false behind a menu, a choice screen or death.</summary>
+        public bool MenuInputEnabled => _menuInputEnabled;
+
+        /// <summary>Whether something has taken the player's own controls away, as possession does.</summary>
+        public bool ControlsSuppressed => _controlsSuppressed;
 
         private void Awake()
         {
@@ -40,11 +57,28 @@ namespace Gunspire
         /// <summary>Enables or disables every input surface at once, for menus and death.</summary>
         public void SetInputEnabled(bool enabled)
         {
-            if (Motor != null) Motor.InputEnabled = enabled;
-            if (Look != null) Look.InputEnabled = enabled;
-            if (CombatInput != null) CombatInput.InputEnabled = enabled;
-            if (Movement != null) Movement.InputEnabled = enabled;
+            _menuInputEnabled = enabled;
+            ApplyInput();
             PlayerLook.LockCursor(enabled);
+        }
+
+        /// <summary>
+        /// Takes the player's own controls away, or gives them back, independently of menus: a pause during
+        /// possession must not hand the controls back when it closes.
+        /// </summary>
+        public void SetControlSuppressed(bool suppressed)
+        {
+            _controlsSuppressed = suppressed;
+            ApplyInput();
+        }
+
+        private void ApplyInput()
+        {
+            bool on = _menuInputEnabled && !_controlsSuppressed;
+            if (Motor != null) Motor.InputEnabled = on;
+            if (Look != null) Look.InputEnabled = on;
+            if (CombatInput != null) CombatInput.InputEnabled = on;
+            if (Movement != null) Movement.InputEnabled = on;
         }
 
         public void FullRestore()
@@ -56,6 +90,22 @@ namespace Gunspire
             if (Book != null) Book.ResetCooldowns();
             if (Status != null) Status.ClearAll();
             if (Movement != null) Movement.ResetState();
+        }
+
+        /// <summary>
+        /// Clears everything a run leaves on the player's own systems: possession, auto-fire, concealment,
+        /// buffs, rewind history, the action log, and what the masteries built up. A restart reuses the
+        /// player object, so none of it may carry into the next run.
+        /// </summary>
+        public void ResetRunSystems()
+        {
+            if (Possession != null) Possession.Cancel();
+            if (AutoFire != null) AutoFire.End();
+            if (Concealment != null) Concealment.Clear();
+            if (Buffs != null) Buffs.Clear();
+            if (Rewind != null) Rewind.Clear();
+            if (Actions != null) Actions.Clear();
+            if (Masteries != null) Masteries.ResetForRun();
         }
 
         // ---------------------------------------------------------------- construction
@@ -154,6 +204,7 @@ namespace Gunspire
                 Controller = controller
             };
             book.Context = rig.SpellContext;
+            book.Weapon = weapon;
 
             combat.Context = rig.SpellContext;
             movement.Context = rig.SpellContext;
@@ -161,6 +212,7 @@ namespace Gunspire
             movement.Mana = mana;
             movement.Health = health;
             movement.Sheet = sheet;
+            movement.Book = book;
 
             // Stats, gun and spells all come from the one loadout definition, which a restart
             // reapplies to this same object.
@@ -168,7 +220,56 @@ namespace Gunspire
 
             health.Damaged += (info, amount) => OnPlayerDamaged(rig, info, amount);
 
+            rig.AttachPlayerSystems();
             return rig;
+        }
+
+        /// <summary>
+        /// Adds and binds the systems spells build on: concealment, buffs, rewind history, the action log,
+        /// possession, auto-fire and the masteries. After the loadout, so the masteries rank what it equipped.
+        /// Public so tooling can assemble a rig in edit mode, where Awake never runs.
+        /// </summary>
+        public void AttachPlayerSystems()
+        {
+            GameObject root = gameObject;
+
+            Concealment = Ensure<PlayerConcealment>(root);
+            Concealment.Bind(this);
+
+            Buffs = Ensure<PlayerBuffs>(root);
+            Buffs.Bind(this);
+
+            Rewind = Ensure<RewindRecorder>(root);
+            Rewind.Bind(this);
+
+            Actions = Ensure<ActionLog>(root);
+            Actions.Bind(this);
+
+            Possession = Ensure<PossessionController>(root);
+            Possession.Bind(this);
+
+            AutoFire = Ensure<AutoFireDriver>(root);
+            AutoFire.Weapon = Weapon;
+            AutoFire.Aim = SpellContext != null ? SpellContext.Aim : null;
+            AutoFire.Status = Status;
+
+            Masteries = Ensure<MasteryHost>(root);
+            Masteries.Initialise(this);
+        }
+
+        /// <summary>Drops every static subscription the player systems hold. Edit mode never calls OnDestroy.</summary>
+        public void DetachPlayerSystems()
+        {
+            if (Masteries != null) Masteries.Unbind();
+            if (Concealment != null) Concealment.Unbind();
+            if (Rewind != null) Rewind.Unbind();
+            if (Actions != null) Actions.Unbind();
+        }
+
+        private static T Ensure<T>(GameObject root) where T : Component
+        {
+            T found = root.GetComponent<T>();
+            return found != null ? found : root.AddComponent<T>();
         }
 
         private static void OnPlayerDamaged(PlayerRig rig, DamageInfo info, float amount)

@@ -71,22 +71,33 @@ namespace Gunspire
         }
 
         /// <summary>
-        /// Spells a shrine can still offer: never learned, or learned but below their level
-        /// cap. Taking one you already know levels it instead of rebinding it.
+        /// Spells a shrine can still offer: never learned, or learned but below their level cap, and
+        /// never one the run has eliminated. Taking one you already know levels it instead of rebinding
+        /// it. A movement or melee spell is offered unless it is the one equipped and already at its cap,
+        /// since taking one that is not equipped is a swap. A variant is not offered while another
+        /// version of it is equipped.
+        ///
+        /// Eliminated ids default to the current run's.
         /// </summary>
-        public static List<Spell> Offerable(SpellBook book, SpellSlot slot = SpellSlot.Cast)
+        public static List<Spell> Offerable(SpellBook book, SpellSlot slot = SpellSlot.Cast,
+            ICollection<string> eliminated = null)
         {
             var list = new List<Spell>();
+            if (eliminated == null && RunState.Current != null) eliminated = RunState.Current.EliminatedSpells;
 
             for (int i = 0; i < All.Count; i++)
             {
                 Spell spell = All[i];
                 if (spell.Slot != slot) continue;
+                if (eliminated != null && eliminated.Contains(spell.Id)) continue;
 
-                // Only the cast slots stack levels, and only they are tracked by the book.
-                // A movement or melee spell is a straight swap, so the caller drops whichever
-                // one is already bound rather than the book knowing about it.
-                if (slot == SpellSlot.Cast && book != null && !book.CanTake(spell)) continue;
+                if (book != null)
+                {
+                    if (slot == SpellSlot.Cast ? !book.CanTake(spell) : book.IsEquipped(spell) && !book.CanTake(spell))
+                        continue;
+
+                    if (book.HasOtherVariant(spell)) continue;
+                }
 
                 list.Add(spell);
             }
@@ -121,19 +132,36 @@ namespace Gunspire
         /// </summary>
         public static List<Spell> OfferDistinct(Rng rng, SpellBook book, float luck, int count,
             float rarityBonus = 1f, SpellSlot slot = SpellSlot.Cast)
+            => OfferDistinct(rng, Offerable(book, slot), luck, count, rarityBonus);
+
+        /// <summary>
+        /// Rolls distinct offers from a given pool. At most one Petty spell per offering while school
+        /// spells remain to fill it; once they run out, Petty spells fill the rest, so a roster that is
+        /// still mostly Petty does not shrink every offer to a single card.
+        /// </summary>
+        public static List<Spell> OfferDistinct(Rng rng, List<Spell> pool, float luck, int count,
+            float rarityBonus = 1f)
         {
             var chosen = new List<Spell>();
-            List<Spell> pool = Offerable(book, slot);
+            var remaining = new List<Spell>(pool);
+            var candidates = new List<Spell>();
 
             int guard = 0;
-            while (chosen.Count < count && pool.Count > 0 && guard++ < 200)
+            while (chosen.Count < count && remaining.Count > 0 && guard++ < 200)
             {
+                bool pettyTaken = chosen.Exists(s => s.School == SpellSchool.Petty);
+
+                candidates.Clear();
+                for (int i = 0; i < remaining.Count; i++)
+                    if (!pettyTaken || remaining[i].School != SpellSchool.Petty) candidates.Add(remaining[i]);
+                if (candidates.Count == 0) candidates.AddRange(remaining);
+
                 Rarity rolled = Rarities.Roll(rng, luck, rarityBonus);
-                Spell pick = Rarities.PickOfRarity(rng, pool, s => s.Rarity, rolled);
+                Spell pick = Rarities.PickOfRarity(rng, candidates, s => s.Rarity, rolled);
                 if (pick == null) break;
 
                 chosen.Add(pick);
-                pool.Remove(pick);
+                remaining.Remove(pick);
             }
 
             return chosen;
@@ -343,7 +371,10 @@ namespace Gunspire
             Rarity = Rarity.Common,
             ManaCost = 6f,
             Cooldown = 0f,
-            MaxLevel = 1,
+
+            // Each level past the first adds a charge. The DashLevels migration carries this onto the asset.
+            MaxLevel = 3,
+            LevelUpNote = "and one more charge",
             TintOverride = new Color(0.6f, 0.95f, 1f),
             OnCast = { new DashEffect() }
         };

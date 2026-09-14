@@ -41,7 +41,10 @@ namespace Gunspire
 
         /// <summary>Something knocked into something else.</summary>
         Collision,
-        Environment
+        Environment,
+
+        /// <summary>A mastery's own damage: a Conflux reaction, a Psi Blades bonus. Never lifesteal.</summary>
+        Mastery
     }
 
     /// <summary>

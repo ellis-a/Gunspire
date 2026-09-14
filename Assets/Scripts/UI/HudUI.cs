@@ -27,8 +27,10 @@ namespace Gunspire
 
             if (playing)
             {
+                DrawDivineKnowledge(player);
                 DrawCrosshair(player);
                 DrawInteractPrompt(player);
+                DrawPossession(player);
             }
 
             DrawVitals(player);
@@ -57,6 +59,28 @@ namespace Gunspire
             UIStyles.Fill(new Rect(cx - 1f, cy - 1f, 2f, 2f), new Color(1f, 1f, 1f, 0.9f));
         }
 
+        /// <summary>Health bars, attack timers and the like over enemies, as far as the Divination count reaches.</summary>
+        private static void DrawDivineKnowledge(PlayerRig player)
+        {
+            if (player.Masteries == null) return;
+
+            DivineKnowledgeMastery knowledge = player.Masteries.Get<DivineKnowledgeMastery>();
+            if (knowledge != null) knowledge.DrawGUI(player.Camera);
+        }
+
+        /// <summary>Who you are controlling and for how long, since the body on screen is not your own.</summary>
+        private static void DrawPossession(PlayerRig player)
+        {
+            PossessionController possession = player.Possession;
+            if (possession == null || !possession.IsPossessing) return;
+
+            string name = possession.Current is EnemyController enemy ? enemy.DisplayName : "another body";
+            var rect = new Rect(Screen.width * 0.5f - 220f, 108f, 440f, 24f);
+            UIStyles.Fill(rect, UIStyles.PanelSoft);
+            UIStyles.Text(rect, "CONTROLLING " + name.ToUpperInvariant() + "   " + possession.TimeLeft.ToString("0.0") + "s",
+                UIStyles.Center, UIStyles.Accent);
+        }
+
         private void DrawInteractPrompt(PlayerRig player)
         {
             string prompt = player.CombatInput != null ? player.CombatInput.InteractPrompt : null;
@@ -75,9 +99,16 @@ namespace Gunspire
             float y = Screen.height - 116f;
             const float width = 300f;
 
+            DrawMasteryResources(player, x, y - 20f);
+
             Health health = player.Health;
             var healthRect = new Rect(x, y, width, 20f);
             UIStyles.Bar(healthRect, health.Fraction, UIStyles.HealthColor, new Color(0.2f, 0.06f, 0.09f, 0.85f));
+
+            // The Blood Debt's overheal, as a strip along the top of the bar.
+            if (health.Shield > 0f)
+                UIStyles.Fill(new Rect(x, y, width * Mathf.Clamp01(health.Shield / Mathf.Max(1f, health.Max)), 4f),
+                    new Color(0.6f, 0.85f, 1f, 0.9f));
             UIStyles.Text(new Rect(x + 8f, y, width, 20f),
                 Mathf.CeilToInt(health.Current) + " / " + Mathf.CeilToInt(health.Max), UIStyles.Small, Color.white);
 
@@ -89,6 +120,32 @@ namespace Gunspire
 
             DrawMovementSlot(player, x, y + 44f);
         }
+
+        /// <summary>The masteries that are currencies: souls, psi charge, debt, and Arcane Warp's bonus. Only those held.</summary>
+        private static void DrawMasteryResources(PlayerRig player, float x, float y)
+        {
+            MasteryHost host = player.Masteries;
+            if (host == null) return;
+
+            string line = "";
+
+            SoulsMastery souls = host.Get<SoulsMastery>();
+            if (souls != null && souls.Cap > 0) line += "SOULS " + souls.Souls + "/" + souls.Cap + "   ";
+
+            PsiBladesMastery psi = host.Get<PsiBladesMastery>();
+            if (psi != null && psi.Max > 0) line += "PSI " + psi.Charge.ToString("0.##") + "/" + psi.Max + "   ";
+
+            BloodDebtMastery debt = host.Get<BloodDebtMastery>();
+            if (debt != null && debt.Debt > 0.5f) line += "DEBT " + Mathf.CeilToInt(debt.Debt) + "   ";
+
+            ArcaneWarpMastery warp = host.Get<ArcaneWarpMastery>();
+            if (warp != null && warp.Rank > 0) line += "WARP +" + Mathf.RoundToInt(warp.Bonus * 100f) + "%   ";
+
+            if (line.Length > 0) UIStyles.Text(new Rect(x, y, 460f, 18f), line, UIStyles.Small, UIStyles.Accent);
+        }
+
+        private static string ShiftLabel(Spell ability, MovementController movement)
+            => "SHIFT " + ability.DisplayName + (ability.MaxLevel > 1 ? " L" + movement.Level : "");
 
         /// <summary>
         /// The Shift slot. The three ability shapes need three readouts: charge pips for Dash,
@@ -123,7 +180,7 @@ namespace Gunspire
                 }
 
                 UIStyles.Text(new Rect(x + max * 26f + 8f, y, 200f, 16f),
-                    "SHIFT " + ability.DisplayName, UIStyles.Small, UIStyles.Muted);
+                    ShiftLabel(ability, movement), UIStyles.Small, UIStyles.Muted);
                 return;
             }
 
@@ -140,7 +197,7 @@ namespace Gunspire
 
                 UIStyles.Bar(bar, fraction, ability.Tint, new Color(1f, 1f, 1f, 0.10f));
                 UIStyles.Text(new Rect(x + 128f, y, 260f, 16f),
-                    "SHIFT " + ability.DisplayName + (on ? "  ON" : "  " + ability.CostLine()),
+                    ShiftLabel(ability, movement) + (on ? "  ON" : "  " + ability.CostLine()),
                     UIStyles.Small, on ? ability.Tint : UIStyles.Muted);
                 return;
             }
@@ -150,7 +207,7 @@ namespace Gunspire
             UIStyles.Bar(cooldownBar, 1f - cooldown, ability.Tint, new Color(1f, 1f, 1f, 0.10f));
 
             UIStyles.Text(new Rect(x + 128f, y, 260f, 16f),
-                "SHIFT " + ability.DisplayName +
+                ShiftLabel(ability, movement) +
                 (cooldown > 0f ? "  " + movement.Cooldown.ToString("0.0") + "s" : ""),
                 UIStyles.Small, cooldown > 0f ? UIStyles.Muted : ability.Tint);
         }
@@ -295,8 +352,9 @@ namespace Gunspire
                 }
 
                 float cooldown = book.GetCooldownFraction(i);
-                bool affordable = player.Mana.Has(spell.ManaCost);
-                bool ready = cooldown <= 0f && affordable;
+                CastOutcome state = book.Evaluate(i);
+                bool affordable = state == CastOutcome.Ready || state == CastOutcome.OnCooldown;
+                bool ready = state == CastOutcome.Ready;
 
                 UIStyles.Fill(rect, UIStyles.Panel);
                 if (cooldown > 0f)
@@ -323,11 +381,30 @@ namespace Gunspire
                 UIStyles.Text(new Rect(textX, rect.y + 22f, textWidth, 16f), spell.DisplayName,
                     UIStyles.Small, UIStyles.Ink);
 
-                string bottom = cooldown > 0f
-                    ? book.GetCooldown(i).ToString("0.0") + "s"
-                    : Mathf.RoundToInt(spell.ManaCost) + " mana";
-                UIStyles.Text(new Rect(textX, rect.y + 38f, textWidth, 16f), bottom,
-                    UIStyles.Small, affordable ? UIStyles.Muted : UIStyles.Warning);
+                // A charge fills the slot from the bottom, the opposite way to a cooldown draining.
+                float charge = book.ChargeFraction(i);
+                if (charge > 0f)
+                    UIStyles.Fill(new Rect(rect.x, rect.yMax - 4f, rect.width * charge, 4f), spell.Tint);
+
+                StanceMode stance = book.ActiveStanceMode(i);
+                Color bottomColor = affordable ? UIStyles.Muted : UIStyles.Warning;
+                string bottom;
+
+                if (stance != null)
+                {
+                    bottom = stance.Name;
+                    bottomColor = stance.Tint;
+                }
+                else if (book.IsSustainActive(i))
+                {
+                    bottom = "ON";
+                    bottomColor = spell.Tint;
+                }
+                else if (book.IsCharging(i)) bottom = "charging " + Mathf.RoundToInt(charge * 100f) + "%";
+                else if (cooldown > 0f) bottom = book.GetCooldown(i).ToString("0.0") + "s";
+                else bottom = spell.CostLine();
+
+                UIStyles.Text(new Rect(textX, rect.y + 38f, textWidth, 16f), bottom, UIStyles.Small, bottomColor);
             }
         }
 

@@ -3,26 +3,31 @@ using UnityEngine;
 namespace Gunspire
 {
     /// <summary>
-    /// The knobs a held-down movement spell needs and an ordinary cast does not.
+    /// The knobs a held-on spell needs and an ordinary cast does not.
     ///
-    /// Kept as its own object hanging off <see cref="Spell.Sustain"/>, rather than six more
-    /// fields on Spell itself, so a fireball's Inspector never shows a wall-zip tickbox. This
-    /// is the same shape <see cref="WeaponDefinition.AltFire"/> uses for the parts of a gun
-    /// that only some guns have.
+    /// Kept as its own object hanging off <see cref="Spell.Sustain"/>, rather than more fields
+    /// on Spell itself, so a fireball's Inspector never shows a wall-zip tickbox. This is the
+    /// same shape <see cref="WeaponDefinition.AltFire"/> uses for the parts of a gun that only
+    /// some guns have.
     ///
-    /// A spell with one of these is a toggle: pressing the key starts it, pressing again stops
-    /// it, and it runs until the mana dries up or its condition breaks. A spell without one
-    /// fires once and goes on cooldown, whichever slot it sits in.
+    /// A spell with one of these is a toggle in whatever slot it sits in: pressing the key starts
+    /// it, pressing again stops it, and it runs until what it drains dries up or its condition
+    /// breaks. A spell without one fires once and goes on cooldown.
     /// </summary>
     [System.Serializable]
     public class SustainProfile
     {
-        /// <summary>
-        /// Drained every second it stays up. This is what makes holding it a cost, and it
-        /// doubles as the switch for whether the profile counts at all - see
-        /// <see cref="Exists"/>.
-        /// </summary>
+        /// <summary>Mana drained every second it stays up.</summary>
         public float ManaPerSecond = 0f;
+
+        /// <summary>
+        /// Health drained every second it stays up, through the Blood Debt, and never below one hit
+        /// point: the toggle ends instead. Bloodwake.
+        /// </summary>
+        public float HealthPerSecond = 0f;
+
+        /// <summary>A toggle that drains nothing. Without it a free toggle would read as no toggle at all.</summary>
+        public bool Toggle;
 
         /// <summary>
         /// Whether this profile is really here. Unity never leaves a plain serialisable class
@@ -30,12 +35,12 @@ namespace Gunspire
         /// ever loaded from an asset as sustained. <see cref="WeaponDefinition.AltFire"/> has
         /// the same problem and answers it the same way.
         ///
-        /// Read off the drain rather than a separate tickbox, so the two cannot disagree: a
-        /// held mode that costs nothing per second is not a held mode.
+        /// Read off the drains as well as the flag, so a spell asset written when a drain was the
+        /// only switch still counts without a migration.
         /// </summary>
-        public bool Exists => ManaPerSecond > 0f;
+        public bool Exists => Toggle || ManaPerSecond > 0f || HealthPerSecond > 0f;
 
-        /// <summary>Seconds it can stay up. Zero means until the mana runs out.</summary>
+        /// <summary>Seconds it can stay up. Zero means until the drain runs out.</summary>
         public float MaxDuration = 0f;
 
         /// <summary>Percent bonus applied to move speed while active.</summary>
@@ -47,6 +52,14 @@ namespace Gunspire
         /// <summary>Drops the moment the caster moves. Pairs with <see cref="Invulnerable"/>.</summary>
         public bool BreakOnMovement;
 
+        /// <summary>Hidden from enemy sight while active. Footsteps are still heard. Invisibility.</summary>
+        public bool HideFromSight;
+
+        /// <summary>Drops the moment the caster fires a gun, casts another spell, or swings.</summary>
+        public bool BreakOnShoot;
+        public bool BreakOnCast;
+        public bool BreakOnMelee;
+
         /// <summary>
         /// Fires a line at whatever the caster is looking at, hauls them to the first surface it
         /// hits, and makes that surface the floor. See <see cref="PlayerMotor.BeginWallZip"/>.
@@ -57,7 +70,57 @@ namespace Gunspire
         public string CostLine()
         {
             string duration = MaxDuration > 0f ? ", up to " + MaxDuration.ToString("0.#") + "s" : "";
-            return ManaPerSecond.ToString("0") + " mana/s" + duration;
+
+            if (ManaPerSecond > 0f && HealthPerSecond > 0f)
+                return ManaPerSecond.ToString("0") + " mana/s, " + HealthPerSecond.ToString("0") + " health/s" + duration;
+            if (HealthPerSecond > 0f) return HealthPerSecond.ToString("0") + " health/s" + duration;
+            if (ManaPerSecond > 0f) return ManaPerSecond.ToString("0") + " mana/s" + duration;
+            return "toggle" + duration;
         }
+    }
+
+    /// <summary>
+    /// Hold the key to charge, release to cast. The charge reached is on
+    /// <see cref="AbilityContext.Charge"/> for the effects to scale by. Costs and the cooldown are
+    /// paid on release, so letting go too early to count costs nothing.
+    /// </summary>
+    [System.Serializable]
+    public class ChargeProfile
+    {
+        /// <summary>Seconds held to reach a full charge. Zero means the spell is not charged.</summary>
+        public float SecondsToFull = 0f;
+
+        /// <summary>Released below this fraction, nothing is cast and nothing is spent.</summary>
+        [Range(0f, 1f)] public float MinimumFraction = 0f;
+
+        public bool Exists => SecondsToFull > 0f;
+    }
+
+    /// <summary>
+    /// One mode of a stance: what it is called, how it reads, and what it puts on every bullet while
+    /// it is the active one.
+    /// </summary>
+    [System.Serializable]
+    public class StanceMode
+    {
+        public string Name = "Mode";
+        public Color Tint = Color.white;
+        public System.Collections.Generic.List<StatusApplication> BulletStatuses =
+            new System.Collections.Generic.List<StatusApplication>();
+    }
+
+    /// <summary>
+    /// A spell that is a standing state rather than a cast: always on while bound, starting in its
+    /// first mode, with each tap of its key stepping to the next and wrapping round. It never
+    /// switches off, drains nothing and has no cooldown, so the only price is the slot. Elemental
+    /// Form, whose modes are fire, ice and storm.
+    /// </summary>
+    [System.Serializable]
+    public class StanceProfile
+    {
+        public System.Collections.Generic.List<StanceMode> Modes =
+            new System.Collections.Generic.List<StanceMode>();
+
+        public bool Exists => Modes != null && Modes.Count > 0;
     }
 }

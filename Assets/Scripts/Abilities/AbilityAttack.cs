@@ -49,6 +49,12 @@ namespace Gunspire
         public bool IsExecuting { get; private set; }
         public float CooldownRemaining => _timer;
 
+        /// <summary>Off cooldown and not already running, ignoring range and sight. A possessed body fires on command.</summary>
+        public bool IsReady => !IsExecuting && _timer <= 0f && _owner != null;
+
+        /// <summary>Whether <see cref="Initialise"/> has bound this to an owner yet.</summary>
+        public bool IsInitialised => _owner != null;
+
         /// <summary>
         /// Binds this attack to whatever is using it. Taking an interface rather than an
         /// EnemyController is what lets a familiar run the same chains on the player's team -
@@ -70,13 +76,16 @@ namespace Gunspire
             };
         }
 
-        private void Update()
+        private void Update() => TickCooldown(WorldClock.DeltaTime);
+
+        /// <summary>Runs the cooldown down by a stretch of world time. Update calls it; public so tooling can wait one out.</summary>
+        public void TickCooldown(float dt)
         {
             if (_timer <= 0f) return;
 
             // Chill slows an enemy's attack rate as well as its feet.
             float rate = _owner != null && _owner.Sheet != null ? _owner.Sheet.Get(Attr.AttackSpeed) : 1f;
-            _timer -= WorldClock.DeltaTime * rate;
+            _timer -= dt * rate;
         }
 
         public bool CanUse(float distance, bool hasLineOfSight)

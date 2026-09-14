@@ -12,7 +12,7 @@ namespace Gunspire
     /// whether it can move, which attacks it may start, and whether it is running away instead.
     /// </summary>
     [RequireComponent(typeof(CharacterController))]
-    public class EnemyController : MonoBehaviour, IAbilityOwner, IKnockable
+    public class EnemyController : MonoBehaviour, IAbilityOwner, IKnockable, IPossessable
     {
         // IAbilityOwner. MonoBehaviour already has gameObject and transform in lower case;
         // these just expose them under the interface's names.
@@ -141,6 +141,28 @@ namespace Gunspire
             }
         }
 
+        /// <summary>
+        /// Seconds until its soonest attack is off cooldown, or zero while one is running. Divine
+        /// Knowledge's attack timer. Read from the components rather than the list Start builds, so it
+        /// answers before Start too.
+        /// </summary>
+        public float NextAttackIn
+        {
+            get
+            {
+                GetComponents(_attackScratch);
+                if (_attackScratch.Count == 0) return 0f;
+
+                float soonest = float.MaxValue;
+                for (int i = 0; i < _attackScratch.Count; i++)
+                {
+                    if (_attackScratch[i].IsExecuting) return 0f;
+                    soonest = Mathf.Min(soonest, _attackScratch[i].CooldownRemaining);
+                }
+                return Mathf.Max(0f, soonest);
+            }
+        }
+
         public float DistanceToTarget => Target == null
             ? float.MaxValue
             : Vector3.Distance(Flat(transform.position), Flat(Target.position));
@@ -199,6 +221,9 @@ namespace Gunspire
         private void Update()
         {
             if (IsHidden || (Health != null && !Health.IsAlive)) return;
+
+            // The player is driving it, through Drive.
+            if (IsPossessed) return;
 
             // A stopped world stops thinking too, or an enemy would still start an attack mid-freeze.
             if (WorldClock.IsStopped) return;
@@ -841,8 +866,8 @@ namespace Gunspire
 
         /// <summary>
         /// Brings a hidden enemy back exactly as it was, at the given point or where it left. A spot
-        /// that has since become a wall moves it to the nearest open cell. Landing on top of another
-        /// body waits for the shared landing check in Phase 4.
+        /// that has since become a wall moves it to the nearest open cell, and anything standing on the
+        /// spot is shoved aside by <see cref="LandingCheck"/>.
         /// </summary>
         public void Reveal(Vector3? at = null)
         {
@@ -864,6 +889,11 @@ namespace Gunspire
             // The character controller is still switched off, so nothing undoes this move.
             transform.position = position;
 
+            // Whatever has walked onto the spot since is moved aside first, so two bodies never come back overlapping.
+            CharacterController capsule = GetComponent<CharacterController>();
+            LandingCheck.ShoveClear(position, capsule != null ? capsule.radius : 0.5f,
+                capsule != null ? capsule.height : 1.8f, gameObject);
+
             for (int i = 0; i < _hiddenColliders.Count; i++)
                 if (_hiddenColliders[i] != null) _hiddenColliders[i].enabled = true;
             for (int i = 0; i < _hiddenRenderers.Count; i++)
@@ -877,6 +907,128 @@ namespace Gunspire
 
             if (Status != null) Status.Paused = false;
             IsHidden = false;
+        }
+
+        // ---------------------------------------------------------------- possession
+
+        public Transform Body => transform;
+        float IPossessable.EyeHeight => EyeHeight;
+
+        /// <summary>The player is controlling it. Its own thinking is off and it fights on the player's side.</summary>
+        public bool IsPossessed { get; private set; }
+
+        private Team _teamBeforePossession = Team.Enemy;
+        private float _hoverBeforePossession;
+        private Transform _possessedAim;
+        private readonly List<AbilityAttack> _possessedAttacks = new List<AbilityAttack>();
+
+        /// <summary>Its attacks, in the order they were built, each one an action on its own key.</summary>
+        public int ActionCount
+        {
+            get
+            {
+                if (!IsPossessed) GetComponents(_possessedAttacks);
+                return _possessedAttacks.Count;
+            }
+        }
+
+        public string ActionName(int index)
+        {
+            if (!IsPossessed) GetComponents(_possessedAttacks);
+            return index >= 0 && index < _possessedAttacks.Count ? _possessedAttacks[index].Name : null;
+        }
+
+        public void BeginPossession()
+        {
+            if (IsPossessed) return;
+            IsPossessed = true;
+
+            CancelAttacks(null);
+            _teamBeforePossession = Health != null ? Health.Team : Team.Enemy;
+            _hoverBeforePossession = HoverHeight;
+            SetSide(Team.Player);
+
+            if (_controller == null) _controller = GetComponent<CharacterController>();
+
+            GetComponents(_possessedAttacks);
+            for (int i = 0; i < _possessedAttacks.Count; i++)
+                if (!_possessedAttacks[i].IsInitialised) _possessedAttacks[i].Initialise(this);
+
+            // IsAttacking reads the list Start builds, so a body taken before Start ran still knows it is mid-attack.
+            if (_attacks.Count == 0) _attacks.AddRange(_possessedAttacks);
+
+            // Its attacks aim at their target, so while possessed the target is a point the view moves.
+            _possessedAim = new GameObject(name + " Possessed Aim").transform;
+            _possessedAim.position = transform.position + transform.forward * 10f;
+            _liveEntry = null;
+            Target = _possessedAim;
+            _velocity = Vector3.zero;
+        }
+
+        public void EndPossession()
+        {
+            if (!IsPossessed) return;
+            IsPossessed = false;
+
+            CancelAttacks(null);
+            SetSide(_teamBeforePossession);
+            HoverHeight = _hoverBeforePossession;
+
+            if (_possessedAim != null)
+            {
+                if (Application.isPlaying) Destroy(_possessedAim.gameObject);
+                else DestroyImmediate(_possessedAim.gameObject);
+            }
+
+            _possessedAim = null;
+            Target = null;
+            _retargetTimer = 0f;
+        }
+
+        /// <summary>
+        /// One frame of the player's orders: turn to the view, move relative to it, rise or sink if it
+        /// flies, and start whichever attacks' keys went down. A flier's height changes by adjusting the
+        /// altitude it holds, so it still hovers over whatever is beneath it.
+        /// </summary>
+        public void Drive(in PossessionInput input, float dt)
+        {
+            if (!IsPossessed || (Health != null && !Health.IsAlive)) return;
+            if (_controller == null) _controller = GetComponent<CharacterController>();
+
+            transform.rotation = Quaternion.Euler(0f, input.Yaw, 0f);
+
+            if (_possessedAim != null && input.AimForward.sqrMagnitude > 0.0001f)
+            {
+                const float reach = 80f;
+                Vector3 aimAt = input.AimOrigin + input.AimForward.normalized * reach;
+                if (Physics.Raycast(input.AimOrigin, input.AimForward, out RaycastHit hit, reach,
+                        Layers.HitMaskFor(Team.Player), QueryTriggerInteraction.Ignore))
+                    aimAt = hit.point;
+
+                // Attacks aim a little above their target's feet, so the point sits that far below where to hit.
+                _possessedAim.position = aimAt - Vector3.up * 0.95f;
+            }
+
+            bool impaired = Status != null && Status.IsControlImpaired;
+            Vector3 desired = Vector3.zero;
+
+            if (!impaired)
+            {
+                desired = transform.forward * input.Move.y + transform.right * input.Move.x;
+                if (desired.sqrMagnitude > 1f) desired.Normalize();
+
+                if (Flying) HoverHeight = Mathf.Clamp(HoverHeight + input.Rise * 3f * dt, 1f, 8f);
+
+                for (int i = 0; i < _possessedAttacks.Count && i < 31; i++)
+                {
+                    if ((input.ActionsPressed & (1 << i)) == 0 || IsAttacking) continue;
+
+                    AbilityAttack attack = _possessedAttacks[i];
+                    if (attack.IsReady && (Status == null || Status.CanAttack(attack.Reach))) attack.Begin();
+                }
+            }
+
+            ApplyMotion(desired, dt, IsAttacking ? MoveSpeedWhileAttacking : 1f);
         }
 
         // ---------------------------------------------------------------- flight and steering

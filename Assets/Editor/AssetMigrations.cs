@@ -76,7 +76,8 @@ namespace Gunspire.EditorTools
             new BoonStatText(),
             new LoadoutRetiredSpells(),
             new RetireLegacySpells(),
-            new EnemyAttackReach()
+            new EnemyAttackReach(),
+            new DashLevels()
         };
 
         [MenuItem("Gunspire/Migrations/1 - Report")]

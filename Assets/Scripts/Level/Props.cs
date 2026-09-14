@@ -318,6 +318,11 @@ namespace Gunspire
             {
                 if (Ability == null) return null;
 
+                // The one already equipped levels up rather than swapping for itself.
+                SpellBook book = PlayerRig.Instance != null ? PlayerRig.Instance.Book : null;
+                if (book != null && book.IsEquipped(Ability))
+                    return "Study " + Ability.DisplayName + "  -  " + Ability.LevelUpSummary(book.GetLevel(Ability));
+
                 Spell current = Bound(PlayerRig.Instance, Ability.Slot);
                 string replaces = current != null ? "  -  replaces " + current.DisplayName : "";
 
@@ -332,6 +337,14 @@ namespace Gunspire
         {
             var rig = interactor.GetComponentInParent<PlayerRig>();
             if (rig == null || Ability == null) return;
+
+            if (rig.Book != null && rig.Book.IsEquipped(Ability))
+            {
+                int level = rig.Book.LevelUp(Ability);
+                GameDirector.Instance?.Notify(Ability.DisplayName + " is now level " + level);
+                Destroy(gameObject);
+                return;
+            }
 
             // Routed on the spell's own slot rather than a field on the pedestal, so the two
             // cannot disagree about where the thing standing on it is going to end up.

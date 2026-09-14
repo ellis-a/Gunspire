@@ -27,6 +27,9 @@ namespace Gunspire
             /// <summary>Out of hearing as well. A body left behind by Assume Identity.</summary>
             public bool HiddenFromHearing;
 
+            /// <summary>Out of every enemy's choice of target, sight or no sight. Flicker, and Rewind's playback.</summary>
+            public bool Untargetable;
+
             public bool IsAlive => Transform != null && (Health == null || Health.IsAlive);
         }
 
@@ -48,7 +51,18 @@ namespace Gunspire
             get
             {
                 if (_takenBody != null && _takenBody.IsAlive) return _takenBody;
+                return RigEntry;
+            }
+        }
 
+        /// <summary>
+        /// The player's own body, whether or not they are currently in it. Concealment writes here, so
+        /// hiding the real body while possessing something else does not touch the possessed body.
+        /// </summary>
+        public static Entry RigEntry
+        {
+            get
+            {
                 PlayerRig rig = PlayerRig.Instance;
                 RigBody.Transform = rig != null ? rig.transform : null;
                 RigBody.Health = rig != null ? rig.Health : null;
@@ -79,6 +93,7 @@ namespace Gunspire
             _takenBody = null;
             RigBody.HiddenFromSight = false;
             RigBody.HiddenFromHearing = false;
+            RigBody.Untargetable = false;
         }
 
         /// <summary>Everything currently worth fighting, the player's body first.</summary>
@@ -87,7 +102,7 @@ namespace Gunspire
             into.Clear();
 
             Entry body = PlayerBody;
-            if (body.IsAlive) into.Add(body);
+            if (body.IsAlive && !body.Untargetable) into.Add(body);
 
             for (int i = MinionList.Count - 1; i >= 0; i--)
             {
@@ -98,7 +113,7 @@ namespace Gunspire
                     continue;
                 }
 
-                if (MinionList[i].IsAlive) into.Add(MinionList[i]);
+                if (MinionList[i].IsAlive && !MinionList[i].Untargetable) into.Add(MinionList[i]);
             }
         }
 

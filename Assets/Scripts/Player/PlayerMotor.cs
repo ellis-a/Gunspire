@@ -1,3 +1,5 @@
+using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace Gunspire
@@ -6,6 +8,9 @@ namespace Gunspire
     /// First person movement. Quake-style ground friction plus air acceleration, so
     /// strafing and dashing keep momentum. Speed, jump height and dash charges all come
     /// off the character sheet, which is how Athletics pays out.
+    ///
+    /// Spells reach in through a handful of verbs: timed impulse sequences, a window without
+    /// friction, turning velocity around, and travel with the controller switched off.
     /// </summary>
     [RequireComponent(typeof(CharacterController))]
     public class PlayerMotor : MonoBehaviour, IKnockable
@@ -99,6 +104,12 @@ namespace Gunspire
 
         public Vector3 Velocity => _velocity;
 
+        /// <summary>Which way is up right now: world up, or an attached wall's outward normal.</summary>
+        public Vector3 UpAxis => _upAxis;
+
+        /// <summary>Raised after every teleport. Rewind's history clears on it.</summary>
+        public event Action Teleported;
+
         // ---- knockback impacts. The player takes them by the same rules as everything else. ----
 
         /// <summary>
@@ -147,7 +158,13 @@ namespace Gunspire
         public bool IsGrounded { get; private set; }
         public bool IsDashing => _dashTimer > 0f;
         public int DashCharges { get; private set; }
-        public int MaxDashCharges => _sheet != null ? Mathf.Max(1, _sheet.GetInt(Attr.DashCharges)) : 1;
+
+        /// <summary>Charges beyond the sheet's, from the movement spell's level. Set by the movement slot.</summary>
+        public int BonusDashCharges { get; set; }
+
+        public int MaxDashCharges => (_sheet != null ? Mathf.Max(1, _sheet.GetInt(Attr.DashCharges)) : 1)
+                                     + Mathf.Max(0, BonusDashCharges);
+
         public float DashRechargeFraction => Mathf.Clamp01(1f - _dashRechargeTimer / Mathf.Max(0.01f, dashRechargeSeconds));
 
         /// <summary>Set by cutscene-ish moments (boon screens) to freeze the player in place.</summary>
@@ -155,18 +172,31 @@ namespace Gunspire
 
         private void Awake()
         {
-            _controller = GetComponent<CharacterController>();
-            _sheet = GetComponent<CharacterSheet>();
-            _status = GetComponent<StatusController>();
-            _health = GetComponent<Health>();
+            EnsureInitialised();
             DashCharges = MaxDashCharges;
         }
 
-        private void Update()
+        /// <summary>Resolves the components Awake would. Edit mode never calls Awake, so tooling relies on this.</summary>
+        public void EnsureInitialised()
         {
-            float dt = Time.deltaTime;
+            if (_controller == null) _controller = GetComponent<CharacterController>();
+            if (_sheet == null) _sheet = GetComponent<CharacterSheet>();
+            if (_status == null) _status = GetComponent<StatusController>();
+            if (_health == null) _health = GetComponent<Health>();
+        }
+
+        private void Update() => Step(Time.deltaTime);
+
+        /// <summary>One frame of movement. Update calls it; public so tooling can step the motor.</summary>
+        public void Step(float dt)
+        {
+            EnsureInitialised();
             RechargeDashes(dt);
             _knockback = Vector3.MoveTowards(_knockback, Vector3.zero, KnockbackDecay * dt);
+            if (_frictionSuppressed > 0f) _frictionSuppressed -= dt;
+
+            // Travelling with the controller off: something else is placing the body.
+            if (IsKinematic) return;
 
             bool frozen = _status != null && _status.IsControlImpaired;
             Vector2 input = (InputEnabled && !frozen) ? ReadMoveInput() : Vector2.zero;
@@ -222,6 +252,8 @@ namespace Gunspire
 
             bool hopping = ZipState != WallZipState.Zipping
                            && _jumpBufferTimer > 0f && _coyoteTimer > 0f && _dashTimer <= 0f;
+
+            TickSequence(dt);
 
             if (ZipState == WallZipState.Zipping) UpdateZip(dt);
             else if (_dashTimer > 0f) UpdateDash(dt);
@@ -339,7 +371,7 @@ namespace Gunspire
                 // A frame spent grounded scrubs about a tenth of your speed, so a chain that
                 // touches down and takes off in the same frame must not pay it. This is the
                 // difference between a hop chain that builds and one that bleeds out.
-                if (!skipFriction) horizontal = ApplyFriction(horizontal, dt);
+                if (!skipFriction && !IsFrictionSuppressed) horizontal = ApplyFriction(horizontal, dt);
 
                 horizontal = Accelerate(horizontal, wishDir, wishSpeed, groundAcceleration, dt);
             }
@@ -362,6 +394,176 @@ namespace Gunspire
             }
 
             _velocity = horizontal + up * vertical;
+        }
+
+        // ---------------------------------------------------------------- spell verbs
+
+        private float _frictionSuppressed;
+
+        /// <summary>Ground friction is skipped for this long, as it already is on a jump frame. Ride the Gale's push.</summary>
+        public void SuppressFriction(float seconds) => _frictionSuppressed = Mathf.Max(_frictionSuppressed, seconds);
+
+        public bool IsFrictionSuppressed => _frictionSuppressed > 0f || _sequenceSuppressesFriction;
+
+        /// <summary>
+        /// Turns velocity around, knockback included, since knockback is a force on you too. Horizontal
+        /// only leaves a fall a fall; the full version turns a fall into a rise. Repulse.
+        /// </summary>
+        public void InvertVelocity(bool includeVertical)
+        {
+            _velocity = Invert(_velocity, _upAxis, includeVertical);
+            _knockback = Invert(_knockback, _upAxis, includeVertical);
+            if (_dashTimer > 0f) _dashDirection = -_dashDirection;
+        }
+
+        private static Vector3 Invert(Vector3 v, Vector3 up, bool includeVertical)
+        {
+            if (includeVertical) return -v;
+
+            float vertical = Vector3.Dot(v, up);
+            return -(v - up * vertical) + up * vertical;
+        }
+
+        /// <summary>True while something is moving the body directly with the controller switched off.</summary>
+        public bool IsKinematic { get; private set; }
+
+        /// <summary>
+        /// Switches the controller off so the body can be moved directly, through anything, as Rewind's
+        /// playback moves it. Nothing collides and gravity does nothing until <see cref="EndKinematic"/>.
+        /// </summary>
+        public void BeginKinematic()
+        {
+            EnsureInitialised();
+            if (IsKinematic) return;
+
+            IsKinematic = true;
+            _dashTimer = 0f;
+            StopSequence();
+            _controller.enabled = false;
+        }
+
+        public void MoveKinematic(Vector3 position)
+        {
+            if (IsKinematic) transform.position = position;
+        }
+
+        public void EndKinematic(bool keepVelocity = false)
+        {
+            if (!IsKinematic) return;
+
+            IsKinematic = false;
+            _controller.enabled = true;
+
+            if (keepVelocity) return;
+            _velocity = Vector3.zero;
+            _knockback = Vector3.zero;
+        }
+
+        /// <summary>Whether the body passes through enemies. Gravewalk's lunge.</summary>
+        public bool PassesThroughEnemies => Physics.GetIgnoreLayerCollision(Layers.Player, Layers.Enemy);
+
+        /// <summary>
+        /// Lets the body pass through enemies, or stops it. Set on the collision matrix, since there is
+        /// one player. End it clear of bodies, or push them aside with <see cref="LandingCheck"/>.
+        /// </summary>
+        public void SetPassThroughEnemies(bool pass) => Physics.IgnoreLayerCollision(Layers.Player, Layers.Enemy, pass);
+
+        // ---------------------------------------------------------------- impulse sequences
+
+        private readonly List<ImpulseStep> _sequence = new List<ImpulseStep>();
+        private readonly List<bool> _stepStarted = new List<bool>();
+        private readonly List<bool> _stepLanded = new List<bool>();
+        private float _sequenceTime;
+        private Vector3 _sequenceForward;
+        private float _sequenceGravityScale = 1f;
+        private bool _sequenceSuppressesFriction;
+
+        public bool IsPlayingSequence => _sequence.Count > 0;
+
+        /// <summary>
+        /// Plays a timed run of pushes: forces over windows, impulses at their starts, gravity scaled and
+        /// friction suppressed while each step runs. Forward is the given direction with its pitch taken
+        /// off against the current up axis, and up is that axis, so on a wall up is away from the wall.
+        /// Ride the Gale and Bound.
+        /// </summary>
+        public void PlaySequence(IList<ImpulseStep> steps, Vector3 forward)
+        {
+            StopSequence();
+            if (steps == null) return;
+
+            for (int i = 0; i < steps.Count; i++)
+            {
+                if (steps[i] == null) continue;
+                _sequence.Add(steps[i]);
+                _stepStarted.Add(false);
+                _stepLanded.Add(false);
+            }
+
+            Vector3 flat = Vector3.ProjectOnPlane(forward, _upAxis);
+            if (flat.sqrMagnitude < 0.0001f) flat = Vector3.ProjectOnPlane(transform.forward, _upAxis);
+            _sequenceForward = flat.sqrMagnitude > 0.0001f ? flat.normalized : Vector3.forward;
+            _sequenceTime = 0f;
+        }
+
+        public void StopSequence()
+        {
+            _sequence.Clear();
+            _stepStarted.Clear();
+            _stepLanded.Clear();
+            _sequenceGravityScale = 1f;
+            _sequenceSuppressesFriction = false;
+        }
+
+        private void TickSequence(float dt)
+        {
+            if (_sequence.Count == 0) return;
+
+            float previous = _sequenceTime;
+            _sequenceTime += dt;
+
+            float gravityScale = 1f;
+            bool suppress = false;
+            bool anyLeft = false;
+
+            for (int i = 0; i < _sequence.Count; i++)
+            {
+                ImpulseStep step = _sequence[i];
+                float start = step.Delay;
+                float end = step.Delay + Mathf.Max(0f, step.Duration);
+
+                if (_sequenceTime < start)
+                {
+                    anyLeft = true;
+                    continue;
+                }
+
+                if (!_stepStarted[i])
+                {
+                    _stepStarted[i] = true;
+                    _velocity += _sequenceForward * step.ForwardImpulse + _upAxis * step.UpImpulse;
+                    if (step.UpImpulse > 0f) _coyoteTimer = 0f;
+                }
+
+                // Landing ends a step, but not on the frames it starts, while still on the ground it left.
+                if (step.EndOnLanding && !_stepLanded[i] && _sequenceTime - start > 0.1f && IsGrounded)
+                    _stepLanded[i] = true;
+                if (_stepLanded[i]) continue;
+
+                // Integrated over exactly the part of this frame the window covers.
+                float covered = Mathf.Min(_sequenceTime, end) - Mathf.Max(previous, start);
+                if (covered > 0f) _velocity += (_sequenceForward * step.ForwardForce + _upAxis * step.UpForce) * covered;
+
+                if (_sequenceTime > end) continue;
+
+                anyLeft = true;
+                gravityScale *= step.GravityScale;
+                suppress |= step.SuppressFriction;
+            }
+
+            _sequenceGravityScale = gravityScale;
+            _sequenceSuppressesFriction = suppress;
+
+            if (!anyLeft) StopSequence();
         }
 
         // ---------------------------------------------------------------- wall zip
@@ -485,9 +687,10 @@ namespace Gunspire
 
         /// <summary>
         /// Gravity with the sheet's scale applied, so anything that lightens the player - a slow
-        /// fall, or buoyancy - changes both the fall and the jump that has to climb against it.
+        /// fall, or buoyancy - changes both the fall and the jump that has to climb against it. A
+        /// running impulse sequence scales it further while its step lasts.
         /// </summary>
-        private float Gravity => gravity * (_sheet != null ? _sheet.Get(Attr.GravityScale) : 1f);
+        private float Gravity => gravity * (_sheet != null ? _sheet.Get(Attr.GravityScale) : 1f) * _sequenceGravityScale;
 
         private void DoJump()
         {
@@ -563,18 +766,24 @@ namespace Gunspire
         /// <summary>Used by Blink and knockback: hard-set the position, keeping momentum.</summary>
         public void Teleport(Vector3 position, bool preserveVelocity = true)
         {
+            EnsureInitialised();
+
             _controller.enabled = false;
             transform.position = position;
             _controller.enabled = true;
 
-            if (preserveVelocity) return;
+            if (!preserveVelocity)
+            {
+                // A relocation that throws away momentum is a hard reset - loading a room, most of
+                // all - so it throws away the gravity direction too. Otherwise, taking the exit
+                // while stuck to a wall carries that wall's idea of down into the next floor. The
+                // ability itself notices the motor has let go and ends on its next tick.
+                _velocity = Vector3.zero;
+                EndWallZip();
+                StopSequence();
+            }
 
-            // A relocation that throws away momentum is a hard reset - loading a room, most of
-            // all - so it throws away the gravity direction too. Otherwise, taking the exit
-            // while stuck to a wall carries that wall's idea of down into the next floor. The
-            // ability itself notices the motor has let go and ends on its next tick.
-            _velocity = Vector3.zero;
-            EndWallZip();
+            Teleported?.Invoke();
         }
 
         public void AddImpulse(Vector3 impulse)

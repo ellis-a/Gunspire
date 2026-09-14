@@ -23,6 +23,21 @@ namespace Gunspire
         public float Cooldown = 6f;
 
         /// <summary>
+        /// Costs beyond mana. Every one is refused when it cannot be paid, never clamped: a spell
+        /// costing two souls cannot be cast with one. Health is spent through the Blood Debt, and
+        /// never below one hit point.
+        /// </summary>
+        public int SoulCost;
+        public float HealthCost;
+        public int PsiCost;
+
+        /// <summary>
+        /// Spends every soul held instead of a fixed number, and can be cast with none. Bone Shards.
+        /// The count spent is on <see cref="AbilityContext.SoulsSpent"/> for the effects to read.
+        /// </summary>
+        public bool SpendsAllSouls;
+
+        /// <summary>
         /// How far casting this carries to something listening, as a multiple of the listener's
         /// hearing range. Same scale as a gun's. A quiet utility spell belongs well under one.
         /// </summary>
@@ -42,13 +57,35 @@ namespace Gunspire
         public SpellSlot Slot = SpellSlot.Cast;
 
         /// <summary>
-        /// Filled in only on a movement spell that stays on until switched off rather than
-        /// firing once. Always present as an object - Unity insists - but inert until its
-        /// drain is set, so <see cref="IsSustained"/> is the question to ask, never a null check.
+        /// Filled in only on a spell that stays on until switched off rather than firing once, in
+        /// any slot. Always present as an object - Unity insists - so <see cref="IsSustained"/> is
+        /// the question to ask, never a null check.
         /// </summary>
         public SustainProfile Sustain = new SustainProfile();
 
         public bool IsSustained => Sustain != null && Sustain.Exists;
+
+        /// <summary>Filled in only on a spell held to charge and released to cast. Bone Shards.</summary>
+        public ChargeProfile Charge = new ChargeProfile();
+
+        public bool IsCharged => Charge != null && Charge.Exists;
+
+        /// <summary>
+        /// Filled in only on a stance: a set of modes that is always on while bound, stepped through
+        /// by the key. Elemental Form.
+        /// </summary>
+        public StanceProfile Stance = new StanceProfile();
+
+        public bool IsStance => Stance != null && Stance.Exists;
+
+        /// <summary>
+        /// Spells sharing a group are versions of one spell chosen at pick time, such as Shapeshift's
+        /// forms. Only one of a group can be equipped; binding another replaces it.
+        /// </summary>
+        public string VariantGroup = string.Empty;
+
+        /// <summary>Echo never repeats this. Rewind, whose second copy would have nothing to return to.</summary>
+        public bool NeverEchoes;
 
         /// <summary>
         /// Whether casting this spends one of the dash charges, which the HUD
@@ -114,14 +151,18 @@ namespace Gunspire
         /// <summary>One line of cost for the HUD, the pedestal prompt and the choice screens.</summary>
         public string CostLine()
         {
+            if (IsStance) return "always on, tap to change form";
             if (IsSustained) return Sustain.CostLine();
 
-            string mana = ManaCost > 0f ? Mathf.RoundToInt(ManaCost) + " mana" : "";
-            string cooldown = Cooldown > 0f ? Cooldown.ToString("0.#") + "s cooldown" : "";
+            var parts = new List<string>(5);
+            if (ManaCost > 0f) parts.Add(Mathf.RoundToInt(ManaCost) + " mana");
+            if (SpendsAllSouls) parts.Add("every soul");
+            else if (SoulCost > 0) parts.Add(SoulCost + (SoulCost == 1 ? " soul" : " souls"));
+            if (HealthCost > 0f) parts.Add(Mathf.RoundToInt(HealthCost) + " health");
+            if (PsiCost > 0) parts.Add(PsiCost + " psi");
+            if (Cooldown > 0f) parts.Add(Cooldown.ToString("0.#") + "s cooldown");
 
-            if (mana.Length > 0 && cooldown.Length > 0) return mana + ", " + cooldown;
-            if (mana.Length > 0) return mana;
-            return cooldown.Length > 0 ? cooldown : "free";
+            return parts.Count > 0 ? string.Join(", ", parts) : "free";
         }
 
         /// <summary>

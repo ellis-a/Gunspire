@@ -20,6 +20,10 @@ MonoBehaviour:
       invulnerability. Charges recover on their own.
     ManaCost: 6
     Cooldown: 0
+    SoulCost: 0
+    HealthCost: 0
+    PsiCost: 0
+    SpendsAllSouls: 0
     NoiseMultiplier: 1
     Rarity: 0
     Type: 1
@@ -28,14 +32,27 @@ MonoBehaviour:
     Slot: 1
     Sustain:
       ManaPerSecond: 0
+      HealthPerSecond: 0
+      Toggle: 0
       MaxDuration: 0
       MoveSpeedBonus: 0
       Invulnerable: 0
       BreakOnMovement: 0
+      HideFromSight: 0
+      BreakOnShoot: 0
+      BreakOnCast: 0
+      BreakOnMelee: 0
       WallZip: 0
-    MaxLevel: 1
+    Charge:
+      SecondsToFull: 0
+      MinimumFraction: 0
+    Stance:
+      Modes: []
+    VariantGroup: 
+    NeverEchoes: 0
+    MaxLevel: 3
     GrowthPerLevel: 0.22
-    LevelUpNote: 
+    LevelUpNote: and one more charge
     TintOverride: {r: 0.6, g: 0.95, b: 1, a: 1}
     Icon: {fileID: 0}
     OnCast:

@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 namespace Gunspire
@@ -5,6 +6,10 @@ namespace Gunspire
     /// <summary>
     /// Reads the combat half of the player input and drives the gun, the spell slots,
     /// the melee spell, and interaction.
+    ///
+    /// On the player, silence stops spells - the cast slots and Shift - and disarm stops weapons: the
+    /// gun and the melee slot. That mirrors enemies, where silence stops ranged attacks and disarm
+    /// stops melee.
     /// </summary>
     public class PlayerCombat : MonoBehaviour
     {
@@ -33,14 +38,21 @@ namespace Gunspire
 
         /// <summary>
         /// The melee slot. A <see cref="Spell"/> like any other, restricted to
-        /// <see cref="SpellSlot.Melee"/> and swapped at a pedestal rather than levelled.
+        /// <see cref="SpellSlot.Melee"/>, swapped or levelled at a pedestal.
         /// </summary>
         public Spell MeleeSpell { get; private set; }
 
         /// <summary>Shared with the spell book, so melee runs the same effects as everything else.</summary>
         public AbilityContext Context { get; set; }
 
+        /// <summary>A melee attack is about to run its chain. Psi Blades spends its charge here.</summary>
+        public event Action<Spell> MeleeStarting;
+
+        /// <summary>A melee attack finished, and whether it actually happened rather than aborting.</summary>
+        public event Action<Spell, bool> MeleeFinished;
+
         private float _bashTimer;
+        private float _bashCooldownFull;
         private float _swapCooldown;
         private IInteractable _focus;
         private Component _focusComponent;
@@ -51,9 +63,18 @@ namespace Gunspire
         public string InteractPrompt => _focus != null && _focus.CanInteract(gameObject) ? _focus.Prompt : null;
 
         /// <summary>Fraction of the melee cooldown still to run, for the HUD.</summary>
-        public float MeleeCooldownFraction => MeleeSpell == null || MeleeSpell.Cooldown <= 0f
-            ? 0f
-            : Mathf.Clamp01(_bashTimer / MeleeSpell.Cooldown);
+        public float MeleeCooldownFraction => _bashCooldownFull <= 0f ? 0f : Mathf.Clamp01(_bashTimer / _bashCooldownFull);
+
+        public int MeleeLevel => Book != null && MeleeSpell != null ? Mathf.Max(1, Book.GetLevel(MeleeSpell)) : 1;
+
+        /// <summary>The direction of the last melee attack, for anything recording it.</summary>
+        public Vector3 LastMeleeForward { get; private set; }
+
+        public bool IsDisarmed => Status != null && Status.IsDisarmed;
+        public bool IsSilenced => Status != null && Status.IsSilenced;
+
+        /// <summary>Whether the trigger reaches the gun: not disarmed, and not firing itself.</summary>
+        public bool CanShoot => !IsDisarmed && (Weapon == null || !Weapon.AutoFire);
 
         /// <summary>Refuses anything that is not a melee spell, rather than binding it silently.</summary>
         public void EquipMelee(Spell spell)
@@ -67,6 +88,9 @@ namespace Gunspire
 
             MeleeSpell = spell;
             _bashTimer = 0f;
+            _bashCooldownFull = 0f;
+
+            if (Book != null) Book.SetEquipped(SpellSlot.Melee, spell);
         }
 
         // Qualified because this class also has a field called Health, and an unqualified
@@ -116,17 +140,30 @@ namespace Gunspire
 
             if (Weapon != null)
             {
-                bool alt = Input.GetMouseButton(1);
-                Weapon.HandleInput(Input.GetMouseButton(0), alt, Input.GetKeyDown(ReloadKey));
+                if (CanShoot)
+                {
+                    Weapon.HandleInput(Input.GetMouseButton(0), Input.GetMouseButton(1), Input.GetKeyDown(ReloadKey));
+                    if (Input.GetMouseButtonDown(1)) ReportAltFire();
+                }
+                else
+                {
+                    // A gun firing itself needs no trigger, and a disarmed one gets a released frame so
+                    // nothing held down carries through.
+                    Weapon.HandleInput(false, false, false);
+                    if (IsDisarmed && (Input.GetMouseButtonDown(0) || Input.GetMouseButtonDown(1)))
+                        Notify(SpellCosts.Refusal(CastOutcome.Disarmed, null) + " - cannot shoot");
+                }
 
-                if (Input.GetMouseButtonDown(1)) ReportAltFire();
                 ApplyZoom();
             }
 
             if (Book != null)
             {
                 for (int i = 0; i < SpellBook.SlotCount; i++)
-                    if (Input.GetKeyDown(SpellBook.SlotKeys[i])) UseSpellSlot(i);
+                {
+                    if (Input.GetKeyDown(SpellBook.SlotKeys[i])) ReportSlot(i, Book.PressSlot(i));
+                    if (Input.GetKeyUp(SpellBook.SlotKeys[i])) ReportSlot(i, Book.ReleaseSlot(i));
+                }
             }
 
             // Right click is alt fire now, so the bash lives on V alone - it was already
@@ -139,27 +176,35 @@ namespace Gunspire
         }
 
         /// <summary>
-        /// Uses a spell slot and says why if it does not fire. Pressing a key and getting
-        /// silence reads as a broken game, especially now that a run opens with Q empty.
+        /// Says why a spell slot did not fire. Pressing a key and getting silence reads as a broken
+        /// game, especially now that a run opens with Q empty.
         /// </summary>
-        private void UseSpellSlot(int slot)
+        private void ReportSlot(int slot, CastOutcome outcome)
         {
-            CastOutcome outcome = Book.TryCastSlot(slot);
-            if (outcome == CastOutcome.Cast) return;
-
             string label = SpellBook.SlotLabels[slot];
             switch (outcome)
             {
+                // Cooldowns, charging and toggles already read clearly on the HUD slot, so they stay quiet.
+                case CastOutcome.Cast:
+                case CastOutcome.Ready:
+                case CastOutcome.OnCooldown:
+                case CastOutcome.Charging:
+                case CastOutcome.ToggledOff:
+                    return;
+
+                case CastOutcome.StanceChanged:
+                    StanceMode mode = Book.ActiveStanceMode(slot);
+                    if (mode != null) Notify(Book.GetSlot(slot).DisplayName + ": " + mode.Name);
+                    return;
+
                 case CastOutcome.NoSpell:
                     Notify("Nothing bound to " + label + " - learn a spell at a Rune Shrine");
-                    break;
-                case CastOutcome.NotEnoughMana:
-                    Notify("Not enough mana");
-                    break;
-                case CastOutcome.NoRoom:
-                    Notify("No room to cast that");
-                    break;
-                // A cooldown already reads clearly on the HUD slot, so it stays quiet.
+                    return;
+
+                default:
+                    string text = SpellCosts.Refusal(outcome, Book.GetSlot(slot));
+                    if (text != null) Notify(text);
+                    return;
             }
         }
 
@@ -199,36 +244,95 @@ namespace Gunspire
 
         private static void Notify(string message)
         {
-            if (GameDirector.Instance != null) GameDirector.Instance.Notify(message, 1.6f);
+            if (GameDirector.Instance != null && !string.IsNullOrEmpty(message)) GameDirector.Instance.Notify(message, 1.6f);
         }
 
         // ---------------------------------------------------------------- melee bash
 
-        /// <summary>
-        /// Casts whatever is bound to the melee slot. The swing itself is an effect chain like
-        /// any other spell, so its reach, damage and knockback are all
-        /// authored on the asset rather than hardcoded here.
-        /// </summary>
+        /// <summary>Why the melee slot can or cannot be used right now.</summary>
+        public CastOutcome EvaluateMelee()
+        {
+            if (MeleeSpell == null || Context == null) return CastOutcome.NoSpell;
+            if (_bashTimer > 0f) return CastOutcome.OnCooldown;
+            if (IsDisarmed) return CastOutcome.Disarmed;
+            return SpellCosts.Check(MeleeSpell, Context);
+        }
+
         private void TryBash()
         {
-            if (_bashTimer > 0f || Aim == null || MeleeSpell == null || Context == null) return;
+            if (Aim == null) return;
 
-            if (MeleeSpell.ManaCost > 0f && (Mana == null || !Mana.Has(MeleeSpell.ManaCost)))
+            CastOutcome outcome = TryCastMelee();
+            switch (outcome)
             {
-                Notify("Not enough mana for " + MeleeSpell.DisplayName);
-                return;
+                case CastOutcome.Cast:
+                case CastOutcome.OnCooldown:
+                case CastOutcome.NoSpell:
+                case CastOutcome.NoRoom:
+                    return;
+                case CastOutcome.NotEnoughMana:
+                    Notify("Not enough mana for " + MeleeSpell.DisplayName);
+                    return;
+                default:
+                    Notify(SpellCosts.Refusal(outcome, MeleeSpell));
+                    return;
             }
+        }
+
+        /// <summary>
+        /// Casts whatever is bound to the melee slot. The swing itself is an effect chain like
+        /// any other spell, so its reach, damage and knockback are all authored on the asset rather
+        /// than hardcoded here. Public so tooling can swing without a key.
+        /// </summary>
+        public CastOutcome TryCastMelee()
+        {
+            CastOutcome outcome = EvaluateMelee();
+            if (outcome != CastOutcome.Ready) return outcome;
+
+            Spell spell = MeleeSpell;
+            int level = MeleeLevel;
+            Vector3 forward = Aim != null ? Aim.forward : transform.forward;
+
+            MeleeStarting?.Invoke(spell);
 
             // Charged only once the chain commits, so a swing that aborts costs nothing - the
             // same refund rule the cast slots and the Shift slot already follow.
-            if (!MeleeSpell.Cast(Context, 1)) return;
+            Context.SoulsSpent = SpellCosts.SoulsFor(spell, Context);
+            bool cast = spell.Cast(Context, level);
+            if (cast) SpellCosts.Pay(spell, Context);
+            Context.SoulsSpent = 0;
 
-            if (MeleeSpell.ManaCost > 0f && Mana != null) Mana.TrySpend(MeleeSpell.ManaCost);
+            if (cast)
+            {
+                _bashCooldownFull = spell.CooldownAtLevel(level)
+                                    / Mathf.Max(0.25f, Sheet != null ? Sheet.Get(Attr.AttackSpeed) : 1f);
+                _bashTimer = _bashCooldownFull;
+                LastMeleeForward = forward;
 
-            _bashTimer = MeleeSpell.Cooldown
-                         / Mathf.Max(0.25f, Sheet != null ? Sheet.Get(Attr.AttackSpeed) : 1f);
+                if (Aim != null) SpawnBashVisual(Aim.position, Aim.forward);
+            }
 
-            SpawnBashVisual(Aim.position, Aim.forward);
+            MeleeFinished?.Invoke(spell, cast);
+            return cast ? CastOutcome.Cast : CastOutcome.NoRoom;
+        }
+
+        /// <summary>A repeat of an earlier swing for Echo: free, with no cooldown, raising no melee events.</summary>
+        public bool CastMeleeEcho(Spell spell, int level, Vector3 forward)
+        {
+            if (Context == null || spell == null) return false;
+
+            Context.IsEcho = true;
+            Context.ForwardOverride = forward.sqrMagnitude > 0.0001f ? forward.normalized : (Vector3?)null;
+
+            try
+            {
+                return spell.Cast(Context, Mathf.Max(1, level));
+            }
+            finally
+            {
+                Context.IsEcho = false;
+                Context.ForwardOverride = null;
+            }
         }
 
         private void SpawnBashVisual(Vector3 origin, Vector3 forward)

@@ -22,6 +22,7 @@ namespace Gunspire.EditorTools
             "Gunspire/Verify Combat Core",
             "Gunspire/Verify Enemy AI",
             "Gunspire/Verify World Systems",
+            "Gunspire/Verify Player Systems",
             "Gunspire/Verify Spell Slots",
             "Gunspire/Verify Holster",
             "Gunspire/Verify Shot Spread",

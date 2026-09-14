@@ -29,6 +29,12 @@ namespace Gunspire
         public event Action Changed;
 
         /// <summary>
+        /// Raised for every application, fresh or a top-up, after it has landed: the entity, which status,
+        /// the source and the side it came from. Conflux listens for elements meeting on one target.
+        /// </summary>
+        public static event Action<StatusController, StatusId, GameObject, Team> AnyApplied;
+
+        /// <summary>
         /// Frost at full stacks: a hundred percent slowed, so frozen in every sense that used to
         /// be a separate status. This is the state that kinetic damage finishes.
         /// </summary>
@@ -208,6 +214,7 @@ namespace Gunspire
 
                 RebuildModifiers(existing);
                 Changed?.Invoke();
+                AnyApplied?.Invoke(this, app.Id, source, sourceTeam);
                 return;
             }
 
@@ -229,6 +236,7 @@ namespace Gunspire
             RebuildModifiers(status);
             def.OnApplied(this, status);
             Changed?.Invoke();
+            AnyApplied?.Invoke(this, app.Id, source, sourceTeam);
         }
 
         public void ApplyAll(List<StatusApplication> apps, GameObject source, Team sourceTeam)

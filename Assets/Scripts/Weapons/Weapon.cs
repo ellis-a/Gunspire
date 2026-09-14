@@ -25,6 +25,29 @@ namespace Gunspire
         /// <summary>Run-wide on-hit effects granted by boons. Merged with the weapon list on every shot.</summary>
         public List<StatusApplication> ExtraStatuses;
 
+        /// <summary>
+        /// A phantom copy of a gun: no ammo, no reloads, no recoil pushed into the look controller, and
+        /// its shots and hits say what they are. Divine Assistance, Phantasmal Mimic.
+        /// </summary>
+        public bool IsPhantom;
+
+        /// <summary>Never spends a round and never reloads. Superid; phantoms behave this way already.</summary>
+        public bool InfiniteAmmo;
+
+        /// <summary>Reads another gun's infusions instead of its own, without spending them. A phantom mirroring the real gun.</summary>
+        public Weapon InfusionSource;
+
+        /// <summary>While set, every round goes straight at this with no spread, and projectiles steer onto it. Superid.</summary>
+        public Transform ForcedTarget;
+
+        /// <summary>The gun is firing itself; the trigger is ignored. <see cref="AutoFireDriver"/> pulls it.</summary>
+        public bool AutoFire;
+
+        private int _nextRound;
+        private bool _firingEcho;
+
+        private bool FreeRounds => IsPhantom || InfiniteAmmo || _firingEcho;
+
         /// <summary>Raised for every round, after it leaves the barrel.</summary>
         public event System.Action<WeaponShot> Fired;
 
@@ -93,7 +116,11 @@ namespace Gunspire
         /// <summary>Blocky viewmodel so the player can see which gun they are holding.</summary>
         private void BuildModel()
         {
-            if (_model != null) Destroy(_model);
+            if (_model != null)
+            {
+                if (Application.isPlaying) Destroy(_model);
+                else DestroyImmediate(_model);
+            }
 
             _model = Build.Empty(transform, "Model");
             Material body = MaterialLibrary.Lit(new Color(0.15f, 0.15f, 0.18f), 0.4f, 0.6f);
@@ -131,6 +158,11 @@ namespace Gunspire
 
         public void ClearInfusions() => _infusions.Clear();
 
+        public void RemoveInfusion(string id) => _infusions.RemoveAll(i => i.Id == id);
+
+        private List<BulletInfusion> InfusionList
+            => InfusionSource != null && InfusionSource != this ? InfusionSource._infusions : _infusions;
+
         /// <summary>Runs infusion timers down. Public so tooling can drive it without waiting.</summary>
         public void TickInfusions(float seconds)
         {
@@ -144,14 +176,18 @@ namespace Gunspire
 
         private List<BulletInfusion> ActiveInfusions()
         {
-            var active = new List<BulletInfusion>(_infusions.Count);
-            for (int i = 0; i < _infusions.Count; i++)
-                if (!_infusions[i].Expired) active.Add(_infusions[i]);
+            List<BulletInfusion> source = InfusionList;
+            var active = new List<BulletInfusion>(source.Count);
+            for (int i = 0; i < source.Count; i++)
+                if (!source[i].Expired) active.Add(source[i]);
             return active;
         }
 
         private void SpendInfusionRound()
         {
+            // A copy's rounds carry a charge without using it up, or Smite's one round would go to the phantom.
+            if (IsPhantom || _firingEcho || InfusionSource != null) return;
+
             for (int i = _infusions.Count - 1; i >= 0; i--)
             {
                 BulletInfusion infusion = _infusions[i];
@@ -166,7 +202,7 @@ namespace Gunspire
         /// when it fired, so a one-round infusion still lands after it has been spent.
         /// </summary>
         public void ReportHit(IDamageable target, in DamageInfo damage, Vector3 point, Vector3 normal,
-            Vector3 direction, List<BulletInfusion> infusions)
+            Vector3 direction, List<BulletInfusion> infusions, int round = 0, bool echo = false)
         {
             if (target == null) return;
 
@@ -177,7 +213,10 @@ namespace Gunspire
                 Damage = damage,
                 Point = point,
                 Normal = normal,
-                Direction = direction
+                Direction = direction,
+                Round = round,
+                IsPhantom = IsPhantom,
+                IsEcho = echo
             };
 
             if (infusions != null)
@@ -217,14 +256,15 @@ namespace Gunspire
         {
             if (Definition == null || IsReloading) return;
 
-            if (AmmoInMagazine <= 0)
+            if (!FreeRounds && AmmoInMagazine <= 0)
             {
                 StartReload();
                 return;
             }
             if (_cooldown > 0f) return;
 
-            if (Definition.ManaPerShot > 0f && (OwnerMana == null || !OwnerMana.TrySpend(Definition.ManaPerShot)))
+            // A phantom uses none of its owner's resources.
+            if (!IsPhantom && Definition.ManaPerShot > 0f && (OwnerMana == null || !OwnerMana.TrySpend(Definition.ManaPerShot)))
                 return;
 
             float attackSpeed = OwnerSheet != null ? OwnerSheet.Get(Attr.AttackSpeed) : 1f;
@@ -371,7 +411,7 @@ namespace Gunspire
         {
             for (int i = 0; i < Definition.BurstCount; i++)
             {
-                if (AmmoInMagazine <= 0) break;
+                if (!FreeRounds && AmmoInMagazine <= 0) break;
                 FireOnce();
                 yield return new WaitForSeconds(Definition.BurstInterval);
             }
@@ -389,12 +429,20 @@ namespace Gunspire
         /// impacts, tracers, recoil, the muzzle flash and the auto-reload behave identically
         /// whichever button asked.
         /// </summary>
-        private void FireRound(ShotSpec spec, int ammoCost)
+        private void FireRound(ShotSpec spec, int ammoCost, Vector3? directionOverride = null)
         {
-            AmmoInMagazine -= Mathf.Max(0, ammoCost);
+            if (!FreeRounds) AmmoInMagazine -= Mathf.Max(0, ammoCost);
 
             Vector3 origin = AimOrigin != null ? AimOrigin.position : transform.position;
-            Vector3 forward = AimOrigin != null ? AimOrigin.forward : transform.forward;
+            Vector3 forward = directionOverride ?? (AimOrigin != null ? AimOrigin.forward : transform.forward);
+
+            // Auto-aim: straight at the target's centre, every pellet, with no spread at all.
+            bool forced = ForcedTarget != null && !_firingEcho;
+            if (forced)
+            {
+                Vector3 toTarget = ForcedTarget.position + Vector3.up * 0.9f - origin;
+                if (toTarget.sqrMagnitude > 0.0001f) forward = toTarget.normalized;
+            }
 
             // Dexterity steadies the hands: one multiplier on the cone, one on the kick. Applied
             // here rather than to the definition, so both triggers pick them up.
@@ -407,23 +455,47 @@ namespace Gunspire
 
             for (int i = 0; i < spec.Pellets; i++)
             {
-                Vector3 direction = ApplySpread(forward, spec.SpreadDegrees * spreadScale);
-                if (spec.Delivery == DeliveryKind.Hitscan) FireHitscan(spec, origin, direction);
-                else FireProjectile(spec, origin, direction);
+                // Every pellet is its own round, so a round striking several things still counts once.
+                int round = ++_nextRound;
+                Vector3 direction = forced ? forward : ApplySpread(forward, spec.SpreadDegrees * spreadScale);
+                if (spec.Delivery == DeliveryKind.Hitscan) FireHitscan(spec, origin, direction, round);
+                else FireProjectile(spec, origin, direction, round);
             }
 
             Fired?.Invoke(new WeaponShot
             {
-                Weapon = this, Spec = spec, Origin = origin, Direction = forward, AmmoCost = ammoCost
+                Weapon = this, Spec = spec, Origin = origin, Direction = forward, AmmoCost = ammoCost,
+                IsPhantom = IsPhantom, IsEcho = _firingEcho
             });
             SpendInfusionRound();
 
             MuzzleFlash();
             PlayFireSound();
 
-            if (Look != null)
+            // A copy of a gun firing alongside yours must not double your recoil.
+            if (Look != null && !IsPhantom && !_firingEcho)
                 Look.AddRecoil(spec.RecoilPitch * recoilScale, Random.Range(-1f, 1f) * spec.RecoilYaw * recoilScale);
-            if (AmmoInMagazine <= 0) StartReload();
+            if (!FreeRounds && AmmoInMagazine <= 0) StartReload();
+        }
+
+        /// <summary>
+        /// A repeat of an earlier round for Echo: the recorded shot along its recorded direction, from
+        /// where the gun is now. No ammo, no recoil and no infusion spent, and its shot event says it is
+        /// an echo so it is never recorded to be repeated again.
+        /// </summary>
+        public void FireEcho(ShotSpec spec, Vector3 direction)
+        {
+            if (Definition == null) return;
+
+            _firingEcho = true;
+            try
+            {
+                FireRound(spec, 0, direction.sqrMagnitude > 0.0001f ? direction.normalized : (Vector3?)null);
+            }
+            finally
+            {
+                _firingEcho = false;
+            }
         }
 
         private float CurrentSpread()
@@ -464,7 +536,7 @@ namespace Gunspire
 
         // ---------------------------------------------------------------- delivery
 
-        private void FireHitscan(in ShotSpec spec, Vector3 origin, Vector3 direction)
+        private void FireHitscan(in ShotSpec spec, Vector3 origin, Vector3 direction, int round)
         {
             int mask = Layers.HitMaskFor(OwnerTeam);
             float range = spec.Range;
@@ -492,7 +564,7 @@ namespace Gunspire
                     Vector3 at = AbilityContext.CenterOf(handed);
                     DamageInfo handedDamage = BuildShotDamage(spec, at, -direction, direction, _roundInfusions);
                     handed.TakeDamage(handedDamage);
-                    ReportHit(handed, handedDamage, at, -direction, direction, _roundInfusions);
+                    ReportHit(handed, handedDamage, at, -direction, direction, _roundInfusions, round, _firingEcho);
                     Combat.SpawnImpact(at, -direction, spec.Tint, 0.3f, spec.DamageType);
 
                     endPoint = hit.point;
@@ -514,7 +586,7 @@ namespace Gunspire
 
                 DamageInfo damage = BuildShotDamage(spec, hit.point, hit.normal, direction, _roundInfusions);
                 target.TakeDamage(damage);
-                ReportHit(target, damage, hit.point, hit.normal, direction, _roundInfusions);
+                ReportHit(target, damage, hit.point, hit.normal, direction, _roundInfusions, round, _firingEcho);
                 Combat.SpawnImpact(hit.point, hit.normal, spec.Tint, 0.3f, spec.DamageType);
                 endPoint = hit.point;
                 anythingHit = true;
@@ -574,7 +646,7 @@ namespace Gunspire
             return info;
         }
 
-        private void FireProjectile(in ShotSpec spec, Vector3 origin, Vector3 direction)
+        private void FireProjectile(in ShotSpec spec, Vector3 origin, Vector3 direction, int round)
         {
             Vector3 spawn = Muzzle != null ? Muzzle.position : origin + direction * 0.6f;
 
@@ -614,6 +686,16 @@ namespace Gunspire
 
             p.SourceWeapon = this;
             p.Infusions = infusions;
+            p.Round = round;
+            p.IsEcho = _firingEcho;
+
+            // "Never misses" for a projectile gun means its rounds steer onto the target.
+            if (ForcedTarget != null && !_firingEcho)
+            {
+                p.HomingTarget = ForcedTarget;
+                p.HomingEnabled = true;
+                p.HomingStrength = Mathf.Max(p.HomingStrength, 14f);
+            }
 
             p.Launch();
         }
@@ -650,7 +732,8 @@ namespace Gunspire
 
         public void StartReload()
         {
-            if (IsReloading || Definition == null) return;
+            // A gun with no magazine to empty has nothing to reload, and must not pause to do it.
+            if (IsReloading || Definition == null || IsPhantom || InfiniteAmmo) return;
             if (AmmoInMagazine >= Definition.MagazineSize) return;
             _reloadRoutine = StartCoroutine(ReloadRoutine());
         }

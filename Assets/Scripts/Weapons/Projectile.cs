@@ -46,6 +46,55 @@ namespace Gunspire
         public Weapon SourceWeapon;
         public List<BulletInfusion> Infusions;
 
+        /// <summary>Which round of its gun this is, so a round striking several things still counts once. Zero for anything else.</summary>
+        public int Round;
+
+        /// <summary>An Echo's repeat of an earlier round.</summary>
+        public bool IsEcho;
+
+        /// <summary>When homing, steers onto this rather than searching for something. Superid's aim.</summary>
+        public Transform HomingTarget;
+
+        /// <summary>A side-to-side weave: how far either side of its line it drifts, and how many times a second. Flaming Skull.</summary>
+        public float SwayAmplitude;
+        public float SwayFrequency = 2f;
+
+        /// <summary>Flies through level geometry and props while still striking what it can hit. Divine Star, if decided.</summary>
+        public bool PassesThroughWalls;
+
+        /// <summary>Raised whenever it moves, with where it was and where it is now. A trail follows this.</summary>
+        public event System.Action<Projectile, Vector3, Vector3> Moved;
+
+        private static readonly List<Projectile> LiveList = new List<Projectile>();
+
+        /// <summary>
+        /// Every projectile in flight. They have no collider for an area search to find, so anything that
+        /// needs them - Force of Will's reflect - asks here.
+        /// </summary>
+        public static IReadOnlyList<Projectile> Live
+        {
+            get
+            {
+                LiveList.RemoveAll(p => p == null);
+                return LiveList;
+            }
+        }
+
+        /// <summary>Live projectiles fired by one side within a radius of a point.</summary>
+        public static int FindNear(Vector3 point, float radius, Team ownerTeam, List<Projectile> into)
+        {
+            into.Clear();
+            IReadOnlyList<Projectile> live = Live;
+
+            for (int i = 0; i < live.Count; i++)
+            {
+                Projectile p = live[i];
+                if (p.OwnerTeam == ownerTeam && (p.transform.position - point).sqrMagnitude <= radius * radius) into.Add(p);
+            }
+            return into.Count;
+        }
+
+        private float _swayOffset;
         private Vector3 _velocity;
         private float _age;
         private int _hitMask;
@@ -124,10 +173,20 @@ namespace Gunspire
         public void Launch()
         {
             _velocity = transform.forward * Speed;
-            _hitMask = Layers.HitMaskFor(OwnerTeam);
+            _hitMask = MaskFor(OwnerTeam);
             Layers.SetRecursively(gameObject,
                 OwnerTeam == Team.Player ? Layers.PlayerProjectile : Layers.EnemyProjectile);
+
+            if (!LiveList.Contains(this)) LiveList.Add(this);
         }
+
+        private int MaskFor(Team team)
+        {
+            int mask = Layers.HitMaskFor(team);
+            return PassesThroughWalls ? mask & ~Layers.WorldMask : mask;
+        }
+
+        private void OnDestroy() => LiveList.Remove(this);
 
         /// <summary>Layers this projectile can currently hit.</summary>
         public int HitMask => _hitMask;
@@ -147,6 +206,7 @@ namespace Gunspire
 
             _alreadyHit.Clear();
             _homingTarget = null;
+            HomingTarget = null;
 
             if (_onHitContext != null)
             {
@@ -163,7 +223,7 @@ namespace Gunspire
                 transform.forward = direction;
             }
 
-            _hitMask = Layers.HitMaskFor(team);
+            _hitMask = MaskFor(team);
             Layers.SetRecursively(gameObject,
                 team == Team.Player ? Layers.PlayerProjectile : Layers.EnemyProjectile);
         }
@@ -171,7 +231,7 @@ namespace Gunspire
         private void Update()
         {
             // Shots are part of the world: the player's own hang in the air when it stops.
-            float dt = WorldClock.DeltaTime;
+            float dt = _stepOverride >= 0f ? _stepOverride : WorldClock.DeltaTime;
             _age += dt;
             if (_age >= Lifetime)
             {
@@ -183,7 +243,7 @@ namespace Gunspire
             if (HomingEnabled) ApplyHoming(dt);
 
             Vector3 start = transform.position;
-            Vector3 step = _velocity * dt;
+            Vector3 step = _velocity * dt + SwayStep();
             float distance = step.magnitude;
             if (distance <= 0.0001f) return;
 
@@ -201,9 +261,43 @@ namespace Gunspire
 
         private void MoveTo(Vector3 position, Vector3 direction)
         {
+            Vector3 from = transform.position;
             transform.position = position;
             if (direction.sqrMagnitude > 0.0001f) transform.forward = direction;
+            Moved?.Invoke(this, from, position);
         }
+
+        /// <summary>
+        /// This frame's share of the weave: the change in sideways offset since the last frame, so the
+        /// line it follows stays the line it was fired along.
+        /// </summary>
+        private Vector3 SwayStep()
+        {
+            if (SwayAmplitude <= 0f || _velocity.sqrMagnitude < 0.0001f) return Vector3.zero;
+
+            Vector3 side = Vector3.Cross(Vector3.up, _velocity.normalized);
+            if (side.sqrMagnitude < 0.0001f) side = Vector3.right;
+            side.Normalize();
+
+            float offset = Mathf.Sin(_age * SwayFrequency * Mathf.PI * 2f) * SwayAmplitude;
+            float change = offset - _swayOffset;
+            _swayOffset = offset;
+            return side * change;
+        }
+
+        /// <summary>How far to one side of its line the weave has it right now. Read by tooling.</summary>
+        public float SwayOffset => _swayOffset;
+
+        /// <summary>Advances the projectile by a given time, as Update does. Public so tooling can fly one.</summary>
+        public void Step(float dt)
+        {
+            float saved = _stepOverride;
+            _stepOverride = dt;
+            try { Update(); }
+            finally { _stepOverride = saved; }
+        }
+
+        private float _stepOverride = -1f;
 
         /// <summary>Returns true when the projectile is done and should stop moving this frame.</summary>
         private bool HandleHit(RaycastHit hit)
@@ -247,7 +341,7 @@ namespace Gunspire
                 DamageInfo info = BuildHitDamage(point, normal);
                 target.TakeDamage(info);
                 if (SourceWeapon != null)
-                    SourceWeapon.ReportHit(target, info, point, normal, transform.forward, Infusions);
+                    SourceWeapon.ReportHit(target, info, point, normal, transform.forward, Infusions, Round, IsEcho);
                 Combat.SpawnImpact(point, normal, Tint, 0.3f, DamageType);
 
                 if (Pierce > 0)
@@ -302,12 +396,14 @@ namespace Gunspire
             Weapon weapon = SourceWeapon;
             List<BulletInfusion> infusions = Infusions;
             Vector3 direction = transform.forward;
+            int round = Round;
+            bool echo = IsEcho;
             System.Action<IDamageable, DamageInfo> onHit = weapon == null
                 ? (System.Action<IDamageable, DamageInfo>)null
                 : (target, info) =>
                 {
                     if (weapon != null)
-                        weapon.ReportHit(target, info, info.HitPoint, info.HitNormal, direction, infusions);
+                        weapon.ReportHit(target, info, info.HitPoint, info.HitNormal, direction, infusions, round, echo);
                 };
 
             Combat.Explode(point, SplashRadius, template, Layers.HitMaskFor(OwnerTeam), 0.4f, Knockback, onHit);
@@ -329,12 +425,18 @@ namespace Gunspire
 
         private void ApplyHoming(float dt)
         {
-            if (_homingTarget == null || !_homingTarget.gameObject.activeInHierarchy)
-                _homingTarget = FindHomingTarget();
+            Transform target = HomingTarget != null && HomingTarget.gameObject.activeInHierarchy ? HomingTarget : null;
 
-            if (_homingTarget == null) return;
+            if (target == null)
+            {
+                if (_homingTarget == null || !_homingTarget.gameObject.activeInHierarchy)
+                    _homingTarget = FindHomingTarget();
+                target = _homingTarget;
+            }
 
-            Vector3 desired = (_homingTarget.position + Vector3.up * 0.9f - transform.position).normalized;
+            if (target == null) return;
+
+            Vector3 desired = (target.position + Vector3.up * 0.9f - transform.position).normalized;
             Vector3 newDirection = Vector3.RotateTowards(_velocity.normalized, desired,
                 HomingStrength * dt, 0f);
             _velocity = newDirection * _velocity.magnitude;

@@ -91,14 +91,26 @@ namespace Gunspire.EditorTools
                     problems.Add("duplicate id \"" + spell.Id + "\" (" + other + " and " + spell.Slot + ")");
                 seen[spell.Id] = spell.Slot.ToString();
 
-                // Every slot costs mana now, one way or the other. A free spell in any slot is
-                // almost always a value that never got filled in.
-                float upfront = spell.IsSustained ? spell.Sustain.ManaPerSecond : spell.ManaCost;
-                if (upfront <= 0f)
-                    problems.Add(spell.Id + " (" + spell.Slot + ") costs no mana");
+                // Every spell costs something, one way or another. A spell costing nothing at all is almost
+                // always a value that never got filled in. A stance is the exception, whose price is the slot,
+                // and so is a toggle marked as free on purpose.
+                bool costsSomething = spell.IsStance
+                    || (spell.IsSustained
+                        ? spell.Sustain.ManaPerSecond > 0f || spell.Sustain.HealthPerSecond > 0f || spell.Sustain.Toggle
+                        : spell.ManaCost > 0f)
+                    || spell.SoulCost > 0 || spell.SpendsAllSouls || spell.HealthCost > 0f || spell.PsiCost > 0;
+                if (!costsSomething)
+                    problems.Add(spell.Id + " (" + spell.Slot + ") costs nothing");
 
-                if (spell.IsSustained && spell.Slot != SpellSlot.Movement)
-                    problems.Add(spell.Id + " is sustained but sits in the " + spell.Slot + " slot");
+                // Toggles work in any slot now. Charging and stances read a key held or tapped repeatedly,
+                // which only the cast slots do, and a spell can only be one of the three.
+                int modes = (spell.IsSustained ? 1 : 0) + (spell.IsCharged ? 1 : 0) + (spell.IsStance ? 1 : 0);
+                if (modes > 1)
+                    problems.Add(spell.Id + " is more than one of sustained, charged and stance");
+
+                if ((spell.IsCharged || spell.IsStance) && spell.Slot != SpellSlot.Cast)
+                    problems.Add(spell.Id + " is " + (spell.IsCharged ? "charged" : "a stance")
+                                 + " but sits in the " + spell.Slot + " slot");
 
                 if (spell.Slot != SpellSlot.Cast && spell.OnCast.Count == 0 && !spell.IsSustained)
                     problems.Add(spell.Id + " has an empty effect chain");

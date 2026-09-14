@@ -38,6 +38,23 @@ namespace Gunspire
         public float InvulnerabilityTimer { get; set; }
         public bool IsInvulnerable => InvulnerabilityTimer > 0f;
 
+        /// <summary>
+        /// Temporary hit points taken before health, gone when their time runs out. The Blood Debt's
+        /// overheal. Only damage that has already passed resistances reaches it.
+        /// </summary>
+        public float Shield { get; private set; }
+        private float _shieldTimer;
+
+        /// <summary>Adds to the shield and restarts its clock at the longer of the two times.</summary>
+        public void AddShield(float amount, float seconds)
+        {
+            if (!IsAlive || amount <= 0f || seconds <= 0f) return;
+
+            Shield += amount;
+            _shieldTimer = Mathf.Max(_shieldTimer, seconds);
+            HealthChanged?.Invoke();
+        }
+
         public event Action<DamageInfo, float> Damaged;
         public event Action<float> Healed;
         public event Action<DamageInfo> Died;
@@ -70,6 +87,12 @@ namespace Gunspire
             float dt = WorldClock.DeltaFor(gameObject);
 
             if (InvulnerabilityTimer > 0f) InvulnerabilityTimer -= dt;
+
+            if (Shield > 0f && (_shieldTimer -= dt) <= 0f)
+            {
+                Shield = 0f;
+                HealthChanged?.Invoke();
+            }
 
             if (_sheet != null && Current < Max)
             {
@@ -246,6 +269,19 @@ namespace Gunspire
 
             if (amount <= 0f) return;
 
+            if (Shield > 0f)
+            {
+                float absorbed = Mathf.Min(Shield, amount);
+                Shield -= absorbed;
+                amount -= absorbed;
+
+                if (amount <= 0f)
+                {
+                    HealthChanged?.Invoke();
+                    return;
+                }
+            }
+
             Current = Mathf.Max(0f, Current - amount);
 
             // After the damage lands, so the hit that applied sleep does not also end it, and
@@ -330,6 +366,8 @@ namespace Gunspire
             Max = ComputeMax();
             Current = startingHealth > 0f ? Mathf.Min(startingHealth, Max) : Max;
             InvulnerabilityTimer = 0.5f;
+            Shield = 0f;
+            _shieldTimer = 0f;
             HealthChanged?.Invoke();
         }
 

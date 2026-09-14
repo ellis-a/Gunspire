@@ -165,6 +165,7 @@ namespace Gunspire
             // Revive after the stats are back, so it fills to the correct maximum.
             Player.Health.Revive();
             Player.FullRestore();
+            Player.ResetRunSystems();
         }
 
         /// <summary>Back to the opening screen, so a new run can be a different build.</summary>
@@ -178,6 +179,10 @@ namespace Gunspire
 
         private void ClearRoom()
         {
+            // First, while the body still exists: a possessed enemy is about to be destroyed with the room,
+            // and the camera is inside it.
+            if (Player != null && Player.Possession != null) Player.Possession.Cancel();
+
             if (_roomRoot != null) Destroy(_roomRoot);
             _roomRoot = null;
             CurrentRoom = null;

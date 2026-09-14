@@ -15,6 +15,10 @@ namespace Gunspire
         public Vector3 Direction;
 
         public int AmmoCost;
+
+        /// <summary>Fired by a phantom copy of a gun, or as Echo's repeat. Neither is recorded or breaks invisibility.</summary>
+        public bool IsPhantom;
+        public bool IsEcho;
     }
 
     /// <summary>
@@ -29,6 +33,13 @@ namespace Gunspire
         public Vector3 Point;
         public Vector3 Normal;
         public Vector3 Direction;
+
+        /// <summary>Which round of the gun landed, so a round striking several things counts once where that matters.</summary>
+        public int Round;
+
+        /// <summary>From a phantom copy of a gun, or an echoed round. Arcane Warp restores nothing for either.</summary>
+        public bool IsPhantom;
+        public bool IsEcho;
 
         /// <summary>
         /// Deals extra damage as its own instance rather than folding it into this hit. An ethereal

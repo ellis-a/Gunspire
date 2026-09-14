@@ -223,7 +223,8 @@ differed from the plan:
 - **A gun's hit hook fires for splash victims too,** not only direct hits. `WeaponHit.DealBonus` deals a
   bonus as its own instance.
 - **Infusions live on the weapon component,** which the holster re-equips rather than replaces, so they
-  survive a swap without being pushed again. A restart clears them. Phantom weapons do not exist yet.
+  survive a swap without being pushed again. A restart clears them. Phantom weapons, from Phase 4, can read
+  the real gun's infusions without spending them.
 - **`Sfx` no longer builds its voice pool outside play mode,** where it threw, so tooling can fire guns.
 
 ### 1.1 A damage origin on every hit
@@ -320,7 +321,8 @@ deviations:
 
 - **Decided: silence and disarm split by reach.** Every enemy attack is tagged melee or ranged; silence
   stops ranged attacks and disarm stops melee ones. The hound's lunge is the one melee attack today, and
-  a migration wrote the tag onto the enemy assets. On the player both still do nothing until 4.3.
+  a migration wrote the tag onto the enemy assets. On the player, since 4.3, silence stops spells and
+  disarm stops the gun and the melee slot.
 - **Decided: familiars are not minions yet.** They stay collateral that never pulls aggro.
   `TargetRegistry` holds the player's body and anything registered as a minion, which nothing is until
   the Phase 3 framework.
@@ -337,8 +339,8 @@ deviations:
   time.
 - **Hazards are a registry,** and lingering zones register themselves. `Combat.PullToward` is the pull.
 - **Hiding** keeps the enemy registered with its room and pauses its statuses and attack timers.
-  Revealing onto a spot that has become a wall moves it to the nearest open cell; landing on another body
-  waits for Phase 4.
+  Revealing onto a spot that has become a wall moves it to the nearest open cell, and anything standing on
+  the spot is shoved aside by the Phase 4 landing check.
 - **Copies take a filter** for statuses they should not inherit, so whether Superego Death copies the
   death mark is the spell's call. Plague and Torment remain planned statuses.
 
@@ -443,8 +445,8 @@ deviations:
   (1.6) now goes on the minion layer, not the familiar layer. `MinionLibrary` holds one reference minion,
   a zombie, in code only until something summons it. Minions follow the player's body through the flow
   field and fight the nearest enemy that is close or in sight.
-- **Revive is a per-definition timer,** zero meaning death is final, so the Bestial companion decision can
-  go either way without framework changes.
+- **Revive is a per-definition timer,** zero meaning death is final. The Bestial companion was decided in
+  Phase 4: it dies until the next floor, so the beasts use zero.
 - **Persistent minions are counted when a floor ends** and respawned around the player on the next;
   non-persistent ones stay behind. The single monstrosity slot and the beast tier are ids in the same
   count; their limits belong to their spells.
@@ -496,7 +498,7 @@ walking ones.
 - **Persistence on `RunState`:** a zombie count, a single monstrosity slot and the beast tier, respawned
   on floor arrival and placed with `NavField.TryFindSpot`. Plague zombies do not persist.
 - **Performance.** Raise Dead has no cap. Measure a horde of fifty to a hundred.
-- **Open design decision:** whether the Bestial companion revives on a timer or can only be knocked down.
+- **Decided:** the Bestial companion dies until the next floor.
 
 ### 3.3 Knockback impacts
 
@@ -537,6 +539,68 @@ Smoke, Nether Wall.**
 ---
 
 ## Phase 4: player systems
+
+**Status: done.** Verify Player Systems checks the items below against a real player rig. Decisions and
+deviations:
+
+- **Decided: a stance is always on.** Elemental Form starts in fire when bound, each tap steps fire, ice,
+  storm and back to fire, and there is no off. It drains nothing and has no cooldown; the slot is its price.
+- **Decided: the Bestial companion dies until the next floor.** A new rank mid-floor replaces a living
+  companion with the new tier but never brings back one that died.
+- **Levels (4.1).** The book records the movement and melee spells, so they level and count toward
+  masteries. Dash gains a charge per level past the first, to a cap of three; a migration moved the asset's
+  cap. A pedestal offering the spell you hold levels it. Offers hold at most one Petty spell while school
+  spells remain, then fill with Petty; eliminated ids live on `RunState`. Variants are separate spells
+  sharing a `VariantGroup`, and binding one replaces another from the same group.
+- **Masteries (4.2).** `MasteryHost` ranks one component per school whenever the equipped set changes and
+  on every floor arrival, since spells can still be bound mid-floor. Every number is a placeholder:
+  - **Conflux:** bursts of 12, then 30, and a 40 damage, 4m detonation at three spells.
+  - **Blood Debt:** 20 debt repaid per kill, 50% interest, 0.5% spell power per point of debt, and a
+    6 second shield.
+  - **Psi Blades:** a melee bonus of 12 psychic.
+
+  Conflux's ice reaction is kinetic, the type thrown ice already is, so it can shatter a frozen neighbour.
+  Divine Knowledge's fourth rung grants nothing. The beasts are minions outside the roster; the mastery
+  summons its own.
+- **Costs (4.3).** Souls, health and psi are refused, never clamped, and health never goes below one hit
+  point. Echoed casts are free and start no cooldown. On the player, silence stops the cast slots and Shift;
+  disarm stops the gun and the melee slot.
+- **Activation (4.4).**
+  - **Toggles:** they work in any slot, through one `SustainRunner`. A toggle can drain health, be
+    marked free, hide the player, and break on shooting, casting or melee. A cast-slot toggle starts its
+    cooldown when it goes off; Shift's keep none, as before.
+  - **Upfront drain:** the half-second drain a toggle pays on switching on is now actually taken. It was
+    checked but never spent.
+  - **Charged spells:** they pay on release, and a release below the minimum costs nothing.
+  - **Timed buffs:** conditional buffs keep their own clock and apply only while the condition holds.
+- **Motor (4.5).** Gravity scale was already done in Phase 0. New: impulse sequences, friction suppression,
+  velocity inversion (horizontal or full, since Repulse is still open), kinematic travel, passing through
+  enemies, and a shared landing check. The check is wired into banished enemies returning and into an
+  option on `TeleportEffect`. The rewind recorder keeps 3 seconds at 10 snapshots a second and clears on
+  every teleport and floor change. Teleport validation is a new selector; switching Blink's own chain over
+  to it is content, left for Phase 5.
+- **Hiding (4.6)** is a keyed set of requests written onto the player's own registry entry, which also
+  gained an untargetable flag.
+- **Possession (4.7).** `PossessionController` and `IPossessable`, with enemies implementing it:
+  - **Controls:** attacks bound in order to left click, right click, Q, E and F, and flight on Space and
+    Control.
+  - **Ending:** control ends on a direct hit but not a status tick. The camera then flies home in 0.6
+    seconds with controls locked and the real body immune.
+  - **Menus and room changes:** the player's own controls are suppressed separately from menu input, so
+    pausing mid-possession does not hand them back. A room change cancels possession first.
+  - **Still open:** what happens to the enemy afterwards is the spell's call.
+- **Weapons (4.8).**
+  - **Phantom guns:** they fire without ammo, reloads or recoil, follow swaps, and can share infusions
+    without spending them. The holster takes keyed swap locks.
+  - **Auto-fire:** it picks the enemy nearest the reticle by angle among those in sight, and holds fire
+    with nothing in sight (Superid's open question, defaulted).
+  - **Action log:** it records your own shots, casts and swings. Echoes replay them from where you stand,
+    free and unrecorded; toggles, stances and spells marked `NeverEchoes` are never recorded.
+  - **Projectiles:** they have a live registry, a round id, sway, a moved event, a homing target
+    override, and an option to pass through walls.
+- **HUD.** Souls, psi, debt and Arcane Warp's bonus show under the vitals. The shield shows on the health
+  bar. Slots show charge, toggles and stance modes. Divine Knowledge draws over enemies, and a banner shows
+  who you are controlling.
 
 ### 4.1 Slots and spell levels
 
@@ -671,8 +735,8 @@ numbers and a level cap of 3. They pulled small slices of earlier phases forward
 - **A hit with no damage no longer executes.** It cannot spend a death mark or a mark, or shatter full
   frost, so a sleep bolt is not a finishing blow.
 
-Not yet: the one-Petty-per-offer rule. With only Petty cast spells in the roster, it would shrink every
-offer to a single card.
+The one-Petty-per-offer rule arrived in Phase 4, with a fill-in: once school spells run out, Petty spells
+fill the rest of the offer, so a roster of only Petty cast spells still offers a full hand.
 
 ---
 
@@ -705,7 +769,6 @@ These are unresolved in the design doc, grouped by the phase they block.
 
 **Phase 3, world systems**
 
-- Whether the Bestial companion revives on a timer or is only knocked down.
 - Stitched Monstrosity: whether recasting with one out refuses or replaces it.
 - Lich Guise: whether the Stitched Monstrosity and plague zombies are swap targets.
 - Nether Wall's size and duration.
@@ -713,7 +776,9 @@ These are unresolved in the design doc, grouped by the phase they block.
 
 **Phase 4, player systems**
 
-- Elemental Form: how three forms share one key, and whether it drains mana.
+- Assume Identity: which keys an enemy's attacks go on when it has more than five, and whether a Gazer's
+  rise and fall want their own keys. The framework binds attacks in order to left click, right click, Q,
+  E and F, and flight to Space and Control.
 - Repulse: which way it goes when standing still, whether vertical momentum inverts, whether the camera
   turns, and whether it keeps Dash's invulnerability.
 - Force of Will: where reflected shots go, and whether a charge is spent with nothing to reflect.

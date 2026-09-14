@@ -80,6 +80,22 @@ namespace Gunspire
         /// <summary>Set when a timed effect gives up, e.g. the caster was frozen mid wind-up.</summary>
         public bool Aborted;
 
+        /// <summary>
+        /// How far a held spell was charged, from nothing to full. One for everything not charged, so
+        /// an effect that scales by charge behaves at full strength anywhere else. Set by the caller
+        /// before a cast and left alone by <see cref="Begin"/>.
+        /// </summary>
+        public float Charge = 1f;
+
+        /// <summary>A repeat of an earlier cast by Echo: free, with no cooldown and nothing recorded.</summary>
+        public bool IsEcho;
+
+        /// <summary>Aims the next cast along this instead of the aim transform, for an echo's original direction.</summary>
+        public Vector3? ForwardOverride;
+
+        /// <summary>How many souls this cast spent, for a spell that spends every soul.</summary>
+        public int SoulsSpent;
+
         public int HitMask => Layers.HitMaskFor(Team);
         public int TargetMask => Layers.TargetMaskFor(Team);
 
@@ -125,7 +141,7 @@ namespace Gunspire
             Origin = Aim != null
                 ? Aim.position
                 : Caster.transform.position + Vector3.up * 1.5f;
-            Forward = Aim != null ? Aim.forward : Caster.transform.forward;
+            Forward = ForwardOverride ?? (Aim != null ? Aim.forward : Caster.transform.forward);
             Point = Origin + Forward;
 
             Targets.Clear();

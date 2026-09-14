@@ -65,6 +65,14 @@ namespace Gunspire
         /// <summary>Walking minions carried between floors, as a count of each kind that survived.</summary>
         public readonly MinionRoster Minions = new MinionRoster();
 
+        /// <summary>Spell ids struck from this run's offers. <see cref="SpellLibrary.Offerable"/> leaves them out.</summary>
+        public readonly HashSet<string> EliminatedSpells = new HashSet<string>();
+
+        public void EliminateSpell(string id)
+        {
+            if (!string.IsNullOrEmpty(id)) EliminatedSpells.Add(id);
+        }
+
         /// <summary>Grants a familiar, or raises the level of one already owned.</summary>
         public void GrantFamiliar(string id, int level)
         {

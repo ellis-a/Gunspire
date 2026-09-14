@@ -170,9 +170,16 @@ namespace Gunspire
     {
         public bool PreserveVelocity = true;
 
+        /// <summary>Moves any body standing on the landing aside first, through the shared landing check.</summary>
+        public bool ShoveOccupants;
+
         public override bool Execute(AbilityContext ctx)
         {
             if (ctx.Motor == null) return false;
+
+            if (ShoveOccupants && ctx.Controller != null)
+                LandingCheck.ShoveClear(ctx.Point, ctx.Controller.radius, ctx.Controller.height, ctx.Caster);
+
             ctx.Motor.Teleport(ctx.Point, PreserveVelocity);
             return true;
         }

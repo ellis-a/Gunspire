@@ -168,9 +168,9 @@ Two gaps.
 - **Death.** Familiars have `Health` and can die, and nothing resummons them until the next
   room. That is survivable for a familiar you bought; it is harsh for a companion that is
   supposed to be a standing property of your build, and worse for the spells below that are
-  cast from the companion's position. Either the mastery beast revives on a timer or it is
-  made unkillable and only ever knocked down. **Now pressing:** enemies attack minions, decided
-  under Death, so the companion will be focused rather than only catching stray blasts.
+  cast from the companion's position. **Decided: it dies until the next floor.** The mastery
+  summons it again on floor arrival, and a new rank mid-floor replaces a living companion but
+  never brings back one that died.
 
 ---
 
@@ -382,8 +382,9 @@ Three problems beyond the bullet infusion.
 - **Three modes on one key.** Every spell is one key press. Cycling fire to ice to storm and
   off is four states on one button, and there is no second input on a spell slot to hang a
   cycle on. Options: the key cycles forward and the stance never turns off while mana lasts;
-  or hold to cycle, tap to cast; or the form is chosen once when the spell is learned. Worth
-  deciding before any of it is built.
+  or hold to cycle, tap to cast; or the form is chosen once when the spell is learned.
+  **Decided: tap cycles, with no off.** Binding it sets fire as the active form, each tap steps to
+  ice, storm and back to fire, and it drains no mana, so there is no downside beyond the slot.
 - **Bullet infusion surviving a gun swap.** `Weapon.ExtraStatuses` is the right hook and is
   already driven by `RunState.BulletStatuses`, but `RunState.Bind` pushes it onto the live
   weapon once. `Holster.Draw` replaces what the live weapon points at, so the infusion needs

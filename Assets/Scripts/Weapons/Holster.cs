@@ -57,7 +57,24 @@ namespace Gunspire
             }
         }
 
-        public bool CanSwap => FilledSlots > 1;
+        public bool CanSwap => FilledSlots > 1 && _swapLocks.Count == 0;
+
+        private readonly System.Collections.Generic.HashSet<object> _swapLocks =
+            new System.Collections.Generic.HashSet<object>();
+
+        /// <summary>Something is holding the gun in hand: Divine Assistance's mirror, or Superid.</summary>
+        public bool SwapLocked => _swapLocks.Count > 0;
+
+        /// <summary>Keyed, so two spells locking the swap do not unlock each other.</summary>
+        public void LockSwap(object key)
+        {
+            if (key != null && _swapLocks.Add(key)) Changed?.Invoke();
+        }
+
+        public void UnlockSwap(object key)
+        {
+            if (key != null && _swapLocks.Remove(key)) Changed?.Invoke();
+        }
 
         private int OtherIndex => (ActiveIndex + 1) % SlotCount;
 
@@ -173,6 +190,7 @@ namespace Gunspire
             }
 
             ActiveIndex = 0;
+            _swapLocks.Clear();
             Changed?.Invoke();
         }
     }
