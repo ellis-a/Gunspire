@@ -36,6 +36,16 @@ namespace Gunspire
         public Color Tint = Color.white;
         public List<StatusApplication> Statuses;
 
+        /// <summary>How its hits are reported. The gun or the ability that fired it sets this.</summary>
+        public DamageOrigin Origin;
+
+        /// <summary>
+        /// The gun that fired it, so its hits reach that gun's on-hit hook, and the infusions the
+        /// gun carried at the moment it fired. Both null for anything but a gun's round.
+        /// </summary>
+        public Weapon SourceWeapon;
+        public List<BulletInfusion> Infusions;
+
         private Vector3 _velocity;
         private float _age;
         private int _hitMask;
@@ -69,6 +79,8 @@ namespace Gunspire
                 Aim = source.Aim,
                 Level = source.Level,
                 Power = source.Power,
+                StatusPower = source.StatusPower,
+                DamageOrigin = source.DamageOrigin,
                 LevelScale = source.LevelScale,
                 DamageType = source.DamageType,
                 Category = source.Category,
@@ -115,6 +127,45 @@ namespace Gunspire
             _hitMask = Layers.HitMaskFor(OwnerTeam);
             Layers.SetRecursively(gameObject,
                 OwnerTeam == Team.Player ? Layers.PlayerProjectile : Layers.EnemyProjectile);
+        }
+
+        /// <summary>Layers this projectile can currently hit.</summary>
+        public int HitMask => _hitMask;
+
+        /// <summary>
+        /// Hands the projectile to another side and sends it off in a new direction at the same
+        /// speed, for reflects. It forgets what it already pierced, since those were the old side's
+        /// hits, and drops the old side's homing target and the gun it came from.
+        /// </summary>
+        public void SwitchSide(Team team, GameObject owner, CharacterSheet ownerSheet, Vector3 direction)
+        {
+            OwnerTeam = team;
+            Owner = owner;
+            OwnerSheet = ownerSheet;
+            SourceWeapon = null;
+            Infusions = null;
+
+            _alreadyHit.Clear();
+            _homingTarget = null;
+
+            if (_onHitContext != null)
+            {
+                _onHitContext.Team = team;
+                _onHitContext.Caster = owner;
+                _onHitContext.Sheet = ownerSheet;
+            }
+
+            if (direction.sqrMagnitude > 0.0001f)
+            {
+                direction.Normalize();
+                float speed = _velocity.sqrMagnitude > 0.0001f ? _velocity.magnitude : Speed;
+                _velocity = direction * speed;
+                transform.forward = direction;
+            }
+
+            _hitMask = Layers.HitMaskFor(team);
+            Layers.SetRecursively(gameObject,
+                team == Team.Player ? Layers.PlayerProjectile : Layers.EnemyProjectile);
         }
 
         private void Update()
@@ -174,8 +225,10 @@ namespace Gunspire
             if (hitTarget)
             {
                 _alreadyHit.Add(target);
-                DamageInfo info = BuildDamage(hit.point, hit.normal);
+                DamageInfo info = BuildHitDamage(hit.point, hit.normal);
                 target.TakeDamage(info);
+                if (SourceWeapon != null)
+                    SourceWeapon.ReportHit(target, info, hit.point, hit.normal, transform.forward, Infusions);
                 Combat.SpawnImpact(hit.point, hit.normal, Tint, 0.3f, DamageType);
 
                 if (Pierce > 0)
@@ -196,7 +249,8 @@ namespace Gunspire
             return true;
         }
 
-        private DamageInfo BuildDamage(Vector3 point, Vector3 normal)
+        /// <summary>The hit this projectile deals on a direct strike. Public so tooling can inspect it.</summary>
+        public DamageInfo BuildHitDamage(Vector3 point, Vector3 normal)
         {
             float amount = Damage;
             bool crit = false;
@@ -210,6 +264,7 @@ namespace Gunspire
             DamageInfo info = DamageInfo.Create(amount, DamageType, OwnerTeam, Owner);
             info.IsCrit = crit;
             info.CanCrit = CanCrit;
+            info.Origin = Origin;
             info.Knockback = transform.forward * Knockback;
             info = info.At(point, normal).WithStatuses(Statuses);
             return info;
@@ -220,9 +275,23 @@ namespace Gunspire
             DamageInfo template = DamageInfo.Create(SplashDamage > 0f ? SplashDamage : Damage,
                 DamageType, OwnerTeam, Owner);
             template.CanCrit = false;
+            template.Origin = Origin;
             template = template.WithStatuses(Statuses);
 
-            Combat.Explode(point, SplashRadius, template, Layers.HitMaskFor(OwnerTeam), 0.4f, Knockback);
+            // Everything a gun's blast catches is a hit from that gun, so its on-hit hook fires
+            // for each of them, not only for whatever the round struck directly.
+            Weapon weapon = SourceWeapon;
+            List<BulletInfusion> infusions = Infusions;
+            Vector3 direction = transform.forward;
+            System.Action<IDamageable, DamageInfo> onHit = weapon == null
+                ? (System.Action<IDamageable, DamageInfo>)null
+                : (target, info) =>
+                {
+                    if (weapon != null)
+                        weapon.ReportHit(target, info, info.HitPoint, info.HitNormal, direction, infusions);
+                };
+
+            Combat.Explode(point, SplashRadius, template, Layers.HitMaskFor(OwnerTeam), 0.4f, Knockback, onHit);
 
             GameObject blast = Build.Sphere(null, "Blast", point, SplashRadius * 0.5f,
                 MaterialLibrary.Transparent(new Color(Tint.r, Tint.g, Tint.b, 0.5f)), collider: false);

@@ -127,21 +127,45 @@ namespace Gunspire
             AbilityEvents.Used -= OnAbilityUsed;
         }
 
-        private bool CameFromPlayer(in DamageInfo info)
-            => info.SourceTeam == Team.Player && Player != null;
+        /// <summary>
+        /// Every enemy death is the player's kill, whoever or whatever landed the blow: a minion, a
+        /// burn, a wall, another enemy's stray shot. Souls, the Blood Debt and the on-kill boons
+        /// all count from here.
+        /// </summary>
+        public static bool CountsAsKill(Health victim) => victim != null && victim.Team == Team.Enemy;
+
+        /// <summary>
+        /// Lifesteal is for the player's own hits: gun, spells, melee, and the statuses those leave
+        /// behind. Not minions, not collisions dealt on the player's behalf, and never an execute,
+        /// whose damage is only whatever health happened to be left.
+        /// </summary>
+        public static bool GrantsLifesteal(in DamageInfo info, GameObject player)
+        {
+            if (player == null || info.Source != player || info.Type == DamageType.Execute) return false;
+
+            switch (info.Origin)
+            {
+                case DamageOrigin.Gun:
+                case DamageOrigin.Spell:
+                case DamageOrigin.Melee:
+                case DamageOrigin.StatusTick:
+                    return true;
+                default:
+                    return false;
+            }
+        }
 
         private void OnAnyDamaged(Health victim, DamageInfo info, float amount)
         {
             if (victim == null || victim.Team == Team.Player) return;
-            if (!CameFromPlayer(info) || LifestealFraction <= 0f) return;
+            if (Player == null || LifestealFraction <= 0f || !GrantsLifesteal(info, Player.gameObject)) return;
 
             Player.Health.Heal(amount * LifestealFraction, silent: true);
         }
 
         private void OnAnyDied(Health victim, DamageInfo info)
         {
-            if (victim == null || victim.Team != Team.Enemy) return;
-            if (!CameFromPlayer(info)) return;
+            if (Player == null || !CountsAsKill(victim)) return;
 
             Kills++;
 
@@ -160,6 +184,7 @@ namespace Gunspire
             DamageInfo template = DamageInfo.Create(BlinkDetonationDamage * ctx.Power,
                 DamageType.Energy, Team.Player, ctx.Caster);
             template.CanCrit = false;
+            template.Origin = DamageOrigin.Spell;
             template = template.WithStatuses(ctx.EmpowerAll(SpellStatuses));
 
             Combat.Explode(position + Vector3.up * 0.9f, 5.5f, template, Layers.PlayerHitMask, 0.4f, 6f);

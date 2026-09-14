@@ -19,6 +19,7 @@ namespace Gunspire.EditorTools
             "Gunspire/Migrations/3 - Verify Nothing Pending",
             "Gunspire/Verify Stats",
             "Gunspire/Verify Debuffs",
+            "Gunspire/Verify Combat Core",
             "Gunspire/Verify Spell Slots",
             "Gunspire/Verify Holster",
             "Gunspire/Verify Shot Spread",

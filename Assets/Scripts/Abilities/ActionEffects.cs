@@ -292,6 +292,7 @@ namespace Gunspire
                 p.CanCrit = false;
                 p.Damage = Damage * ctx.Power;
                 p.DamageType = ctx.DamageType;
+                p.Origin = ctx.DamageOrigin;
                 p.Speed = Speed;
                 p.Gravity = Gravity;
                 p.Lifetime = Lifetime;
@@ -357,7 +358,7 @@ namespace Gunspire
         {
             DelayedBlast.Spawn(ctx.Point, Radius * (ScaleRadiusWithLevel ? ctx.LevelScale : 1f),
                 Delay, Damage * ctx.Power, ctx.DamageType, ctx.Team, ctx.Caster,
-                new List<StatusApplication>(ctx.Payload), ctx.Tint, Knockback, MinFraction);
+                new List<StatusApplication>(ctx.Payload), ctx.Tint, Knockback, MinFraction, ctx.DamageOrigin);
             return true;
         }
 
@@ -377,10 +378,11 @@ namespace Gunspire
         private GameObject _source;
         private List<StatusApplication> _statuses;
         private Color _tint;
+        private DamageOrigin _origin;
 
         public static DelayedBlast Spawn(Vector3 point, float radius, float delay, float damage,
             DamageType damageType, Team team, GameObject source, List<StatusApplication> statuses,
-            Color tint, float knockback, float minFraction)
+            Color tint, float knockback, float minFraction, DamageOrigin origin = DamageOrigin.Unspecified)
         {
             var go = new GameObject("DelayedBlast");
             go.transform.position = point;
@@ -396,6 +398,7 @@ namespace Gunspire
             d._source = source;
             d._statuses = statuses;
             d._tint = tint;
+            d._origin = origin;
             return d;
         }
 
@@ -406,6 +409,7 @@ namespace Gunspire
 
             DamageInfo template = DamageInfo.Create(_damage, _damageType, _team, _source);
             template.CanCrit = false;
+            template.Origin = _origin;
             template = template.WithStatuses(_statuses);
 
             Combat.Explode(transform.position, _radius, template, Layers.HitMaskFor(_team),
@@ -439,7 +443,7 @@ namespace Gunspire
 
             LingeringZone.Spawn(ctx.Point, Radius * scale, Duration * scale,
                 DamagePerTick * ctx.Power, TickInterval, ctx.DamageType, ctx.Team, ctx.Caster,
-                new List<StatusApplication>(ctx.Payload), ctx.Tint);
+                new List<StatusApplication>(ctx.Payload), ctx.Tint, ctx.DamageOrigin);
             return true;
         }
 
@@ -465,10 +469,11 @@ namespace Gunspire
         private List<StatusApplication> _statuses;
         private Material _material;
         private Color _color;
+        private DamageOrigin _origin;
 
         public static LingeringZone Spawn(Vector3 point, float radius, float duration, float damagePerTick,
             float tickInterval, DamageType damageType, Team team, GameObject source,
-            List<StatusApplication> statuses, Color tint)
+            List<StatusApplication> statuses, Color tint, DamageOrigin origin = DamageOrigin.Unspecified)
         {
             var go = new GameObject("LingeringZone");
             go.transform.position = point;
@@ -487,6 +492,7 @@ namespace Gunspire
             zone._source = source;
             zone._statuses = statuses;
             zone._color = color;
+            zone._origin = origin;
 
             var renderer = disc.GetComponent<MeshRenderer>();
             if (renderer != null) zone._material = renderer.material;
@@ -531,6 +537,7 @@ namespace Gunspire
 
                 DamageInfo info = DamageInfo.Create(_damage, _damageType, _team, _source);
                 info.CanCrit = false;
+                info.Origin = _origin;
                 info = info.At(target.Transform.position + Vector3.up, Vector3.up)
                            .WithStatuses(_statuses);
                 target.TakeDamage(info);

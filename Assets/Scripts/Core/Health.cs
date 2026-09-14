@@ -136,12 +136,8 @@ namespace Gunspire
         public bool IsEthereal => EtherealByNature || (Status != null && Status.IsEthereal);
 
         /// <summary>
-        /// The two effects that skip the health bar entirely: a full stack of frost taking a
-        /// kinetic hit, and a death mark taking any hit at all.
-        ///
-        /// Never fires on the player. An instant death from a status the HUD had a second to
-        /// show would read as the game breaking rather than as a mistake the player made.
-        /// Returns true when it has dealt with the hit.
+        /// The two executes a hit can set off: a full stack of frost taking a kinetic hit, and a
+        /// death mark taking any hit at all. Returns true when it has dealt with the hit.
         /// </summary>
         private bool TryExecute(in DamageInfo info)
         {
@@ -152,29 +148,51 @@ namespace Gunspire
 
             if (!marked && !shattering) return false;
 
-            if (IsElite)
-            {
-                // Heavy, but survivable. Routed through the normal path so resistances, the
-                // damage hooks and the death handling all still apply.
-                float bite = Max * (marked ? DeathmarkStatus.EliteFraction : 0.25f);
-                if (shattering) Status.Remove(StatusId.Frost);
+            // A shattered elite survives, so it loses the frost that shattered it, or the very
+            // next kinetic hit would shatter it again.
+            if (shattering && IsElite) Status.Remove(StatusId.Frost);
 
-                Current = Mathf.Max(0f, Current - bite);
-                Damaged?.Invoke(info, bite);
-                AnyDamaged?.Invoke(this, info, bite);
-                HealthChanged?.Invoke();
+            return Execute(info, marked ? DeathmarkStatus.EliteFraction : FrostStatus.EliteShatterFraction);
+        }
 
-                if (Current <= 0f) Die(info);
-                return true;
-            }
+        /// <summary>Pass as the elite fraction for an execute that finishes elites too, as Wither does.</summary>
+        public const float FinishesElites = 1f;
 
-            float lethal = Current;
-            Current = 0f;
+        /// <summary>
+        /// Skips the health bar. Reported under <see cref="DamageType.Execute"/> whatever set it
+        /// off, so anything that must ignore executes - lifesteal, Prismatic Chains - can tell.
+        ///
+        /// An elite loses <paramref name="eliteFraction"/> of its maximum health instead of dying,
+        /// so a status is a large chunk of an elite rather than the whole fight. Pass
+        /// <see cref="FinishesElites"/> to finish elites as well. Never fires on the player: an
+        /// instant death from a status the HUD had a second to show would read as the game
+        /// breaking rather than as a mistake. Returns false when nothing happened.
+        /// </summary>
+        public bool Execute(in DamageInfo cause, float eliteFraction)
+        {
+            if (!IsAlive || team == Team.Player || IsInvulnerable) return false;
 
-            Damaged?.Invoke(info, lethal);
-            AnyDamaged?.Invoke(this, info, lethal);
+            DamageInfo info = cause;
+            info.Type = DamageType.Execute;
+            info.IsCrit = false;
+
+            float dealt = IsElite && eliteFraction < FinishesElites
+                ? Mathf.Min(Current, Max * Mathf.Max(0f, eliteFraction))
+                : Current;
+
+            if (dealt <= 0f) return false;
+
+            Current = Mathf.Max(0f, Current - dealt);
+
+            // An elite that survives was still hit, so anything damage breaks, like sleep, ends.
+            if (Current > 0f && Status != null && info.Origin != DamageOrigin.StatusTick)
+                Status.EndOnDamage(info.Statuses);
+
+            Damaged?.Invoke(info, dealt);
+            AnyDamaged?.Invoke(this, info, dealt);
             HealthChanged?.Invoke();
-            Die(info);
+
+            if (Current <= 0f) Die(info);
             return true;
         }
 
@@ -182,6 +200,11 @@ namespace Gunspire
         {
             if (!IsAlive) return;
             if (info.SourceTeam == team && team != Team.Neutral) return;   // no friendly fire
+
+            // Nothing is hit by its own attack. The team rule already covers this for the player
+            // and enemies; it matters for the neutral team, where a confused enemy's own blast
+            // would otherwise catch it.
+            if (info.Source != null && info.Source == gameObject) return;
             if (IsInvulnerable && info.Type != DamageType.True) return;
 
             float amount = Mathf.Max(0f, info.Amount);
@@ -272,6 +295,22 @@ namespace Gunspire
             }
             return healed;
         }
+
+        /// <summary>
+        /// Puts current health at an exact value, as Rewind needs: no healing scaling, no bleed
+        /// cure, no damage or heal events and no statuses. Only the HUD refresh fires. It can never
+        /// kill, since the value always comes from a moment the entity was alive, so anything below
+        /// a sliver of health is held at that sliver.
+        /// </summary>
+        public void SetCurrent(float value)
+        {
+            if (!IsAlive) return;
+
+            Current = Mathf.Clamp(value, Mathf.Min(MinimumSetHealth, Max), Max);
+            HealthChanged?.Invoke();
+        }
+
+        private const float MinimumSetHealth = 1f;
 
         /// <summary>Brings a dead entity back. Used when a new run reuses the player object.</summary>
         public void Revive(float startingHealth = -1f)

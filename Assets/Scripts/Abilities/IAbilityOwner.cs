@@ -27,5 +27,8 @@ namespace Gunspire
 
         /// <summary>Side of the fight. Decides who the chain can hit.</summary>
         Team Team { get; }
+
+        /// <summary>How its hits are reported: an enemy's own attack, or a minion's.</summary>
+        DamageOrigin AttackOrigin { get; }
     }
 }

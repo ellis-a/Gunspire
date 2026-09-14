@@ -46,6 +46,9 @@ namespace Gunspire
         /// </summary>
         public float StatusPower = 1f;
 
+        /// <summary>How this cast's hits are reported. Set by Begin, and by the owner for attacks.</summary>
+        public DamageOrigin DamageOrigin;
+
         /// <summary>Level growth on its own, for effects that scale range or radius rather than damage.</summary>
         public float LevelScale = 1f;
 
@@ -98,6 +101,9 @@ namespace Gunspire
         {
             Spell = spell;
             Begin(spell.DamageType, spell.Type, spell.Tint, level, spell.LevelMultiplier(level), isSpell: true);
+
+            // Melee is a spell in every other respect, but its hits are reported as melee.
+            if (spell.Slot == SpellSlot.Melee) DamageOrigin = DamageOrigin.Melee;
         }
 
         /// <summary>
@@ -114,6 +120,7 @@ namespace Gunspire
 
             Power = Combat.OutgoingMultiplier(Sheet, isSpell, damageType, category) * levelScale;
             StatusPower = isSpell && Sheet != null ? Sheet.Get(Attr.SpellPower) : 1f;
+            DamageOrigin = isSpell ? DamageOrigin.Spell : DamageOrigin.Attack;
 
             Origin = Aim != null
                 ? Aim.position
@@ -164,6 +171,7 @@ namespace Gunspire
         {
             DamageInfo info = DamageInfo.Create(amount, DamageType, Team, Caster);
             info.CanCrit = canCrit;
+            info.Origin = DamageOrigin;
 
             if (canCrit && Combat.RollCrit(Sheet, out float critMultiplier))
             {

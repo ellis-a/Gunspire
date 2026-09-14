@@ -24,6 +24,7 @@ namespace Gunspire
         public GameObject GameObject => gameObject;
         public Transform Transform => transform;
         public Team Team => Team.Player;
+        public DamageOrigin AttackOrigin => DamageOrigin.Minion;
 
         public Transform Muzzle { get; set; }
         public Transform Target { get; private set; }

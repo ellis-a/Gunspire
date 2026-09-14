@@ -203,6 +203,29 @@ Smash power only exists to gate them. Remove the barriers, the hardness check ag
 
 ## Phase 1: combat core
 
+**Status: done.** Verify Combat Core checks every item below against real components. Where the work
+differed from the plan:
+
+- **Origins have one extra member, `Attack`,** for an enemy's own attacks, which the plan did not name.
+  Owners declare theirs through `IAbilityOwner.AttackOrigin`, so familiars report as `Minion`. Nothing
+  deals `Collision` or `Environment` damage yet; the members exist for Phase 3.
+- **Executes go through `Health.Execute`,** taking the fraction of an elite's health to remove, or
+  `Health.FinishesElites`. Wither's own marker waits for Wither.
+- **Kill credit changes what counts.** Every enemy death is now a kill, including one enemy killing
+  another. Lifesteal is narrower than before: the player's gun, spells, melee and their status ticks
+  only. Familiar hits used to heal the player and no longer do.
+- **Setting health fires the HUD refresh,** since the bar would otherwise go stale, and holds at 1 health
+  rather than killing.
+- **1.5 was built with the Petty spells.**
+- **A body moved to the player's side goes on the familiar layer,** so enemy attacks hit it and the
+  player's shots pass through. Nothing is hit by its own attack any more, which matters only for the
+  neutral team. `DamageInfo.OnBehalfOf` builds damage issued on another's account.
+- **A gun's hit hook fires for splash victims too,** not only direct hits. `WeaponHit.DealBonus` deals a
+  bonus as its own instance.
+- **Infusions live on the weapon component,** which the holster re-equips rather than replaces, so they
+  survive a swap without being pushed again. A restart clears them. Phantom weapons do not exist yet.
+- **`Sfx` no longer builds its voice pool outside play mode,** where it threw, so tooling can fire guns.
+
 ### 1.1 A damage origin on every hit
 
 **Customers: Psi Blades, Arcane Warp, Foretell, confusion, sleep, Assume Identity, Phantasmal Mimic,

@@ -25,6 +25,21 @@ namespace Gunspire
         /// <summary>Run-wide on-hit effects granted by boons. Merged with the weapon list on every shot.</summary>
         public List<StatusApplication> ExtraStatuses;
 
+        /// <summary>Raised for every round, after it leaves the barrel.</summary>
+        public event System.Action<WeaponShot> Fired;
+
+        /// <summary>
+        /// Raised when a round from this gun lands on something alive, hitscan or projectile alike,
+        /// after its damage is dealt. Smite, Desecrate and the mastery meters hang off this.
+        /// </summary>
+        public event System.Action<WeaponHit> Hit;
+
+        /// <summary>Temporary charges on this gun's rounds. Kept across a holster swap, which re-equips this component.</summary>
+        private readonly List<BulletInfusion> _infusions = new List<BulletInfusion>();
+
+        /// <summary>The infusions live for the round being fired right now.</summary>
+        private List<BulletInfusion> _roundInfusions;
+
         public int AmmoInMagazine { get; private set; }
         public bool IsReloading { get; private set; }
         public float ReloadProgress { get; private set; }
@@ -99,6 +114,76 @@ namespace Gunspire
         {
             if (_cooldown > 0f) _cooldown -= Time.deltaTime;
             if (_altCooldown > 0f) _altCooldown -= Time.deltaTime;
+            if (_infusions.Count > 0) TickInfusions(Time.deltaTime);
+        }
+
+        // ---------------------------------------------------------------- infusions
+
+        public IReadOnlyList<BulletInfusion> Infusions => _infusions;
+
+        /// <summary>Adds a charge to every round. One with the same id replaces the old one.</summary>
+        public void Infuse(BulletInfusion infusion)
+        {
+            if (infusion == null) return;
+            if (!string.IsNullOrEmpty(infusion.Id)) _infusions.RemoveAll(i => i.Id == infusion.Id);
+            if (!infusion.Expired) _infusions.Add(infusion);
+        }
+
+        public void ClearInfusions() => _infusions.Clear();
+
+        /// <summary>Runs infusion timers down. Public so tooling can drive it without waiting.</summary>
+        public void TickInfusions(float seconds)
+        {
+            for (int i = _infusions.Count - 1; i >= 0; i--)
+            {
+                BulletInfusion infusion = _infusions[i];
+                if (infusion.HasTimeLimit) infusion.SecondsLeft -= seconds;
+                if (infusion.Expired) _infusions.RemoveAt(i);
+            }
+        }
+
+        private List<BulletInfusion> ActiveInfusions()
+        {
+            var active = new List<BulletInfusion>(_infusions.Count);
+            for (int i = 0; i < _infusions.Count; i++)
+                if (!_infusions[i].Expired) active.Add(_infusions[i]);
+            return active;
+        }
+
+        private void SpendInfusionRound()
+        {
+            for (int i = _infusions.Count - 1; i >= 0; i--)
+            {
+                BulletInfusion infusion = _infusions[i];
+                if (infusion.HasRoundLimit) infusion.RoundsLeft--;
+                if (infusion.Expired) _infusions.RemoveAt(i);
+            }
+        }
+
+        /// <summary>
+        /// Tells listeners a round from this gun landed on something alive. Hitscan calls this
+        /// directly; a projectile calls it when it arrives, passing the infusions the gun carried
+        /// when it fired, so a one-round infusion still lands after it has been spent.
+        /// </summary>
+        public void ReportHit(IDamageable target, in DamageInfo damage, Vector3 point, Vector3 normal,
+            Vector3 direction, List<BulletInfusion> infusions)
+        {
+            if (target == null) return;
+
+            var hit = new WeaponHit
+            {
+                Weapon = this,
+                Target = target,
+                Damage = damage,
+                Point = point,
+                Normal = normal,
+                Direction = direction
+            };
+
+            if (infusions != null)
+                for (int i = 0; i < infusions.Count; i++) infusions[i].OnHit?.Invoke(hit);
+
+            Hit?.Invoke(hit);
         }
 
         // ---------------------------------------------------------------- input
@@ -316,12 +401,22 @@ namespace Gunspire
             float spreadScale = OwnerSheet != null ? OwnerSheet.Get(Attr.Spread) : 1f;
             float recoilScale = OwnerSheet != null ? OwnerSheet.Get(Attr.Recoil) : 1f;
 
+            // Taken once per round, so every pellet carries the same charge and a one-round
+            // infusion is spent by the whole round rather than by its first pellet.
+            _roundInfusions = ActiveInfusions();
+
             for (int i = 0; i < spec.Pellets; i++)
             {
                 Vector3 direction = ApplySpread(forward, spec.SpreadDegrees * spreadScale);
                 if (spec.Delivery == DeliveryKind.Hitscan) FireHitscan(spec, origin, direction);
                 else FireProjectile(spec, origin, direction);
             }
+
+            Fired?.Invoke(new WeaponShot
+            {
+                Weapon = this, Spec = spec, Origin = origin, Direction = forward, AmmoCost = ammoCost
+            });
+            SpendInfusionRound();
 
             MuzzleFlash();
             PlayFireSound();
@@ -398,7 +493,9 @@ namespace Gunspire
                     break;
                 }
 
-                target.TakeDamage(BuildHitscanDamage(spec, hit.point, hit.normal, direction));
+                DamageInfo damage = BuildShotDamage(spec, hit.point, hit.normal, direction, _roundInfusions);
+                target.TakeDamage(damage);
+                ReportHit(target, damage, hit.point, hit.normal, direction, _roundInfusions);
                 Combat.SpawnImpact(hit.point, hit.normal, spec.Tint, 0.3f, spec.DamageType);
                 endPoint = hit.point;
                 anythingHit = true;
@@ -428,8 +525,16 @@ namespace Gunspire
             }
         }
 
-        private DamageInfo BuildHitscanDamage(in ShotSpec spec, Vector3 point, Vector3 normal, Vector3 direction)
+        /// <summary>
+        /// The hit one round deals on arrival: the gun's statuses, the run's boon statuses, and those
+        /// of every infusion given, or of the gun's live infusions when none are given. Public so
+        /// tooling can inspect a shot without firing it.
+        /// </summary>
+        public DamageInfo BuildShotDamage(in ShotSpec spec, Vector3 point, Vector3 normal, Vector3 direction,
+            List<BulletInfusion> infusions = null)
         {
+            if (infusions == null) infusions = ActiveInfusions();
+
             float amount = spec.Damage * Combat.OutgoingMultiplier(OwnerSheet, false, spec.DamageType);
             bool crit = false;
             if (Combat.RollCrit(OwnerSheet, out float critMultiplier))
@@ -440,10 +545,13 @@ namespace Gunspire
 
             DamageInfo info = DamageInfo.Create(amount, spec.DamageType, OwnerTeam, Owner);
             info.IsCrit = crit;
+            info.Origin = DamageOrigin.Gun;
             info.Knockback = direction * spec.Knockback;
             info = info.At(point, normal)
                        .WithStatuses(spec.Statuses)
                        .WithStatuses(ExtraStatuses);
+
+            for (int i = 0; i < infusions.Count; i++) info = info.WithStatuses(infusions[i].Statuses);
             return info;
         }
 
@@ -468,6 +576,7 @@ namespace Gunspire
             p.OwnerSheet = OwnerSheet;
             p.Damage = spec.Damage * outgoing;
             p.DamageType = spec.DamageType;
+            p.Origin = DamageOrigin.Gun;
             p.Speed = spec.ProjectileSpeed;
             p.Gravity = spec.ProjectileGravity;
             p.Lifetime = spec.ProjectileLifetime;
@@ -477,9 +586,15 @@ namespace Gunspire
             p.Pierce = spec.MaxPierce;
             p.HomingEnabled = spec.ProjectileHoming;
 
+            List<BulletInfusion> infusions = _roundInfusions ?? ActiveInfusions();
+
             var statuses = new List<StatusApplication>(spec.Statuses);
             if (ExtraStatuses != null) statuses.AddRange(ExtraStatuses);
+            for (int i = 0; i < infusions.Count; i++) statuses.AddRange(infusions[i].Statuses);
             p.Statuses = statuses;
+
+            p.SourceWeapon = this;
+            p.Infusions = infusions;
 
             p.Launch();
         }

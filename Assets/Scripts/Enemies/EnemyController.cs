@@ -15,7 +15,8 @@ namespace Gunspire
         // these just expose them under the interface's names.
         public GameObject GameObject => gameObject;
         public Transform Transform => transform;
-        public Team Team => Team.Enemy;
+        public Team Team => _attackTeam;
+        public DamageOrigin AttackOrigin => DamageOrigin.Attack;
 
         [Header("Identity")]
         public string DisplayName = "Cultist";
@@ -80,6 +81,7 @@ namespace Gunspire
         /// <see cref="IAbilityOwner"/>; enemies have no prefab, so nothing serializes it.</summary>
         public Transform Muzzle { get; set; }
 
+        private Team _attackTeam = Team.Enemy;
         private CharacterController _controller;
         private readonly List<AbilityAttack> _attacks = new List<AbilityAttack>();
         private Vector3 _velocity;
@@ -189,6 +191,30 @@ namespace Gunspire
             }
 
             Move(impaired);
+        }
+
+        // ---------------------------------------------------------------- allegiance
+
+        /// <summary>
+        /// Which side its attacks are on, apart from its body. Confusion sets this to neutral, so
+        /// its attacks can hit anyone while its body stays an enemy the others will not shoot.
+        /// </summary>
+        public void SetAttackTeam(Team team) => _attackTeam = team;
+
+        /// <summary>
+        /// Moves the whole enemy to a side: its attacks, what can hurt it, and its physics layer.
+        /// Assume Identity moves a controlled enemy to the player's side and back. This changes
+        /// only what can hurt what; who it and the other enemies choose to fight is Phase 2.1.
+        /// </summary>
+        public void SetSide(Team team)
+        {
+            _attackTeam = team;
+
+            // Looked up rather than read from the cached property, which is only filled in Awake.
+            var health = GetComponent<Health>();
+            if (health != null) health.Team = team;
+
+            Layers.SetRecursively(gameObject, Layers.BodyLayerFor(team));
         }
 
         // ---------------------------------------------------------------- perception

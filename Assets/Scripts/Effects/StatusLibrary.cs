@@ -134,6 +134,9 @@ namespace Gunspire
         public const int FullStacks = 100;
         public const float SlowPerStack = 0.01f;
 
+        /// <summary>Fraction of an elite's maximum health a shatter takes, instead of killing it.</summary>
+        public const float EliteShatterFraction = 0.25f;
+
         public override StatusId Id => StatusId.Frost;
         public override string DisplayName => "Frostbitten";
         public override string Description =>

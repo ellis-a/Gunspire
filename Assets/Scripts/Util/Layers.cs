@@ -41,13 +41,27 @@ namespace Gunspire
         /// </summary>
         public static readonly int EnemyTargetMask = PlayerMask | FamiliarMask;
 
+        /// <summary>
+        /// Attacks that belong to no side hit everyone: a confused enemy's shots land on its own
+        /// kind, the player and familiars alike.
+        /// </summary>
+        public static readonly int NeutralHitMask = WorldMask | PlayerMask | EnemyMask | FamiliarMask;
+        public static readonly int NeutralTargetMask = PlayerMask | EnemyMask | FamiliarMask;
+
         /// <summary>Layers a shot fired by the given team should be able to hit.</summary>
         public static int HitMaskFor(Team team)
-            => team == Team.Player ? PlayerHitMask : EnemyHitMask;
+            => team == Team.Player ? PlayerHitMask : team == Team.Enemy ? EnemyHitMask : NeutralHitMask;
 
         /// <summary>Only the hostile characters for the given team - no world geometry.</summary>
         public static int TargetMaskFor(Team team)
-            => team == Team.Player ? EnemyMask : EnemyTargetMask;
+            => team == Team.Player ? EnemyMask : team == Team.Enemy ? EnemyTargetMask : NeutralTargetMask;
+
+        /// <summary>
+        /// The layer a character body belongs on for a side. A body moved to the player's side goes
+        /// on the familiar layer rather than the player's own: enemy attacks hit it, the player's
+        /// shots pass through it, and nothing looking for the player mistakes it for them.
+        /// </summary>
+        public static int BodyLayerFor(Team team) => team == Team.Player ? Familiar : Enemy;
 
         /// <summary>Layers that block line of sight for either side.</summary>
         public static int SightBlockMask => BlockingMask | (1 << Prop);

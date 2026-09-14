@@ -22,14 +22,26 @@ namespace Gunspire
     }
 
     /// <summary>
-    /// How a hit was delivered, where that changes what it does. Only status ticks are told apart
-    /// so far, which is what sleep needs; the other origins arrive with Phase 1.1 of
-    /// Docs/Architecture.md.
+    /// How a hit was delivered. Everything on the player's side shares one team, so without this a
+    /// familiar's bite, a burn tick and a bullet look identical - and sleep, lifesteal and the
+    /// mastery meters all need to tell them apart. Never serialized, so members can be reordered.
     /// </summary>
     public enum DamageOrigin
     {
-        Direct,
-        StatusTick
+        /// <summary>Nothing set it: a cost, a scripted kill, or a source not yet tagged.</summary>
+        Unspecified,
+        Gun,
+        Spell,
+        Melee,
+
+        /// <summary>An enemy's own attack.</summary>
+        Attack,
+        Minion,
+        StatusTick,
+
+        /// <summary>Something knocked into something else.</summary>
+        Collision,
+        Environment
     }
 
     /// <summary>
@@ -63,6 +75,19 @@ namespace Gunspire
                 CanCrit = true,
                 Statuses = null
             };
+        }
+
+        /// <summary>
+        /// Damage dealt on someone else's account, such as an enemy knocked into another enemy.
+        /// Issued from the instigator's side, so friendly fire does not refuse it and the hit is
+        /// credited to whoever caused it rather than to the body that happened to connect.
+        /// </summary>
+        public static DamageInfo OnBehalfOf(float amount, DamageType type, Team instigatorTeam,
+            GameObject instigator, DamageOrigin origin)
+        {
+            DamageInfo info = Create(amount, type, instigatorTeam, instigator);
+            info.Origin = origin;
+            return info;
         }
 
         public DamageInfo WithStatus(StatusApplication status)

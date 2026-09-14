@@ -95,10 +95,15 @@ namespace Gunspire
         {
             _context.TargetTransform = _owner.Target;
 
+            // Read at every attack rather than fixed at Initialise: an enemy's side can change
+            // mid-fight, and a confused one attacks as the neutral team.
+            _context.Team = _owner.Team;
+
             // levelScale feeds ctx.Power, which every damage-dealing effect already multiplies
             // by - so one number here scales the whole chain however it is built.
             _context.Begin(DamageType, Category, Tint, level: 1,
                 levelScale: DamageMultiplier, isSpell: false);
+            _context.DamageOrigin = _owner.AttackOrigin;
 
             yield return AbilityRunner.RunTimed(Sequence, _context);
 

@@ -71,7 +71,8 @@ namespace Gunspire
         /// Used by grenades, ground slams and Blink detonations.
         /// </summary>
         public static int Explode(Vector3 center, float radius, DamageInfo template,
-            int layerMask, float minFraction = 0.35f, float knockback = 0f)
+            int layerMask, float minFraction = 0.35f, float knockback = 0f,
+            System.Action<IDamageable, DamageInfo> onHit = null)
         {
             int count = Physics.OverlapSphereNonAlloc(center, radius, OverlapBuffer, layerMask,
                 QueryTriggerInteraction.Ignore);
@@ -97,6 +98,7 @@ namespace Gunspire
                 if (knockback > 0f) info.Knockback = info.HitNormal * knockback * falloff;
 
                 target.TakeDamage(info);
+                onHit?.Invoke(target, info);
                 hits++;
             }
             return hits;

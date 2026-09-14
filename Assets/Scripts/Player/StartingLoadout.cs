@@ -69,6 +69,10 @@ namespace Gunspire
         {
             if (holster == null) return;
 
+            // A restart reuses the same weapon component, so a charge from the last run would
+            // otherwise ride into the next one.
+            if (holster.Weapon != null) holster.Weapon.ClearInfusions();
+
             holster.Clear();
             holster.SetSlot(0, WeaponLibrary.Get(WeaponId));
         }

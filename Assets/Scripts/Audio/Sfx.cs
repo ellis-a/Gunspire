@@ -160,6 +160,10 @@ namespace Gunspire
             // can take the pool with it while these statics survive.
             if (_root != null && _voices != null && _flatVoices != null) return true;
 
+            // Outside play mode there is nothing to hear, and DontDestroyOnLoad throws, so tooling
+            // that fires a gun to test it stays silent rather than failing.
+            if (!Application.isPlaying) return false;
+
             _root = new GameObject("[Sfx]");
             Object.DontDestroyOnLoad(_root);
             _root.hideFlags = HideFlags.HideInHierarchy;
