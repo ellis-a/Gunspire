@@ -62,6 +62,9 @@ namespace Gunspire
         /// </summary>
         public readonly List<OwnedFamiliar> Familiars = new List<OwnedFamiliar>();
 
+        /// <summary>Walking minions carried between floors, as a count of each kind that survived.</summary>
+        public readonly MinionRoster Minions = new MinionRoster();
+
         /// <summary>Grants a familiar, or raises the level of one already owned.</summary>
         public void GrantFamiliar(string id, int level)
         {

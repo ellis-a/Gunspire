@@ -18,35 +18,43 @@ namespace Gunspire
         public const int EnemyProjectile = 11;
         public const int Prop = 12;          // smashables, pickups, decoration
         public const int Level = 13;         // floors and walls
-        public const int Familiar = 14;      // the player's summons
+        public const int Familiar = 14;      // the player's summons that fly
+        public const int Minion = 15;        // the player's summons that walk: they block enemies, never the player
+        public const int NetherWall = 16;    // stops shots from both sides, and nothing else
+        public const int Smoke = 17;         // stops the player's shots, to hand them to someone inside
 
         public static readonly int WorldMask = (1 << Default) | (1 << Level) | (1 << Prop);
         public static readonly int BlockingMask = (1 << Default) | (1 << Level);
 
-        public static readonly int PlayerHitMask = (1 << Default) | (1 << Level) | (1 << Prop) | (1 << Enemy);
+        public static readonly int PlayerHitMask =
+            (1 << Default) | (1 << Level) | (1 << Prop) | (1 << Enemy) | (1 << NetherWall) | (1 << Smoke);
 
-        // Familiars are in the enemy's hit mask, which is how they can be killed: nothing
-        // deliberately targets them, but they eat blasts and stand in beams like anything else.
+        // Familiars and minions are in the enemy's hit mask, which is how they can be killed: they
+        // eat blasts and stand in beams like anything else.
         public static readonly int EnemyHitMask =
-            (1 << Default) | (1 << Level) | (1 << Prop) | (1 << Player) | (1 << Familiar);
+            (1 << Default) | (1 << Level) | (1 << Prop) | (1 << Player) | (1 << Familiar) | (1 << Minion)
+            | (1 << NetherWall);
 
         public static readonly int EnemyMask = 1 << Enemy;
         public static readonly int PlayerMask = 1 << Player;
         public static readonly int FamiliarMask = 1 << Familiar;
+        public static readonly int MinionMask = 1 << Minion;
 
         /// <summary>
-        /// What an enemy ability is allowed to damage. Familiars are included here but not in
-        /// enemy target selection, so they are collateral rather than a distraction - a pet
-        /// cannot be used to pull aggro off yourself.
+        /// What an enemy ability is allowed to damage. Minions are here because enemies fight them:
+        /// pulling aggro with a horde is intended, and a horde is meant to be a wall enemies chew
+        /// through. Which target an enemy chooses is <see cref="TargetRegistry"/>'s business, and
+        /// familiars do not register there, so they stay collateral rather than a distraction.
         /// </summary>
-        public static readonly int EnemyTargetMask = PlayerMask | FamiliarMask;
+        public static readonly int EnemyTargetMask = PlayerMask | FamiliarMask | MinionMask;
 
         /// <summary>
         /// Attacks that belong to no side hit everyone: a confused enemy's shots land on its own
-        /// kind, the player and familiars alike.
+        /// kind, the player, familiars and minions alike.
         /// </summary>
-        public static readonly int NeutralHitMask = WorldMask | PlayerMask | EnemyMask | FamiliarMask;
-        public static readonly int NeutralTargetMask = PlayerMask | EnemyMask | FamiliarMask;
+        public static readonly int NeutralHitMask = WorldMask | PlayerMask | EnemyMask | FamiliarMask | MinionMask
+                                                    | (1 << NetherWall);
+        public static readonly int NeutralTargetMask = PlayerMask | EnemyMask | FamiliarMask | MinionMask;
 
         /// <summary>Layers a shot fired by the given team should be able to hit.</summary>
         public static int HitMaskFor(Team team)
@@ -56,14 +64,18 @@ namespace Gunspire
         public static int TargetMaskFor(Team team)
             => team == Team.Player ? EnemyMask : team == Team.Enemy ? EnemyTargetMask : NeutralTargetMask;
 
+        /// <summary>The characters on the given team's own side, for zones that help allies.</summary>
+        public static int AllyMaskFor(Team team)
+            => team == Team.Player ? PlayerMask | FamiliarMask | MinionMask : team == Team.Enemy ? EnemyMask : 0;
+
         /// <summary>
         /// The layer a character body belongs on for a side. A body moved to the player's side goes
-        /// on the familiar layer rather than the player's own: enemy attacks hit it, the player's
-        /// shots pass through it, and nothing looking for the player mistakes it for them.
+        /// on the minion layer rather than the player's own: enemy attacks hit it, it blocks enemies,
+        /// the player's shots pass through it, and nothing looking for the player mistakes it for them.
         /// </summary>
-        public static int BodyLayerFor(Team team) => team == Team.Player ? Familiar : Enemy;
+        public static int BodyLayerFor(Team team) => team == Team.Player ? Minion : Enemy;
 
-        /// <summary>Layers that block line of sight for either side.</summary>
+        /// <summary>Layers that block line of sight for either side. Nether Wall and smoke stay out of it.</summary>
         public static int SightBlockMask => BlockingMask | (1 << Prop);
 
         public static void ConfigureCollisionMatrix()
@@ -84,6 +96,28 @@ namespace Gunspire
             Physics.IgnoreLayerCollision(Familiar, Familiar, true);
             Physics.IgnoreLayerCollision(Familiar, PlayerProjectile, true);
             Physics.IgnoreLayerCollision(Familiar, Enemy, true);
+
+            // Walking minions are a wall of bodies: solid to enemies and to each other, so a horde
+            // blocks a doorway and does not stack, but never to the player. In a corridor you are
+            // backing out of, a horde you could not pass would trap you.
+            Physics.IgnoreLayerCollision(Minion, Player, true);
+            Physics.IgnoreLayerCollision(Minion, PlayerProjectile, true);
+            Physics.IgnoreLayerCollision(Minion, Familiar, true);
+            Physics.IgnoreLayerCollision(Minion, Enemy, false);
+            Physics.IgnoreLayerCollision(Minion, Minion, false);
+
+            // Nether Wall and smoke stop shots through the hit masks. Nothing physical collides with
+            // them, so bodies walk through and projectiles only stop where a hit mask says so.
+            int[] volumes = { NetherWall, Smoke };
+            int[] everythingElse =
+            {
+                Default, Player, Enemy, PlayerProjectile, EnemyProjectile, Prop, Level, Familiar, Minion,
+                NetherWall, Smoke
+            };
+
+            for (int v = 0; v < volumes.Length; v++)
+                for (int o = 0; o < everythingElse.Length; o++)
+                    Physics.IgnoreLayerCollision(volumes[v], everythingElse[o], true);
         }
 
         public static void SetRecursively(GameObject go, int layer)

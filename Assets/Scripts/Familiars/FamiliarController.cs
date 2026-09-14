@@ -199,9 +199,12 @@ namespace Gunspire
         {
             if (_owner == null || Health == null || !Health.IsAlive) return;
 
+            // Familiars are yours but not you, so they stop with the world.
+            if (WorldClock.IsStopped) return;
+
             if (_empowerTimer > 0f)
             {
-                _empowerTimer -= Time.deltaTime;
+                _empowerTimer -= WorldClock.DeltaTime;
                 if (_empowerTimer <= 0f)
                 {
                     _empowerDamage = 1f;
@@ -210,7 +213,7 @@ namespace Gunspire
                 }
             }
 
-            _retargetTimer -= Time.deltaTime;
+            _retargetTimer -= WorldClock.DeltaTime;
             if (Target == null || _retargetTimer <= 0f) AcquireTarget();
 
             Drift();
@@ -247,7 +250,7 @@ namespace Gunspire
         /// <summary>Floats toward a slot beside and above the player, easing rather than snapping.</summary>
         private void Drift()
         {
-            _bobPhase += Time.deltaTime * 2f;
+            _bobPhase += WorldClock.DeltaTime * 2f;
 
             Transform player = _owner.transform;
             Vector3 anchor = player.position
@@ -262,7 +265,7 @@ namespace Gunspire
             float gap = Vector3.Distance(transform.position, anchor);
             float speed = Definition.MoveSpeed * Mathf.Clamp(gap * 0.5f, 0.4f, 4f);
 
-            transform.position = Vector3.MoveTowards(transform.position, anchor, speed * Time.deltaTime);
+            transform.position = Vector3.MoveTowards(transform.position, anchor, speed * WorldClock.DeltaTime);
         }
 
         private void FaceTarget()
@@ -275,7 +278,7 @@ namespace Gunspire
             if (to.sqrMagnitude < 0.001f) return;
 
             transform.rotation = Quaternion.Slerp(transform.rotation,
-                Quaternion.LookRotation(to.normalized, Vector3.up), 8f * Time.deltaTime);
+                Quaternion.LookRotation(to.normalized, Vector3.up), 8f * WorldClock.DeltaTime);
         }
 
         private void TryAttack()

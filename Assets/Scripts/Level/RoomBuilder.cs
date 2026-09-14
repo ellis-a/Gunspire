@@ -51,6 +51,9 @@ namespace Gunspire
             runtime.PlayerSpawn = maze.CellCentre(maze.Start) + Vector3.up * 0.2f;
             runtime.PlayerFacing = Quaternion.LookRotation(maze.ExitDirection(maze.Start), Vector3.up);
 
+            runtime.Maze = maze;
+            runtime.ExitRoute = new ExitRouteMap(maze);
+
             runtime.Portal = ExitPortal.Spawn(maze.CellCentre(maze.Exit), Quaternion.identity);
             runtime.Portal.transform.SetParent(root.transform, true);
 

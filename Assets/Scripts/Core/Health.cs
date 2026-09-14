@@ -66,12 +66,15 @@ namespace Gunspire
         {
             if (!IsAlive) return;
 
-            if (InvulnerabilityTimer > 0f) InvulnerabilityTimer -= Time.deltaTime;
+            // The player's own clock for the player, the world's for everything else.
+            float dt = WorldClock.DeltaFor(gameObject);
+
+            if (InvulnerabilityTimer > 0f) InvulnerabilityTimer -= dt;
 
             if (_sheet != null && Current < Max)
             {
                 float regen = _sheet.Get(Attr.HealthRegen);
-                if (regen > 0f) Heal(regen * Time.deltaTime, silent: true);
+                if (regen > 0f) Heal(regen * dt, silent: true);
             }
         }
 
@@ -205,6 +208,14 @@ namespace Gunspire
             // and enemies; it matters for the neutral team, where a confused enemy's own blast
             // would otherwise catch it.
             if (info.Source != null && info.Source == gameObject) return;
+
+            // While the world is stopped, every hit on anything but the player waits, so nothing dies
+            // frozen and the resume lands as one burst, knockback and all.
+            if (WorldClock.ShouldHold(this))
+            {
+                WorldClock.Hold(this, info);
+                return;
+            }
             if (IsInvulnerable && info.Type != DamageType.True) return;
 
             float amount = Mathf.Max(0f, info.Amount);

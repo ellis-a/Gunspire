@@ -404,7 +404,7 @@ namespace Gunspire
 
         private void Update()
         {
-            _timer -= Time.deltaTime;
+            _timer -= WorldClock.DeltaTime;
             if (_timer > 0f) return;
 
             DamageInfo template = DamageInfo.Create(_damage, _damageType, _team, _source);
@@ -437,13 +437,24 @@ namespace Gunspire
         public float TickInterval = 0.5f;
         public bool ScaleWithLevel = true;
 
+        /// <summary>Centred on the caster and moving with them, rather than left where it was cast.</summary>
+        public bool FollowCaster;
+
+        /// <summary>Put on allies standing inside each tick, alongside whatever it does to the other side.</summary>
+        public List<StatusApplication> AllyStatuses = new List<StatusApplication>();
+
         public override bool Execute(AbilityContext ctx)
         {
             float scale = ScaleWithLevel ? ctx.LevelScale : 1f;
 
-            LingeringZone.Spawn(ctx.Point, Radius * scale, Duration * scale,
+            Vector3 at = FollowCaster && ctx.Caster != null ? ctx.Caster.transform.position : ctx.Point;
+
+            LingeringZone zone = LingeringZone.Spawn(at, Radius * scale, Duration * scale,
                 DamagePerTick * ctx.Power, TickInterval, ctx.DamageType, ctx.Team, ctx.Caster,
                 new List<StatusApplication>(ctx.Payload), ctx.Tint, ctx.DamageOrigin);
+
+            if (FollowCaster && ctx.Caster != null) zone.Follow(ctx.Caster.transform);
+            if (AllyStatuses != null && AllyStatuses.Count > 0) zone.BuffAllies(ctx.EmpowerAll(AllyStatuses));
             return true;
         }
 
@@ -471,6 +482,8 @@ namespace Gunspire
         private Color _color;
         private DamageOrigin _origin;
         private Hazards.Hazard _hazard;
+        private Transform _follow;
+        private List<StatusApplication> _allyStatuses;
 
         public static LingeringZone Spawn(Vector3 point, float radius, float duration, float damagePerTick,
             float tickInterval, DamageType damageType, Team team, GameObject source,
@@ -495,8 +508,10 @@ namespace Gunspire
             zone._color = color;
             zone._origin = origin;
 
-            // A patch that hurts is somewhere the other side would rather not stand.
-            zone._hazard = Hazards.Register(go.transform, radius, team);
+            // A patch that hurts is somewhere the other side would rather not stand. One that only
+            // helps allies is not something to avoid.
+            if (damagePerTick > 0f || (statuses != null && statuses.Count > 0))
+                zone._hazard = Hazards.Register(go.transform, radius, team);
 
             var renderer = disc.GetComponent<MeshRenderer>();
             if (renderer != null) zone._material = renderer.material;
@@ -504,12 +519,51 @@ namespace Gunspire
             return zone;
         }
 
+        /// <summary>Keeps the zone centred on something, such as its caster. Returns the zone for chaining.</summary>
+        public LingeringZone Follow(Transform target)
+        {
+            _follow = target;
+            if (target != null) transform.position = target.position;
+            return this;
+        }
+
+        /// <summary>
+        /// Puts these statuses on every ally inside each tick, alongside whatever the zone does to the
+        /// other side. Consecrate and Soul Storm are zones that help as well as hurt.
+        /// </summary>
+        public LingeringZone BuffAllies(List<StatusApplication> statuses)
+        {
+            _allyStatuses = statuses;
+            return this;
+        }
+
         private void OnDestroy() => Hazards.Unregister(_hazard);
 
-        private void Update()
+        private void BuffAlliesInside()
         {
-            float dt = Time.deltaTime;
+            if (_allyStatuses == null || _allyStatuses.Count == 0) return;
+
+            Collider[] found = Physics.OverlapSphere(transform.position, _radius,
+                Layers.AllyMaskFor(_team), QueryTriggerInteraction.Ignore);
+
+            var buffed = new HashSet<StatusController>();
+            for (int i = 0; i < found.Length; i++)
+            {
+                StatusController status = found[i].GetComponentInParent<StatusController>();
+                if (status == null || !buffed.Add(status)) continue;
+                status.ApplyAll(_allyStatuses, _source, _team);
+            }
+        }
+
+        private void Update() => Step(WorldClock.DeltaTime);
+
+        /// <summary>One frame of the zone. Update calls it on world time; public so tooling can step it.</summary>
+        public void Step(float dt)
+        {
             _life += dt;
+
+            // A follower keeps its caster's feet under it, if the caster is still there to follow.
+            if (_follow != null) transform.position = _follow.position;
 
             // Fade out over the last second so its expiry is readable.
             if (_material != null)
@@ -532,6 +586,8 @@ namespace Gunspire
 
         private void Tick()
         {
+            BuffAlliesInside();
+
             Collider[] found = Physics.OverlapSphere(transform.position, _radius,
                 Layers.TargetMaskFor(_team), QueryTriggerInteraction.Ignore);
 

@@ -258,7 +258,7 @@ namespace Gunspire.EditorTools
             if (bodyHealth.Team != Team.Enemy) problems.Add("changing only an enemy's attacks moved its body to " + bodyHealth.Team);
 
             controller.SetSide(Team.Player);
-            if (controller.Team != Team.Player || bodyHealth.Team != Team.Player || body.layer != Layers.Familiar)
+            if (controller.Team != Team.Player || bodyHealth.Team != Team.Player || body.layer != Layers.BodyLayerFor(Team.Player))
                 problems.Add("SetSide(Player) left attacks on " + controller.Team + ", body on " + bodyHealth.Team
                              + ", layer " + body.layer);
 

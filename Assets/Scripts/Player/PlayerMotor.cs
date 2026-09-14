@@ -8,7 +8,7 @@ namespace Gunspire
     /// off the character sheet, which is how Athletics pays out.
     /// </summary>
     [RequireComponent(typeof(CharacterController))]
-    public class PlayerMotor : MonoBehaviour
+    public class PlayerMotor : MonoBehaviour, IKnockable
     {
         [Header("Feel")]
         [SerializeField] private float gravity = -26f;
@@ -99,6 +99,44 @@ namespace Gunspire
 
         public Vector3 Velocity => _velocity;
 
+        // ---- knockback impacts. The player takes them by the same rules as everything else. ----
+
+        /// <summary>
+        /// The share of velocity that knockback put there, decaying like an enemy's. Kept apart from
+        /// velocity so running or dashing into a wall never counts as an impact; only being knocked does.
+        /// </summary>
+        private Vector3 _knockback;
+        private const float KnockbackDecay = 18f;
+
+        public Transform Transform => transform;
+        public Health Health => _health != null ? _health : (_health = GetComponent<Health>());
+
+        public Vector3 Knockback
+        {
+            get => _knockback.sqrMagnitude >= KnockbackImpacts.Threshold * KnockbackImpacts.Threshold
+                ? _knockback
+                : Vector3.zero;
+            set
+            {
+                _velocity += value - _knockback;
+                _knockback = value;
+            }
+        }
+
+        public GameObject Instigator { get; private set; }
+        public Team InstigatorTeam { get; private set; }
+
+        /// <summary>Knockback from a hit, which can slam the player into walls and bodies.</summary>
+        public void AddKnockback(Vector3 velocity, GameObject instigator, Team instigatorTeam)
+        {
+            if (velocity.sqrMagnitude < 0.0001f) return;
+
+            _velocity += velocity;
+            _knockback += velocity;
+            Instigator = instigator;
+            InstigatorTeam = instigatorTeam;
+        }
+
         /// <summary>
         /// Speed across the current surface - FOV stretch, crosshair bloom and the moving-spread
         /// penalty all key off this. Projected against the up axis rather than read off world
@@ -128,6 +166,7 @@ namespace Gunspire
         {
             float dt = Time.deltaTime;
             RechargeDashes(dt);
+            _knockback = Vector3.MoveTowards(_knockback, Vector3.zero, KnockbackDecay * dt);
 
             bool frozen = _status != null && _status.IsControlImpaired;
             Vector2 input = (InputEnabled && !frozen) ? ReadMoveInput() : Vector2.zero;
@@ -407,6 +446,8 @@ namespace Gunspire
             // own notion of below is welded to world Y.
             if (ZipState == WallZipState.Attached && Vector3.Dot(hit.normal, _upAxis) > 0.5f)
                 _surfaceContact = true;
+
+            KnockbackImpacts.OnControllerHit(this, hit);
         }
 
         private Vector3 ApplyFriction(Vector3 horizontal, float dt)

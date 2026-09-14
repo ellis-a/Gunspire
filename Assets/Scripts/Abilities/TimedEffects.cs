@@ -26,7 +26,7 @@ namespace Gunspire
                     ctx.Aborted = true;
                     yield break;
                 }
-                elapsed += Time.deltaTime;
+                elapsed += WorldClock.DeltaFor(ctx.Caster);
                 yield return null;
             }
         }
@@ -63,7 +63,14 @@ namespace Gunspire
                 yield return AbilityRunner.RunTimed(Body, ctx);
                 if (ctx.Aborted) yield break;
 
-                if (Interval > 0f) yield return new WaitForSeconds(Interval);
+                // Waited out on the caster's clock rather than WaitForSeconds, so a stopped world
+                // holds a volley between shots too.
+                float waited = 0f;
+                while (waited < Interval)
+                {
+                    waited += WorldClock.DeltaFor(ctx.Caster);
+                    yield return null;
+                }
             }
         }
 
@@ -123,7 +130,7 @@ namespace Gunspire
             // outrun accumulated deltaTime, and touching a destroyed transform would throw.
             while (elapsed < Duration && ctx.CasterCanAct && beam != null)
             {
-                float dt = Time.deltaTime;
+                float dt = WorldClock.DeltaFor(ctx.Caster);
                 elapsed += dt;
 
                 direction = Quaternion.AngleAxis(SweepDegreesPerSecond * sweepSign * dt, Vector3.up) * direction;

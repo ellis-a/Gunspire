@@ -174,7 +174,7 @@ namespace Gunspire
         private static void OnPlayerDamaged(PlayerRig rig, DamageInfo info, float amount)
         {
             if (info.Knockback.sqrMagnitude > 0.01f && rig.Motor != null)
-                rig.Motor.AddImpulse(info.Knockback);
+                rig.Motor.AddKnockback(info.Knockback, info.Source, info.SourceTeam);
         }
     }
 }

@@ -16,6 +16,13 @@ namespace Gunspire
         public Vector3 FillToScale;
         public bool DestroyOnComplete = true;
 
+        /// <summary>
+        /// Something to remove once this has run its course plus a short linger, counted in world time
+        /// rather than handed to a real-time Destroy, so a stopped world leaves the warning up.
+        /// </summary>
+        public GameObject RemoveWhenDone;
+        public float RemoveAfterExtra;
+
         private float _age;
         private Material _material;
         private Material _fillMaterial;
@@ -37,7 +44,7 @@ namespace Gunspire
 
         private void Update()
         {
-            _age += Time.deltaTime;
+            _age += WorldClock.DeltaTime;
             float t = Mathf.Clamp01(_age / Mathf.Max(0.01f, Duration));
 
             Color c = Color.Lerp(FromColor, ToColor, t);
@@ -46,6 +53,12 @@ namespace Gunspire
 
             if (FillTarget != null)
                 FillTarget.localScale = Vector3.Lerp(FillFromScale, FillToScale, t);
+
+            if (RemoveWhenDone != null && _age >= Duration + RemoveAfterExtra)
+            {
+                Destroy(RemoveWhenDone);
+                return;
+            }
 
             if (t >= 1f && DestroyOnComplete) Destroy(gameObject);
         }
@@ -79,8 +92,9 @@ namespace Gunspire
             vis.FillFromScale = new Vector3(0.02f, 0.02f, 0.02f);
             vis.FillToScale = fill.transform.localScale;
             vis.DestroyOnComplete = false;
+            vis.RemoveWhenDone = root;
+            vis.RemoveAfterExtra = 0.12f;
 
-            Object.Destroy(root, duration + 0.12f);
             return root;
         }
 

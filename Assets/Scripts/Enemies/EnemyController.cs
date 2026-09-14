@@ -12,7 +12,7 @@ namespace Gunspire
     /// whether it can move, which attacks it may start, and whether it is running away instead.
     /// </summary>
     [RequireComponent(typeof(CharacterController))]
-    public class EnemyController : MonoBehaviour, IAbilityOwner
+    public class EnemyController : MonoBehaviour, IAbilityOwner, IKnockable
     {
         // IAbilityOwner. MonoBehaviour already has gameObject and transform in lower case;
         // these just expose them under the interface's names.
@@ -100,6 +100,7 @@ namespace Gunspire
         private readonly List<AbilityAttack> _attackScratch = new List<AbilityAttack>();
         private Vector3 _velocity;
         private Vector3 _externalVelocity;
+        private bool _knockbackActive;
         private float _strafeTimer;
         private int _strafeSign = 1;
         private float _retargetTimer;
@@ -189,7 +190,7 @@ namespace Gunspire
         private void OnDamaged(DamageInfo info, float amount)
         {
             if (info.Knockback.sqrMagnitude > 0.01f)
-                _externalVelocity += info.Knockback;
+                AddKnockback(info.Knockback, info.Source, info.SourceTeam);
 
             // Being hit is the one signal that never needs checking against a range.
             Alert();
@@ -199,7 +200,10 @@ namespace Gunspire
         {
             if (IsHidden || (Health != null && !Health.IsAlive)) return;
 
-            float dt = Time.deltaTime;
+            // A stopped world stops thinking too, or an enemy would still start an attack mid-freeze.
+            if (WorldClock.IsStopped) return;
+
+            float dt = WorldClock.DeltaTime;
             SyncStatusEffects();
 
             bool impaired = Status != null && Status.IsControlImpaired;
@@ -326,7 +330,7 @@ namespace Gunspire
             if (Status != null && Status.IsBlind) return false;
             if (CanSee(TargetRegistry.PlayerBody)) return true;
 
-            _minionSightTimer -= Time.deltaTime;
+            _minionSightTimer -= WorldClock.DeltaTime;
             if (_minionSightTimer > 0f) return false;
             _minionSightTimer = MinionSightInterval;
 
@@ -575,12 +579,12 @@ namespace Gunspire
             if (to.sqrMagnitude < 0.01f) return;
 
             Quaternion wanted = Quaternion.LookRotation(to.normalized, Vector3.up);
-            transform.rotation = Quaternion.Slerp(transform.rotation, wanted, TurnSpeed * Time.deltaTime);
+            transform.rotation = Quaternion.Slerp(transform.rotation, wanted, TurnSpeed * WorldClock.DeltaTime);
         }
 
         private void Move(bool impaired)
         {
-            float dt = Time.deltaTime;
+            float dt = WorldClock.DeltaTime;
             Vector3 desired = Vector3.zero;
 
             if (!impaired && Target != null)
@@ -687,6 +691,10 @@ namespace Gunspire
             else _velocity.y += Gravity * dt;
 
             _externalVelocity = Vector3.MoveTowards(_externalVelocity, Vector3.zero, 18f * dt);
+
+            // Knockback that has slowed below an impact is just drift now, not something that can hurt.
+            if (_externalVelocity.sqrMagnitude < KnockbackImpacts.Threshold * KnockbackImpacts.Threshold)
+                _knockbackActive = false;
 
             _controller.Move((_velocity + _externalVelocity) * dt);
         }
@@ -918,6 +926,34 @@ namespace Gunspire
 
         /// <summary>Used by lunges, knockback and pulls.</summary>
         public void AddImpulse(Vector3 impulse) => _externalVelocity += impulse;
+
+        /// <summary>
+        /// Knockback from a hit, a shove or a pull, carrying who caused it so any impact is credited to
+        /// them. Unlike <see cref="AddImpulse"/>, which an enemy's own lunge uses, this can strike things.
+        /// </summary>
+        public void AddKnockback(Vector3 velocity, GameObject instigator, Team instigatorTeam)
+        {
+            if (velocity.sqrMagnitude < 0.0001f) return;
+
+            _externalVelocity += velocity;
+            _knockbackActive = true;
+            Instigator = instigator;
+            InstigatorTeam = instigatorTeam;
+        }
+
+        public Vector3 Velocity => _velocity + _externalVelocity;
+
+        public Vector3 Knockback
+        {
+            get => _knockbackActive ? _externalVelocity : Vector3.zero;
+            set => _externalVelocity = value;
+        }
+
+        public GameObject Instigator { get; private set; }
+        public Team InstigatorTeam { get; private set; }
+
+        /// <summary>Reported for every bump during a move; only knockback turns a bump into an impact.</summary>
+        private void OnControllerColliderHit(ControllerColliderHit hit) => KnockbackImpacts.OnControllerHit(this, hit);
 
         /// <summary>Keeps a pack from collapsing into one point.</summary>
         private Vector3 Separation()

@@ -17,6 +17,10 @@ namespace Gunspire
         public Quaternion PlayerFacing = Quaternion.identity;
         public ExitPortal Portal;
 
+        /// <summary>The maze this room was built from, and the route to its exit. Both null on a rectangular room.</summary>
+        public MazeLayout Maze;
+        public ExitRouteMap ExitRoute;
+
         private readonly List<EnemyController> _enemies = new List<EnemyController>();
         private bool _cleared;
 

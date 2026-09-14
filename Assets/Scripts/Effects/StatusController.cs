@@ -100,7 +100,8 @@ namespace Gunspire
         private Vector3 _lastPosition;
         private bool _hasLastPosition;
 
-        private void Update() => Tick(Time.deltaTime);
+        // The player's statuses keep real time; everyone else's stop with the world.
+        private void Update() => Tick(WorldClock.DeltaFor(gameObject));
 
         /// <summary>One step of decay and ticks. Update calls it every frame; public so tooling can step time.</summary>
         public void Tick(float dt)

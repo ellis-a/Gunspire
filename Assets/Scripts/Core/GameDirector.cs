@@ -101,6 +101,9 @@ namespace Gunspire
                 if (NotificationTimer <= 0f) Notification = null;
             }
 
+            // Real time, so a stop runs out on the player's clock. Paused, this is zero and nothing moves.
+            WorldClock.Tick(Time.deltaTime);
+
             if (State == GameStateKind.Playing) Run.ElapsedSeconds += Time.deltaTime;
 
             HandleGlobalKeys();
@@ -190,6 +193,21 @@ namespace Gunspire
             FamiliarController.DespawnAll();
             DestroyAllOfType<TelegraphVisual>();
             DestroyAllOfType<FadeAndDie>();
+
+            // Minions, zones, trails and volumes are not parented to the room either. Persistent
+            // minions were already counted by LoadRoom, and come back from that count.
+            MinionController.DespawnAll();
+            DestroyAllOfType<LingeringZone>();
+            DestroyAllOfType<DelayedBlast>();
+            DestroyAllOfType<TrailEmitter>();
+            DestroyAllOfType<WorldTimedLife>();
+
+            // A new room starts in normal time, with nothing held, nothing to avoid and no bodies on
+            // the floor, and with the player in their own body.
+            WorldClock.Reset();
+            Hazards.Clear();
+            DeathRecords.Clear();
+            TargetRegistry.Clear();
         }
 
         private static void DestroyAllOfType<T>() where T : Component
@@ -201,6 +219,13 @@ namespace Gunspire
 
         public void LoadRoom(RoomNode node)
         {
+            // Leaving a floor: persistent minions are counted before the room holding them goes.
+            if (CurrentRoom != null)
+            {
+                Run.Minions.Remember(MinionController.Live);
+                LevelEvents.RaiseFloorLeaving(Run.Floor);
+            }
+
             ClearRoom();
 
             Run.CurrentNode = node;
@@ -220,9 +245,11 @@ namespace Gunspire
             // Familiars come back at every door. Losing one costs you the rest of the room
             // rather than the rest of the run.
             FamiliarSummoner.Resummon(Run);
+            MinionSummoner.RespawnKept(Run, CurrentRoom);
 
             SetState(GameStateKind.Playing);
             Notify(node.Title);
+            LevelEvents.RaiseFloorEntered(CurrentRoom);
         }
 
         public void OnRoomCleared(RoomRuntime room)

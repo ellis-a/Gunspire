@@ -1489,8 +1489,8 @@ Stitched Monstrosity's slam and Fathomless Gate's pull all gain collision damage
   gives more space to move. Not urgent.
 - **Pushing minions works like pushing enemies.** Walking minions have character controllers, so a
   push applies the same way.
-- **Open: the player.** Enemy attacks knock the player around too. Presumably the player takes no
-  collision damage, in line with never being executed by a status, but it is worth stating.
+- **Decided: the player takes impact damage too,** by the same rules, while knockback they were hit
+  with is playing out. Enemy knockback near a wall is noticeably more dangerous for it.
 - Flying enemies still only move sideways, since hovering overwrites vertical velocity every frame.
 
 ---

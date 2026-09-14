@@ -76,7 +76,7 @@ namespace Gunspire
 
             // Chill slows an enemy's attack rate as well as its feet.
             float rate = _owner != null && _owner.Sheet != null ? _owner.Sheet.Get(Attr.AttackSpeed) : 1f;
-            _timer -= Time.deltaTime * rate;
+            _timer -= WorldClock.DeltaTime * rate;
         }
 
         public bool CanUse(float distance, bool hasLineOfSight)

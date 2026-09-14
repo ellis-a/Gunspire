@@ -427,6 +427,41 @@ is alive.
 
 ## Phase 3: world systems
 
+**Status: done.** Verify World Systems checks the items below against real components. Decisions and
+deviations:
+
+- **Decided: the player takes knockback impact damage** by the same rules as enemies, while knockback
+  they were hit with is playing out. Running or dashing into a wall never counts.
+- **The world clock is a keyed rate** that multiplies requests, so slows stack and any stop wins.
+  Converted to it: projectiles, enemy movement and thinking, attack cooldowns, wind-ups, volleys and
+  beams, telegraphs, statuses (the player's stay on real time), lingering zones, delayed blasts,
+  familiars, minions, trails and volume lifetimes. Cosmetic fades, spinning pickups and the player's gun,
+  spells and motor stay on real time. While stopped, hits on anything but the player are held and land on
+  resume, knockback included. Nothing casts Stop Time yet.
+- **Minions are on layer 15,** blocking enemies and each other and never the player, and in the enemy hit
+  and target masks; the familiar comment in `Layers` now says so. A body moved to the player's side
+  (1.6) now goes on the minion layer, not the familiar layer. `MinionLibrary` holds one reference minion,
+  a zombie, in code only until something summons it. Minions follow the player's body through the flow
+  field and fight the nearest enemy that is close or in sight.
+- **Revive is a per-definition timer,** zero meaning death is final, so the Bestial companion decision can
+  go either way without framework changes.
+- **Persistent minions are counted when a floor ends** and respawned around the player on the next;
+  non-persistent ones stay behind. The single monstrosity slot and the beast tier are ids in the same
+  count; their limits belong to their spells.
+- **Horde cost is reported by the verifier on every run,** measured for 100 zombies in edit mode.
+- **Knockback impacts:** 6 m/s threshold, 2.5 damage per m/s above it, half transferred to a struck body,
+  all placeholders. Only knockback, shoves and pulls count, never a creature's own lunge. Damage onto the
+  instigator's own side, their minions or the player, is issued from the neutral team so friendly fire
+  lets it through.
+- **Zones can follow a transform and buff allies.** `TrailEmitter` lays segments by distance, damages with
+  one overlap per tick, and registers each segment as a hazard.
+- **Nether Wall and smoke are layers 16 and 17,** built by `WorldVolumes`. `ShotRedirectVolume` hands a
+  player's hitscan or projectile to a random enemy inside, and lets it through when nobody is. Smoke
+  neither blocks sight nor counts as a hazard, pending those open decisions.
+- **Level services:** `DeathRecords` keeps deaths for five world seconds, `LevelEvents` raises floor
+  leaving and entering, and `ExitRouteMap` routes to the exit over the ground graph on maze floors. The
+  glowing route markers belong to Path of Light itself.
+
 ### 3.1 A world clock
 
 **Customers: Stop Time, Banish's paused timers, and any future slow-motion effect.**
@@ -671,7 +706,6 @@ These are unresolved in the design doc, grouped by the phase they block.
 **Phase 3, world systems**
 
 - Whether the Bestial companion revives on a timer or is only knocked down.
-- Whether the player takes knockback collision damage.
 - Stitched Monstrosity: whether recasting with one out refuses or replaces it.
 - Lich Guise: whether the Stitched Monstrosity and plague zombies are swap targets.
 - Nether Wall's size and duration.

@@ -170,7 +170,8 @@ namespace Gunspire
 
         private void Update()
         {
-            float dt = Time.deltaTime;
+            // Shots are part of the world: the player's own hang in the air when it stops.
+            float dt = WorldClock.DeltaTime;
             _age += dt;
             if (_age >= Lifetime)
             {
@@ -207,29 +208,47 @@ namespace Gunspire
         /// <summary>Returns true when the projectile is done and should stop moving this frame.</summary>
         private bool HandleHit(RaycastHit hit)
         {
-            IDamageable target = Combat.FindDamageable(hit.collider);
+            Vector3 point = hit.point;
+            Vector3 normal = hit.normal;
+            IDamageable target;
+
+            // Smoke that hands shots on: the round lands on someone inside instead, and with nobody
+            // inside it flies straight through. Looked up through parents, so a collider on the
+            // smoke's own visuals counts as the smoke rather than as a wall.
+            var redirect = hit.collider.GetComponentInParent<ShotRedirectVolume>();
+            if (redirect != null)
+            {
+                if (!redirect.TryPickTarget(OwnerTeam, out target)) return false;
+                point = AbilityContext.CenterOf(target);
+                normal = -transform.forward;
+            }
+            else
+            {
+                target = Combat.FindDamageable(hit.collider);
+            }
+
             bool hitTarget = target != null && target.IsAlive &&
                              (target.Team != OwnerTeam || target.Team == Team.Neutral);
 
             if (hitTarget && _alreadyHit.Contains(target))
                 return false;   // already pierced this one, keep flying
 
-            transform.position = hit.point - transform.forward * (Radius * 0.5f);
+            transform.position = point - transform.forward * (Radius * 0.5f);
 
             if (SplashRadius > 0f)
             {
-                Detonate(hit.point);
+                Detonate(point);
                 return true;
             }
 
             if (hitTarget)
             {
                 _alreadyHit.Add(target);
-                DamageInfo info = BuildHitDamage(hit.point, hit.normal);
+                DamageInfo info = BuildHitDamage(point, normal);
                 target.TakeDamage(info);
                 if (SourceWeapon != null)
-                    SourceWeapon.ReportHit(target, info, hit.point, hit.normal, transform.forward, Infusions);
-                Combat.SpawnImpact(hit.point, hit.normal, Tint, 0.3f, DamageType);
+                    SourceWeapon.ReportHit(target, info, point, normal, transform.forward, Infusions);
+                Combat.SpawnImpact(point, normal, Tint, 0.3f, DamageType);
 
                 if (Pierce > 0)
                 {
@@ -237,14 +256,14 @@ namespace Gunspire
                     return false;
                 }
 
-                RunOnHit(hit.point);
+                RunOnHit(point);
                 Destroy(gameObject);
                 return true;
             }
 
             // Hit the world.
-            Combat.SpawnImpact(hit.point, hit.normal, Tint, 0.25f, DamageType);
-            RunOnHit(hit.point);
+            Combat.SpawnImpact(point, normal, Tint, 0.25f, DamageType);
+            RunOnHit(point);
             Destroy(gameObject);
             return true;
         }

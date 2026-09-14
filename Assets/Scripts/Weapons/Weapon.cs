@@ -480,6 +480,25 @@ namespace Gunspire
             for (int i = 0; i < count; i++)
             {
                 RaycastHit hit = HitBuffer[i];
+
+                // Smoke that hands shots on: the round lands on someone inside instead, and with
+                // nobody inside it carries straight on through. Looked up through parents, so a
+                // collider on the smoke's own visuals counts as the smoke rather than as a wall.
+                var redirect = hit.collider.GetComponentInParent<ShotRedirectVolume>();
+                if (redirect != null)
+                {
+                    if (!redirect.TryPickTarget(OwnerTeam, out IDamageable handed)) continue;
+
+                    Vector3 at = AbilityContext.CenterOf(handed);
+                    DamageInfo handedDamage = BuildShotDamage(spec, at, -direction, direction, _roundInfusions);
+                    handed.TakeDamage(handedDamage);
+                    ReportHit(handed, handedDamage, at, -direction, direction, _roundInfusions);
+                    Combat.SpawnImpact(at, -direction, spec.Tint, 0.3f, spec.DamageType);
+
+                    endPoint = hit.point;
+                    anythingHit = true;
+                    break;
+                }
                 IDamageable target = Combat.FindDamageable(hit.collider);
                 bool isTarget = target != null && target.IsAlive &&
                                 (target.Team != OwnerTeam || target.Team == Team.Neutral);
