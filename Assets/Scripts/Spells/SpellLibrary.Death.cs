@@ -13,10 +13,10 @@ namespace Gunspire
             new Spell
             {
                 Id = "raise_dead", School = SpellSchool.Death, DisplayName = "Raise Dead", ShortName = "RAIS",
-                Description = "Pull a long-dead body from the ground and bind a soul to it: a slow zombie that follows you between floors.",
+                Description = "Pull a long-dead body from the ground and bind a soul to it: a slow zombie that follows you between floors. Two can be out per level of the spell.",
                 Type = SpellType.Attack, DamageType = DamageType.Kinetic, Rarity = Rarity.Common,
                 ManaCost = 10f, SoulCost = 1, Cooldown = 3f, TintOverride = DeathTint,
-                OnCast = { new SummonMinionEffect { MinionId = "zombie", Distance = 2.5f } }
+                OnCast = { new SummonMinionEffect { MinionId = "zombie", Distance = 2.5f, CapPerLevel = 2 } }
             },
 
             new Spell

@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace Gunspire
@@ -36,6 +37,7 @@ namespace Gunspire
 
             DrawVitals(player);
             DrawWeapon(player);
+            DrawAllies(player);
             DrawSpellSlots(player);
             DrawStatuses(player);
             DrawRoomInfo();
@@ -353,6 +355,88 @@ namespace Gunspire
                 weapon.IsFocusing ? UIStyles.AmmoColor : UIStyles.Ink);
         }
 
+        // ---------------------------------------------------------------- allies
+
+        private const int MaxAllyRows = 12;
+        private const float AllyPulseSeconds = 0.45f;
+        private readonly List<MinionController> _allies = new List<MinionController>();
+
+        /// <summary>
+        /// A health bar for every walking ally - zombies, the companion, the monstrosity and the rest, but not familiars -
+        /// stacked up the right side above the guns. A bar flashes and swells for a moment when its ally is hurt, so a
+        /// horde being chewed through shows where without reading numbers.
+        /// </summary>
+        private void DrawAllies(PlayerRig player)
+        {
+            IReadOnlyList<MinionController> live = MinionController.Live;
+            _allies.Clear();
+            for (int i = 0; i < live.Count; i++)
+                if (live[i] != null && live[i].Definition != null && live[i].Health != null) _allies.Add(live[i]);
+            if (_allies.Count == 0) return;
+
+            BeastMastery beasts = player.Masteries != null ? player.Masteries.Get<BeastMastery>() : null;
+            MinionController companion = beasts != null ? beasts.Companion : null;
+
+            // The companion first, then kind by kind. An insertion sort, because it is stable: allies of one kind keep
+            // the order they were summoned in, so rows do not trade places between frames.
+            for (int i = 1; i < _allies.Count; i++)
+            {
+                MinionController moving = _allies[i];
+                int j = i - 1;
+                while (j >= 0 && AllyOrder(moving, _allies[j], companion) < 0)
+                {
+                    _allies[j + 1] = _allies[j];
+                    j--;
+                }
+                _allies[j + 1] = moving;
+            }
+
+            const float width = 240f;
+            const float rowHeight = 18f;
+            float x = Screen.width - width - 26f;
+            float bottom = Screen.height - 160f;
+
+            int shown = Mathf.Min(_allies.Count, MaxAllyRows);
+            for (int i = 0; i < shown; i++)
+            {
+                MinionController ally = _allies[i];
+                float y = bottom - (i + 1) * rowHeight;
+
+                float since = Time.unscaledTime - ally.LastHurtTime;
+                float pulse = since < AllyPulseSeconds ? 1f - since / AllyPulseSeconds : 0f;
+
+                Color nameColor = ally.IsDown ? UIStyles.Muted : ally == companion ? UIStyles.Accent : UIStyles.Ink;
+                UIStyles.Text(new Rect(x, y, 90f, rowHeight), ally.Definition.DisplayName, UIStyles.Small, nameColor);
+
+                float barHeight = 8f + 4f * pulse;
+                var bar = new Rect(x + 94f, y + (rowHeight - barHeight) * 0.5f, width - 94f, barHeight);
+
+                if (ally.IsDown)
+                {
+                    UIStyles.Fill(bar, new Color(1f, 1f, 1f, 0.08f));
+                    UIStyles.Text(new Rect(bar.x + 4f, y, bar.width, rowHeight), "down", UIStyles.Small, UIStyles.Muted);
+                    continue;
+                }
+
+                Color fill = Color.Lerp(UIStyles.HealthColor, Color.white, pulse * 0.7f);
+                Color back = Color.Lerp(new Color(0.2f, 0.06f, 0.09f, 0.85f), new Color(1f, 0.85f, 0.85f, 0.9f), pulse * 0.5f);
+                UIStyles.Bar(bar, ally.Health.Fraction, fill, back);
+                if (pulse > 0f) UIStyles.Outline(bar, new Color(1f, 1f, 1f, pulse));
+            }
+
+            if (_allies.Count > shown)
+                UIStyles.Text(new Rect(x, bottom - (shown + 1) * rowHeight, width, rowHeight),
+                    "+" + (_allies.Count - shown) + " more", UIStyles.Right, UIStyles.Muted);
+        }
+
+        private static int AllyOrder(MinionController a, MinionController b, MinionController companion)
+        {
+            if (a == b) return 0;
+            if (a == companion) return -1;
+            if (b == companion) return 1;
+            return string.CompareOrdinal(a.Definition.Id, b.Definition.Id);
+        }
+
         // ---------------------------------------------------------------- spells
 
         private void DrawSpellSlots(PlayerRig player)
@@ -475,6 +559,13 @@ namespace Gunspire
             if (run == null) return;
 
             var rect = new Rect(Screen.width * 0.5f - 220f, 14f, 440f, 22f);
+
+            if (_director.InTraining)
+            {
+                DrawTrainingInfo(rect);
+                return;
+            }
+
             string node = run.CurrentNode != null ? run.CurrentNode.Title : "";
             UIStyles.Text(rect, "Floor " + run.Floor + " / " + _director.FloorCount + "   -   " + node,
                 UIStyles.Center, UIStyles.Ink);
@@ -491,6 +582,21 @@ namespace Gunspire
 
             UIStyles.Text(new Rect(Screen.width - 210f, 14f, 190f, 18f),
                 "TAB character   ESC pause", UIStyles.Right, UIStyles.Muted);
+        }
+
+        /// <summary>The training room's banner: how to change the loadout, and the damage done lately.</summary>
+        private void DrawTrainingInfo(Rect rect)
+        {
+            UIStyles.Text(rect, "Training Room", UIStyles.Center, UIStyles.Ink);
+
+            TrainingRoom training = _director.CurrentRoom.GetComponent<TrainingRoom>();
+            string line = "ESC  choose spells and guns";
+            if (training != null && training.RecentDamage > 0f)
+                line += "      last " + TrainingRoom.DamageWindow.ToString("0") + "s:  " + Mathf.RoundToInt(training.RecentDamage)
+                        + " damage, " + Mathf.RoundToInt(training.RecentDps) + " per second";
+
+            UIStyles.Text(new Rect(Screen.width * 0.5f - 320f, rect.y + 22f, 640f, 18f), line, UIStyles.Center, UIStyles.Muted);
+            UIStyles.Text(new Rect(Screen.width - 210f, 14f, 190f, 18f), "TAB character   ESC pause", UIStyles.Right, UIStyles.Muted);
         }
 
         private void DrawNotification()

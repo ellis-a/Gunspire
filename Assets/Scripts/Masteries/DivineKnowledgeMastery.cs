@@ -53,7 +53,8 @@ namespace Gunspire
         /// Everything this rank reveals about the enemies near a point. Pass the enemies to look at, or
         /// null to use the ones found in the scene.
         /// </summary>
-        public void Collect(Vector3 around, List<Readout> into, IReadOnlyList<EnemyController> enemies = null)
+        public void Collect(Vector3 around, List<Readout> into, IReadOnlyList<EnemyController> enemies = null,
+            Vector3? eye = null)
         {
             into.Clear();
             if (Rank <= 0) return;
@@ -67,6 +68,7 @@ namespace Gunspire
                 Health health = enemy.Health;
                 if (health == null || !health.IsAlive) continue;
                 if ((enemy.transform.position - around).sqrMagnitude > Range * Range) continue;
+                if (eye.HasValue && !InSight(eye.Value, enemy)) continue;
 
                 into.Add(new Readout
                 {
@@ -80,6 +82,27 @@ namespace Gunspire
                     NextAttackIn = enemy.NextAttackIn
                 });
             }
+        }
+
+        /// <summary>
+        /// Whether the eye can see any of the enemy, its head or its middle. Knowledge is about what is in front of you,
+        /// so a wall hides it; two heights keep an enemy half behind cover readable.
+        /// </summary>
+        public static bool InSight(Vector3 eye, EnemyController enemy)
+        {
+            Vector3 feet = enemy.transform.position;
+            return ClearLine(eye, feet + Vector3.up * enemy.EyeHeight)
+                   || ClearLine(eye, feet + Vector3.up * (enemy.EyeHeight * 0.5f));
+        }
+
+        private static bool ClearLine(Vector3 from, Vector3 to)
+        {
+            Vector3 delta = to - from;
+            float distance = delta.magnitude;
+            if (distance < 0.3f) return true;
+
+            return !Physics.Raycast(from, delta / distance, distance - 0.3f, Layers.SightBlockMask,
+                QueryTriggerInteraction.Ignore);
         }
 
         protected override void OnRankChanged(int previous)
@@ -108,7 +131,8 @@ namespace Gunspire
                 if (Rank > 0) _enemies.AddRange(FindObjectsByType<EnemyController>(FindObjectsSortMode.None));
             }
 
-            Collect(Rig.transform.position, _readouts);
+            Vector3? eye = Rig.Camera != null ? Rig.Camera.transform.position : (Vector3?)null;
+            Collect(Rig.transform.position, _readouts, null, eye);
             SyncMarkers();
         }
 

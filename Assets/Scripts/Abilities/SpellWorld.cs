@@ -21,10 +21,14 @@ namespace Gunspire
         public bool AtPoint;
         public float Distance = 2.5f;
 
+        /// <summary>At most this many of the minion out at once per level of the spell; zero for no limit. Raise Dead.</summary>
+        public int CapPerLevel;
+
         public override bool Execute(AbilityContext ctx)
         {
             if (ctx.Caster == null) return false;
             if (OneAtATime && MinionController.CountOf(MinionId) > 0) return false;
+            if (CapPerLevel > 0 && !UnderCap(ctx)) return false;
 
             Vector3 flat = new Vector3(ctx.Forward.x, 0f, ctx.Forward.z);
             if (flat.sqrMagnitude < 0.0001f) flat = ctx.Caster.transform.forward;
@@ -45,7 +49,27 @@ namespace Gunspire
             return true;
         }
 
-        public override string Describe() => "summons " + MinionId;
+        /// <summary>
+        /// Refuses a summon that would go over the cap, which keeps its cost, and says why when the player cast it: a
+        /// spell that does nothing and says nothing reads as broken.
+        /// </summary>
+        private bool UnderCap(AbilityContext ctx)
+        {
+            int cap = CapPerLevel * Mathf.Max(1, ctx.Level);
+            if (MinionController.CountOf(MinionId) + Mathf.Max(1, Count) <= cap) return true;
+
+            if (GameDirector.Instance != null && ctx.Caster.GetComponent<PlayerRig>() != null)
+            {
+                MinionDefinition def = MinionLibrary.Get(MinionId);
+                GameDirector.Instance.Notify("Already at " + cap + " " + (def != null ? def.DisplayName : MinionId)
+                                             + "s - level the spell for more", 2f);
+            }
+            return false;
+        }
+
+        public override string Describe() => CapPerLevel > 0
+            ? "summons " + MinionId + ", up to " + CapPerLevel + " per level"
+            : "summons " + MinionId;
     }
 
     /// <summary>

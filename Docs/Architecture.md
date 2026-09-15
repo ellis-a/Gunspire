@@ -733,6 +733,22 @@ new effect, status and controller. Decisions and deviations:
 - **Blood Scent** draws a marker over every enemy in screen space, through walls, rather than a silhouette
   shader.
 
+**Fixes from the first playtest.** Verify Rooms covers the first four.
+
+- **Every room has a nav grid.** Only mazes built one, so Blink found nowhere to land in any rectangular room, and
+  minions and enemy routing fell back to straight lines there.
+- **Enemies spawn clear of the level and facing out.** Each spawn tests its visible body against walls and props and
+  moves to the nearest spot that fits. It then turns away from nearby walls, out of a corner along the diagonal, and
+  down a corridor rather than across it.
+- **The companion is summoned afresh on each floor.** A room change destroys it only at the end of the frame, and the
+  floor-arrival resummon saw it still alive and kept it.
+- **The training room.** It is switched on from the opening screen, and the pause screen there picks any spell,
+  level or gun. Dummies never attack, come back 2 seconds after dying and heal after 3 seconds left alone. Mana,
+  souls and psi stay full unless switched off.
+- **Divine Knowledge needs line of sight** from the camera to an enemy's head or middle.
+- **Raise Dead is capped at two zombies per level.** A cast over the cap is refused, keeps its cost and says why.
+- **Allies have health bars** on the right of the HUD. A bar flashes and swells when its ally is hurt.
+
 The table below is the list this phase started from.
 
 With the foundations in place, most spells become data: effect chains authored in spell assets. These

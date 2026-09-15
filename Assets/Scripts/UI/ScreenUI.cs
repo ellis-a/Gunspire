@@ -72,8 +72,10 @@ namespace Gunspire
             UIStyles.Text(new Rect(0f, 60f, Screen.width, 48f), "Gunspire",
                 UIStyles.Title, UIStyles.Ink);
             UIStyles.Text(new Rect(0f, 110f, Screen.width, 22f),
-                "Choose how you climb. Click a card, or press its number.",
-                UIStyles.Center, UIStyles.Muted);
+                _director.TrainingSelected
+                    ? "Training room: choose a class to practise with. Any spell or gun can be picked once inside."
+                    : "Choose how you climb. Click a card, or press its number.",
+                UIStyles.Center, _director.TrainingSelected ? UIStyles.Accent : UIStyles.Muted);
 
             const float cardWidth = 320f;
             const float cardHeight = 330f;
@@ -94,6 +96,19 @@ namespace Gunspire
 
                 if (GUI.Button(rect, GUIContent.none, GUIStyle.none)) _director.ChooseLoadout(i);
                 if (NumberPressed(i)) _director.ChooseLoadout(i);
+            }
+
+            var training = new Rect(Screen.width * 0.5f - 130f, y + cardHeight + 28f, 260f, 38f);
+            if (UIStyles.Button(training, _director.TrainingSelected ? "Training room: ON  [T]" : "Training room: OFF  [T]",
+                    _director.TrainingSelected ? UIStyles.Accent : UIStyles.Muted))
+                _director.TrainingSelected = !_director.TrainingSelected;
+
+            // From the event rather than Input: OnGUI runs several times a frame, and a toggle read from Input would
+            // flip on every one of them.
+            if (Event.current.type == EventType.KeyDown && Event.current.keyCode == KeyCode.T)
+            {
+                _director.TrainingSelected = !_director.TrainingSelected;
+                Event.current.Use();
             }
 
             UIStyles.Text(new Rect(0f, Screen.height - 56f, Screen.width, 20f),
@@ -379,6 +394,12 @@ namespace Gunspire
 
         private void DrawPause()
         {
+            if (_director.InTraining)
+            {
+                DrawTrainingPicker();
+                return;
+            }
+
             Dim(0.8f);
             UIStyles.Text(new Rect(0f, 50f, Screen.width, 44f), "Paused", UIStyles.Title, UIStyles.Ink);
 
@@ -542,6 +563,184 @@ namespace Gunspire
                     }
                 }
             }
+        }
+
+        // ---------------------------------------------------------------- training room
+
+        private static readonly SpellSchool[] TrainingSchools =
+        {
+            SpellSchool.Petty, SpellSchool.Elemental, SpellSchool.Bestial, SpellSchool.Abyssal,
+            SpellSchool.Divination, SpellSchool.Death, SpellSchool.Psionic, SpellSchool.Aetherics
+        };
+
+        private SpellSchool _trainingSchool = SpellSchool.Elemental;
+        private int _trainingSlot;
+        private readonly List<Spell> _trainingList = new List<Spell>();
+
+        /// <summary>
+        /// The training room's pause screen: every spell by school, taken with a click, and what is equipped on the right
+        /// with level and gun controls. Cast spells go to the chosen key; movement and melee spells go to their own slots.
+        /// </summary>
+        private void DrawTrainingPicker()
+        {
+            Dim(0.85f);
+            PlayerRig player = _director.Player;
+            if (player == null) return;
+
+            float left = Mathf.Max(16f, Screen.width * 0.5f - 560f);
+            float top = 36f;
+
+            UIStyles.Text(new Rect(0f, top, Screen.width, 40f), "Training Room", UIStyles.Title, UIStyles.Ink);
+            top += 56f;
+
+            for (int i = 0; i < TrainingSchools.Length; i++)
+            {
+                SpellSchool school = TrainingSchools[i];
+                var tab = new Rect(left, top + i * 38f, 150f, 32f);
+                if (UIStyles.Button(tab, school.ToString(), school == _trainingSchool ? UIStyles.Accent : UIStyles.Muted))
+                    _trainingSchool = school;
+            }
+
+            float listX = left + 170f;
+            UIStyles.Text(new Rect(listX, top, 120f, 26f), "Cast spells go to", UIStyles.Small, UIStyles.Muted);
+            for (int i = 0; i < SpellBook.SlotCount; i++)
+            {
+                var key = new Rect(listX + 124f + i * 54f, top, 48f, 26f);
+                if (UIStyles.Button(key, SpellBook.SlotLabels[i], i == _trainingSlot ? UIStyles.Accent : UIStyles.Muted))
+                    _trainingSlot = i;
+            }
+
+            // Cast spells first, then movement, then melee, each by rarity.
+            _trainingList.Clear();
+            foreach (Spell spell in SpellLibrary.All)
+                if (spell.School == _trainingSchool) _trainingList.Add(spell);
+
+            _trainingList.Sort((a, b) =>
+                a.Slot != b.Slot ? a.Slot.CompareTo(b.Slot)
+                : a.Rarity != b.Rarity ? a.Rarity.CompareTo(b.Rarity)
+                : string.CompareOrdinal(a.DisplayName, b.DisplayName));
+
+            for (int i = 0; i < _trainingList.Count; i++)
+            {
+                Spell spell = _trainingList[i];
+                var row = new Rect(listX, top + 36f + i * 30f, 420f, 26f);
+                bool equipped = player.Book.IsEquipped(spell);
+
+                string slot = spell.Slot == SpellSlot.Movement ? "   SHIFT" : spell.Slot == SpellSlot.Melee ? "   MELEE" : "";
+                string label = spell.DisplayName + "   " + Rarities.Name(spell.Rarity) + slot + (equipped ? "   (equipped)" : "");
+                if (UIStyles.Button(row, label, equipped ? UIStyles.Accent : spell.Tint)) EquipForTraining(player, spell);
+            }
+
+            float panelX = listX + 440f;
+            float y = top;
+
+            UIStyles.Text(new Rect(panelX, y, 340f, 26f), "Equipped", UIStyles.Heading, UIStyles.Ink);
+            y += 32f;
+            for (int i = 0; i < SpellBook.SlotCount; i++)
+                y = DrawTrainingSlot(player, panelX, y, SpellBook.SlotLabels[i], player.Book.GetSlot(i), i);
+            y = DrawTrainingSlot(player, panelX, y, "SHIFT", player.Movement != null ? player.Movement.Current : null, -1);
+            y = DrawTrainingSlot(player, panelX, y, "MELEE", player.CombatInput != null ? player.CombatInput.MeleeSpell : null, -1);
+
+            y += 10f;
+            UIStyles.Text(new Rect(panelX, y, 340f, 26f), "Guns", UIStyles.Heading, UIStyles.Ink);
+            y += 32f;
+            if (player.Holster != null)
+            {
+                for (int hand = 0; hand < Holster.SlotCount; hand++)
+                {
+                    WeaponDefinition gun = player.Holster.GetSlot(hand);
+                    UIStyles.Text(new Rect(panelX, y, 60f, 24f), "Hand " + (hand + 1), UIStyles.Small, UIStyles.Muted);
+                    if (UIStyles.Button(new Rect(panelX + 62f, y, 26f, 24f), "<", UIStyles.Muted)) CycleGun(player, hand, -1);
+                    UIStyles.Text(new Rect(panelX + 92f, y, 190f, 24f), gun != null ? gun.DisplayName : "empty",
+                        UIStyles.Small, gun != null ? gun.Tint : UIStyles.Muted);
+                    if (UIStyles.Button(new Rect(panelX + 286f, y, 26f, 24f), ">", UIStyles.Muted)) CycleGun(player, hand, 1);
+                    y += 28f;
+                }
+            }
+
+            y += 10f;
+            TrainingRoom training = _director.CurrentRoom != null ? _director.CurrentRoom.GetComponent<TrainingRoom>() : null;
+            if (training != null)
+            {
+                string refill = "Refill mana, souls and psi: " + (training.RefillResources ? "ON" : "OFF");
+                if (UIStyles.Button(new Rect(panelX, y, 340f, 30f), refill, training.RefillResources ? UIStyles.Accent : UIStyles.Muted))
+                    training.RefillResources = !training.RefillResources;
+                y += 36f;
+
+                if (UIStyles.Button(new Rect(panelX, y, 340f, 30f), "Reset dummies", UIStyles.Muted)) training.ResetAll();
+                y += 36f;
+            }
+
+            if (UIStyles.Button(new Rect(panelX, y, 340f, 30f), "Reset cooldowns", UIStyles.Muted)) player.Book.ResetCooldowns();
+            y += 48f;
+
+            if (UIStyles.Button(new Rect(panelX, y, 164f, 38f), "Resume  [ESC]", UIStyles.Accent)) _director.Resume();
+            if (UIStyles.Button(new Rect(panelX + 176f, y, 164f, 38f), "Leave", UIStyles.Warning)) _director.Restart();
+        }
+
+        /// <summary>One equipped slot: the spell, its level with buttons to change it, and for cast slots a button to empty it.</summary>
+        private static float DrawTrainingSlot(PlayerRig player, float x, float y, string label, Spell spell, int castSlot)
+        {
+            UIStyles.Text(new Rect(x, y, 56f, 24f), label, UIStyles.Small, spell != null ? spell.Tint : UIStyles.Muted);
+            UIStyles.Text(new Rect(x + 58f, y, 150f, 24f), spell != null ? spell.DisplayName : "empty",
+                UIStyles.Small, spell != null ? UIStyles.Ink : UIStyles.Muted);
+            if (spell == null) return y + 28f;
+
+            int level = Mathf.Max(1, player.Book.GetLevel(spell));
+            UIStyles.Text(new Rect(x + 210f, y, 50f, 24f), "L" + level + "/" + spell.MaxLevel, UIStyles.Small, Rarities.Tint(spell.Rarity));
+
+            if (UIStyles.Button(new Rect(x + 256f, y, 26f, 24f), "-", UIStyles.Muted, level > 1))
+                SetTrainingLevel(player, spell, level - 1);
+            if (UIStyles.Button(new Rect(x + 286f, y, 26f, 24f), "+", UIStyles.Muted, level < spell.MaxLevel))
+                SetTrainingLevel(player, spell, level + 1);
+            if (castSlot >= 0 && UIStyles.Button(new Rect(x + 316f, y, 24f, 24f), "x", UIStyles.Warning))
+                player.Book.Bind(null, castSlot);
+
+            return y + 28f;
+        }
+
+        private static void SetTrainingLevel(PlayerRig player, Spell spell, int level)
+        {
+            player.Book.SetLevel(spell, level);
+
+            // Dash's charges come from its level, and the controller reads them when a spell is equipped.
+            if (spell.Slot == SpellSlot.Movement && player.Movement != null && player.Movement.Current == spell)
+                player.Movement.Equip(spell);
+        }
+
+        private void EquipForTraining(PlayerRig player, Spell spell)
+        {
+            switch (spell.Slot)
+            {
+                case SpellSlot.Movement:
+                    if (player.Movement != null) player.Movement.Equip(spell);
+                    break;
+                case SpellSlot.Melee:
+                    if (player.CombatInput != null) player.CombatInput.EquipMelee(spell);
+                    break;
+                default:
+                    player.Book.Bind(spell, _trainingSlot);
+                    break;
+            }
+        }
+
+        /// <summary>Steps a hand through every gun. A hand not in use can also be empty; the drawn one cannot.</summary>
+        private static void CycleGun(PlayerRig player, int hand, int step)
+        {
+            IReadOnlyList<WeaponDefinition> guns = WeaponLibrary.All;
+            if (guns.Count == 0) return;
+
+            WeaponDefinition current = player.Holster.GetSlot(hand);
+            int index = -1;
+            for (int i = 0; i < guns.Count; i++)
+                if (current != null && guns[i].Id == current.Id) index = i;
+
+            bool mayBeEmpty = hand != player.Holster.ActiveIndex;
+            int count = mayBeEmpty ? guns.Count + 1 : guns.Count;
+            int position = index >= 0 ? index : mayBeEmpty ? guns.Count : 0;
+            int next = ((position + step) % count + count) % count;
+
+            player.Holster.SetSlot(hand, next < guns.Count ? guns[next] : null);
         }
 
         private static bool NumberPressed(int index)

@@ -25,6 +25,8 @@ namespace Gunspire
 
         public static RoomRuntime Generate(RoomNode node)
         {
+            if (node.Kind == RoomKind.Training) return TrainingRoom.Generate(node);
+
             var rng = new Rng(node.Seed);
             return UsesMaze(node.Kind) ? GenerateMaze(node, rng) : GenerateRectangle(node, rng);
         }
@@ -94,6 +96,8 @@ namespace Gunspire
                 EnemyController enemy = EnemyFactory.Spawn(rng.Pick(pool), spot, node.Floor, elite: false);
                 if (enemy == null) continue;
 
+                SpawnPlacement.Settle(enemy);
+
                 enemy.transform.SetParent(runtime.transform, true);
                 runtime.Register(enemy);
             }
@@ -127,6 +131,11 @@ namespace Gunspire
             BuildPlatforms(root.transform, width, depth, node, rng, occupied);
             BuildLights(root.transform, width, depth, node);
 
+            // Blink's landing, minions following you and enemies routing round cover all read the grid, so every room
+            // needs one, not only the mazes. Built before the contents, which are props and never block it.
+            var field = root.AddComponent<NavField>();
+            field.Build(width, depth);
+
             PopulateRoom(runtime, root.transform, width, depth, node, rng, occupied);
 
             return runtime;
@@ -154,7 +163,7 @@ namespace Gunspire
 
         // ---------------------------------------------------------------- shell
 
-        private static void BuildShell(Transform parent, float width, float depth, RoomNode node)
+        internal static void BuildShell(Transform parent, float width, float depth, RoomNode node)
         {
             const float wallHeight = 11f;
             const float thickness = 1.5f;
@@ -182,7 +191,7 @@ namespace Gunspire
                 new Vector3(width, 0.12f, 0.25f), trimMaterial, collider: false, layer: Layers.Level);
         }
 
-        private static void BuildLights(Transform parent, float width, float depth, RoomNode node)
+        internal static void BuildLights(Transform parent, float width, float depth, RoomNode node)
         {
             int count = node.Kind == RoomKind.Boss ? 5 : 3;
             for (int i = 0; i < count; i++)
@@ -310,6 +319,8 @@ namespace Gunspire
                 EnemyController enemy = EnemyFactory.Spawn(rng.Pick(pool), spot, floor, elite);
                 if (enemy == null) continue;
 
+                SpawnPlacement.Settle(enemy);
+
                 enemy.transform.SetParent(runtime.transform, true);
                 runtime.Register(enemy);
             }
@@ -319,6 +330,8 @@ namespace Gunspire
         {
             EnemyController boss = EnemyFactory.Spawn(EnemyLibrary.BossId, new Vector3(0f, 0f, 14f), floor);
             if (boss == null) return;
+
+            SpawnPlacement.Settle(boss);
 
             boss.transform.SetParent(runtime.transform, true);
             runtime.Register(boss);

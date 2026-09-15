@@ -414,9 +414,13 @@ namespace Gunspire.EditorTools
             WorldClock.Reset();
 
             // A projectile carrying a trail lays it.
+            // The new emitter, not whichever one Unity finds first: the smoke test leaves trails of its own behind.
+            var oldTrails = new HashSet<TrailEmitter>(Object.FindObjectsByType<TrailEmitter>(FindObjectsSortMode.None));
             Begin(ctx);
             new SpawnProjectileEffect { Damage = 0f, Speed = 10f, Lifetime = 5f, Trail = new TrailProfile { Radius = 1f } }.Execute(ctx);
-            TrailEmitter trail = Object.FindAnyObjectByType<TrailEmitter>();
+            TrailEmitter trail = null;
+            foreach (TrailEmitter found in Object.FindObjectsByType<TrailEmitter>(FindObjectsSortMode.None))
+                if (!oldTrails.Contains(found)) trail = found;
             if (trail == null || trail.Carrier == null) problems.Add("a projectile with a trail laid no trail behind it");
             else
             {
@@ -836,6 +840,36 @@ namespace Gunspire.EditorTools
             Begin(ctx);
             if (!new SummonMinionEffect { MinionId = "monstrosity", OneAtATime = true }.Execute(ctx)) problems.Add("the first Stitched Monstrosity was refused");
             if (new SummonMinionEffect { MinionId = "monstrosity", OneAtATime = true }.Execute(ctx)) problems.Add("a second Stitched Monstrosity was summoned while one was out");
+
+            // Raise Dead: two zombies out per level, and a cast over that is refused.
+            Spell raise = SpellLibrary.Get("raise_dead");
+            var raiseSummon = raise != null && raise.OnCast.Count > 0 ? raise.OnCast[0] as SummonMinionEffect : null;
+            if (raiseSummon == null || raiseSummon.CapPerLevel != 2) problems.Add("Raise Dead is not capped at two zombies per level");
+
+            var capped = new SummonMinionEffect { MinionId = "zombie", CapPerLevel = 2 };
+            int zombiesBefore = MinionController.CountOf("zombie");
+            int raised = 0;
+            for (int i = 0; i < 4; i++)
+            {
+                Begin(ctx);
+                if (capped.Execute(ctx)) raised++;
+            }
+            if (zombiesBefore == 0 && raised != 2) problems.Add("a level one zombie summon capped at two per level raised " + raised);
+
+            Begin(ctx);
+            ctx.Level = 2;
+            if (zombiesBefore == 0 && !capped.Execute(ctx)) problems.Add("a level two zombie summon refused a third zombie");
+
+            // The companion is summoned afresh on each floor: the room change has already destroyed the old one.
+            PlayerRig keeper = MakeRig(new Vector3(17050f, 0f, 0f), rigs);
+            keeper.Book.Bind(TestSpell("beast_floor", SpellSchool.Bestial), 0);
+            BeastMastery beasts = keeper.Masteries.Get<BeastMastery>();
+            MinionController oldCompanion = beasts.Companion;
+            bool hadCompanion = oldCompanion != null;
+            beasts.OnFloorEntered(null);
+            if (!hadCompanion || beasts.Companion == null) problems.Add("a Bestial spell left no companion after arriving on a floor");
+            else if (ReferenceEquals(beasts.Companion, oldCompanion))
+                problems.Add("arriving on a floor kept the old companion, which the room change destroys at the end of that frame");
 
             // Smite: the next round calls a bolt, and only that one.
             PlayerRig smiter = MakeRig(new Vector3(17100f, 0f, 0f), rigs);

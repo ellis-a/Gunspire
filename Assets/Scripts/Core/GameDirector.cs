@@ -46,6 +46,12 @@ namespace Gunspire
 
         public int FloorCount => floorCount;
 
+        /// <summary>Chosen on the opening screen: the class picked next starts the training room instead of a run.</summary>
+        public bool TrainingSelected { get; set; }
+
+        /// <summary>The player is in the training room rather than climbing.</summary>
+        public bool InTraining => CurrentRoom != null && CurrentRoom.Kind == RoomKind.Training;
+
         private void Awake()
         {
             Instance = this;
@@ -90,7 +96,8 @@ namespace Gunspire
             if (index < 0 || index >= _loadoutOffers.Count) return;
 
             StartingLoadout.Select(_loadoutOffers[index]);
-            StartRun(Random.Range(0, int.MaxValue));
+            if (TrainingSelected) StartTraining(Random.Range(0, int.MaxValue));
+            else StartRun(Random.Range(0, int.MaxValue));
         }
 
         private void Update()
@@ -126,6 +133,24 @@ namespace Gunspire
 
         public void StartRun(int seed)
         {
+            PrepareRun(seed);
+
+            Run.Floor = 1;
+            RoomNode first = Run.Map.ChoicesForFloor(1)[0];
+            LoadRoom(first);
+        }
+
+        /// <summary>The training room, on a run of its own so everything that reads the run still has one.</summary>
+        public void StartTraining(int seed)
+        {
+            PrepareRun(seed);
+
+            Run.Floor = 1;
+            LoadRoom(TrainingRoom.Node());
+        }
+
+        private void PrepareRun(int seed)
+        {
             Run?.Unbind();
             AbilityEvents.ClearSubscribers();
 
@@ -143,10 +168,6 @@ namespace Gunspire
             }
 
             Run.Bind(Player);
-
-            Run.Floor = 1;
-            RoomNode first = Run.Map.ChoicesForFloor(1)[0];
-            LoadRoom(first);
         }
 
         /// <summary>
@@ -269,7 +290,7 @@ namespace Gunspire
         public void OnRoomCleared(RoomRuntime room)
         {
             if (room != CurrentRoom) return;
-            if (State != GameStateKind.Playing) return;
+            if (State != GameStateKind.Playing || room.Kind == RoomKind.Training) return;
 
             Notify("Room clear - the way up is open");
         }

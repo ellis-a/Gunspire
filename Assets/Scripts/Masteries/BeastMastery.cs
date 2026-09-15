@@ -35,6 +35,10 @@ namespace Gunspire
         public override void OnFloorEntered(RoomRuntime room)
         {
             LostThisFloor = false;
+
+            // The room change has already destroyed every minion, the companion with them, but Destroy only lands at
+            // the end of the frame. Until then the old companion still looks alive, and Resummon would keep it.
+            Dismiss();
             Resummon();
         }
 

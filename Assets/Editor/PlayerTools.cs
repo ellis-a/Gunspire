@@ -422,6 +422,18 @@ namespace Gunspire.EditorTools
             enemy.Alert();
             knowledge.Collect(rig.transform.position, readouts, enemies);
             if (readouts.Count == 1 && readouts[0].ShowPerception) problems.Add("an alerted enemy still showed its senses");
+
+            // Knowledge is what you can see: a wall between the eye and the enemy hides it.
+            Vector3 eye = rig.transform.position + Vector3.up * 1.6f;
+            knowledge.Collect(rig.transform.position, readouts, enemies, eye);
+            if (readouts.Count != 1) problems.Add("Divine Knowledge hid an enemy in plain view (" + readouts.Count + " read)");
+
+            GameObject wall = Build.Cube(null, "KnowledgeWall", new Vector3(2600f, 3f, 5f), new Vector3(6f, 6f, 0.5f),
+                MaterialLibrary.Lit(Color.gray), collider: true, layer: Layers.Level);
+            Physics.SyncTransforms();
+            knowledge.Collect(rig.transform.position, readouts, enemies, eye);
+            if (readouts.Count != 0) problems.Add("Divine Knowledge showed an enemy through a wall");
+            UnityEngine.Object.DestroyImmediate(wall);
         }
 
         private static void CheckBeasts(List<string> problems, List<PlayerRig> rigs)

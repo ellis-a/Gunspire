@@ -271,7 +271,7 @@ namespace Gunspire
     /// </summary>
     public enum AltFireKind { None, Shot, Salvo, Focus }
 
-    public enum RoomKind { Combat, Elite, Treasure, Shrine, Forge, Boss }
+    public enum RoomKind { Combat, Elite, Treasure, Shrine, Forge, Boss, Training }
 
     /// <summary>Top level flow of a run.</summary>
     public enum GameStateKind

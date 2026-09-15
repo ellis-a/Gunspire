@@ -54,6 +54,9 @@ namespace Gunspire
         /// <summary>Knocked down and waiting to get back up. Out of the fight, and out of enemies' choices.</summary>
         public bool IsDown { get; private set; }
 
+        /// <summary>When it last lost health, on the unscaled clock. The HUD pulses its bar from this.</summary>
+        public float LastHurtTime { get; private set; } = -10f;
+
         public Vector3 Velocity => _velocity + _knockback;
 
         public Vector3 Knockback
@@ -155,6 +158,7 @@ namespace Gunspire
 
         private void OnDamaged(DamageInfo info, float amount)
         {
+            if (amount > 0f) LastHurtTime = Time.unscaledTime;
             if (info.Knockback.sqrMagnitude > 0.01f) AddKnockback(info.Knockback, info.Source, info.SourceTeam);
         }
 

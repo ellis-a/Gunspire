@@ -111,6 +111,17 @@ namespace Gunspire
             return level;
         }
 
+        /// <summary>Sets a spell's level directly, between one and its cap. The training room's level buttons.</summary>
+        public int SetLevel(Spell spell, int level)
+        {
+            if (spell == null) return 0;
+
+            level = Mathf.Clamp(level, 1, spell.MaxLevel);
+            _levels[spell.Id] = level;
+            Changed?.Invoke();
+            return level;
+        }
+
         public float GetCooldownFraction(int index)
         {
             Spell spell = GetSlot(index);
