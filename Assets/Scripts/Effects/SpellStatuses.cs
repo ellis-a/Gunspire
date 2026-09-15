@@ -260,8 +260,13 @@ namespace Gunspire
             PlayerRig rig = c.GetComponent<PlayerRig>();
             if (rig == null) return;
 
+            // A full magazine and no reload in the way, so the gun is firing the moment this starts.
+            if (rig.Weapon != null)
+            {
+                rig.Weapon.RefillMagazine();
+                rig.Weapon.InfiniteAmmo = true;
+            }
             if (rig.AutoFire != null) rig.AutoFire.Begin();
-            if (rig.Weapon != null) rig.Weapon.InfiniteAmmo = true;
             if (rig.Holster != null) rig.Holster.LockSwap(SwapLock);
         }
 

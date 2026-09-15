@@ -182,7 +182,7 @@ namespace Gunspire
 
         private int MaskFor(Team team)
         {
-            int mask = Layers.HitMaskFor(team);
+            int mask = Layers.ShotMaskFor(team);
             return PassesThroughWalls ? mask & ~Layers.WorldMask : mask;
         }
 
@@ -339,6 +339,14 @@ namespace Gunspire
             {
                 _alreadyHit.Add(target);
                 DamageInfo info = BuildHitDamage(point, normal);
+
+                // Headshots are for guns: a spell's projectile has no weapon behind it.
+                if (SourceWeapon != null && Combat.IsHead(hit.collider))
+                {
+                    info.Amount *= Combat.HeadshotMultiplier;
+                    info.IsHeadshot = true;
+                }
+
                 target.TakeDamage(info);
                 if (SourceWeapon != null)
                     SourceWeapon.ReportHit(target, info, point, normal, transform.forward, Infusions, Round, IsEcho);

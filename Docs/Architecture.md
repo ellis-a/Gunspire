@@ -748,6 +748,14 @@ new effect, status and controller. Decisions and deviations:
 - **Divine Knowledge needs line of sight** from the camera to an enemy's head or middle.
 - **Raise Dead is capped at two zombies per level.** A cast over the cap is refused, keeps its cost and says why.
 - **Allies have health bars** on the right of the HUD. A bar flashes and swells when its ally is hurt.
+- **Headshots.** A humanoid enemy's head is its own collider on a hitbox layer that collides with nothing. Only gun
+  rounds and gun projectiles look for it, so blasts and overlaps never count it as a second body. A gun round that
+  strikes a head deals 1.5 times its damage. A hitscan round counts as a headshot if its line crosses the head at
+  all, even after clipping the top of the body, and a head and its body are one hit. Spell projectiles and eyeball
+  enemies have no headshots.
+- **Superid reloads when cast**, so an empty or reloading gun starts firing at once.
+- **Possession ignores keys already held when it starts.** The key that cast Shapeshift was read as a spell key on
+  the same frame and ended the form at once; it could equally have fired a possessed enemy's attack.
 
 The table below is the list this phase started from.
 

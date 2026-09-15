@@ -620,16 +620,20 @@ namespace Gunspire
                 : a.Rarity != b.Rarity ? a.Rarity.CompareTo(b.Rarity)
                 : string.CompareOrdinal(a.DisplayName, b.DisplayName));
 
+            Spell hovered = null;
             for (int i = 0; i < _trainingList.Count; i++)
             {
                 Spell spell = _trainingList[i];
                 var row = new Rect(listX, top + 36f + i * 30f, 420f, 26f);
                 bool equipped = player.Book.IsEquipped(spell);
+                if (row.Contains(Event.current.mousePosition)) hovered = spell;
 
                 string slot = spell.Slot == SpellSlot.Movement ? "   SHIFT" : spell.Slot == SpellSlot.Melee ? "   MELEE" : "";
                 string label = spell.DisplayName + "   " + Rarities.Name(spell.Rarity) + slot + (equipped ? "   (equipped)" : "");
                 if (UIStyles.Button(row, label, equipped ? UIStyles.Accent : spell.Tint)) EquipForTraining(player, spell);
             }
+
+            if (hovered != null) DrawTrainingSpellText(hovered, listX, top + 36f + _trainingList.Count * 30f + 12f, 420f);
 
             float panelX = listX + 440f;
             float y = top;
@@ -676,6 +680,22 @@ namespace Gunspire
 
             if (UIStyles.Button(new Rect(panelX, y, 164f, 38f), "Resume  [ESC]", UIStyles.Accent)) _director.Resume();
             if (UIStyles.Button(new Rect(panelX + 176f, y, 164f, 38f), "Leave", UIStyles.Warning)) _director.Restart();
+        }
+
+        /// <summary>The hovered spell's card under the list: what kind of spell it is, what it costs, and its description.</summary>
+        private static void DrawTrainingSpellText(Spell spell, float x, float y, float width)
+        {
+            var panel = new Rect(x, y, width, 136f);
+            UIStyles.Fill(panel, UIStyles.Panel);
+            UIStyles.Outline(panel, spell.Tint);
+
+            UIStyles.Text(new Rect(x + 12f, y + 8f, width - 24f, 24f), spell.DisplayName, UIStyles.Heading, spell.Tint);
+            UIStyles.Text(new Rect(x + 12f, y + 34f, width - 24f, 18f),
+                Rarities.Name(spell.Rarity) + "   " + spell.Type + " / " + DamageTypes.Name(spell.DamageType)
+                + "   " + spell.CostLine() + "   " + spell.Cooldown.ToString("0.#") + "s cooldown",
+                UIStyles.Small, UIStyles.Accent);
+
+            GUI.Label(new Rect(x + 12f, y + 56f, width - 24f, 74f), spell.Description, UIStyles.Wrap);
         }
 
         /// <summary>One equipped slot: the spell, its level with buttons to change it, and for cast slots a button to empty it.</summary>

@@ -26,6 +26,12 @@ namespace Gunspire.EditorTools
             var problems = new List<string>();
             var before = new HashSet<GameObject>(SceneManager.GetActiveScene().GetRootGameObjects());
 
+            // The headshot checks configure the collision matrix, and batch mode saves project settings on quit.
+            var matrixBefore = new bool[32, 32];
+            for (int a = 0; a < 32; a++)
+                for (int b = a; b < 32; b++)
+                    matrixBefore[a, b] = Physics.GetIgnoreLayerCollision(a, b);
+
             try
             {
                 CheckOrigins(problems);
@@ -35,9 +41,15 @@ namespace Gunspire.EditorTools
                 CheckSides(problems);
                 CheckBonusHit(problems);
                 CheckGunEventsAndInfusions(problems);
+                CheckHeadshots(problems);
             }
             finally
             {
+                for (int a = 0; a < 32; a++)
+                    for (int b = a; b < 32; b++)
+                        if (Physics.GetIgnoreLayerCollision(a, b) != matrixBefore[a, b])
+                            Physics.IgnoreLayerCollision(a, b, matrixBefore[a, b]);
+
                 // Tracers, impacts and projectiles never get the Update that removes them in edit
                 // mode, so everything the checks created is cleared out here in one go.
                 foreach (GameObject root in SceneManager.GetActiveScene().GetRootGameObjects())
@@ -272,7 +284,7 @@ namespace Gunspire.EditorTools
             round.SwitchSide(Team.Player, confused, null, Vector3.back);
 
             if (round.OwnerTeam != Team.Player) problems.Add("a reflected projectile stayed on " + round.OwnerTeam);
-            if (round.HitMask != Layers.HitMaskFor(Team.Player)) problems.Add("a reflected projectile kept the old side's hit mask");
+            if (round.HitMask != Layers.ShotMaskFor(Team.Player)) problems.Add("a reflected projectile kept the old side's hit mask");
             if (round.gameObject.layer != Layers.PlayerProjectile) problems.Add("a reflected projectile kept the old side's layer");
             if (Vector3.Dot(round.transform.forward, Vector3.back) < 0.99f) problems.Add("a reflected projectile did not turn around");
         }
@@ -389,7 +401,194 @@ namespace Gunspire.EditorTools
                 problems.Add("a projectile left without its infusion's statuses");
         }
 
+        // ---------------------------------------------------------------- headshots
+
+        /// <summary>
+        /// Heads are their own hitbox, solid to nothing, and a gun round that strikes one deals half as much again. A round
+        /// through a head and its body is one hit, and a spell's projectile never scores a headshot.
+        /// </summary>
+        private static void CheckHeadshots(List<string> problems)
+        {
+            WeaponDefinition hitscanGun = FindGun(DeliveryKind.Hitscan);
+            WeaponDefinition projectileGun = FindGun(DeliveryKind.Projectile);
+            if (hitscanGun == null || projectileGun == null) return;
+
+            // Switched back on first, so the check proves the configuration turns them off rather than reading a setting
+            // some earlier run left behind.
+            Physics.IgnoreLayerCollision(Layers.Hitbox, Layers.Level, false);
+            Physics.IgnoreLayerCollision(Layers.Hitbox, Layers.Enemy, false);
+            Physics.IgnoreLayerCollision(Layers.Hitbox, Layers.Player, false);
+            Layers.ConfigureCollisionMatrix();
+
+            EnemyController enemy = EnemyFactory.Spawn("cultist", new Vector3(500f, 0f, 3f), 1);
+            if (enemy == null)
+            {
+                problems.Add("could not spawn a cultist to shoot in the head");
+                return;
+            }
+
+            enemy.Health.DestroyOnDeath = false;
+            enemy.Health.ConfigureMaxHealth(100000f);
+
+            // Edit mode cannot run the Destroy that strips visual primitives of their colliders, so they are removed here
+            // as play has them: only the controller and the head are left to be hit.
+            foreach (Collider leftover in enemy.GetComponentsInChildren<Collider>(true))
+                if (!(leftover is CharacterController) && leftover.GetComponent<HeadHitbox>() == null)
+                    Object.DestroyImmediate(leftover);
+
+            // Nor does edit mode give a character controller anything a ray can strike, as play does, so a capsule of the
+            // same size stands in for the body.
+            var controllerShape = enemy.GetComponent<CharacterController>();
+            var bodyStandIn = enemy.gameObject.AddComponent<CapsuleCollider>();
+            bodyStandIn.radius = controllerShape.radius;
+            bodyStandIn.height = controllerShape.height;
+            bodyStandIn.center = controllerShape.center;
+
+            Physics.SyncTransforms();
+
+            HeadHitbox head = enemy.GetComponentInChildren<HeadHitbox>();
+            Collider headCollider = head != null ? head.GetComponent<Collider>() : null;
+            if (headCollider == null)
+            {
+                problems.Add("a humanoid enemy was built with no head hitbox to shoot");
+                return;
+            }
+
+            if (head.gameObject.layer != Layers.Hitbox) problems.Add("an enemy's head is on layer " + head.gameObject.layer + ", not the hitbox layer");
+            if (!Physics.GetIgnoreLayerCollision(Layers.Hitbox, Layers.Level) || !Physics.GetIgnoreLayerCollision(Layers.Hitbox, Layers.Enemy)
+                || !Physics.GetIgnoreLayerCollision(Layers.Hitbox, Layers.Player))
+                problems.Add("head hitboxes collide physically with walls or bodies");
+
+            enemy.SetSide(Team.Player);
+            if (head.gameObject.layer != Layers.Hitbox) problems.Add("an enemy moved to the player's side took its head off the hitbox layer");
+            enemy.SetSide(Team.Enemy);
+
+            Vector3 headCentre = headCollider.bounds.center;
+            Vector3 chest = enemy.transform.position + Vector3.up * 1f;
+
+            var shooter = new GameObject("HeadshotShooter");
+            var weapon = shooter.AddComponent<Weapon>();
+            weapon.OwnerTeam = Team.Player;
+            weapon.Owner = shooter;
+            weapon.AimOrigin = shooter.transform;
+            weapon.Equip(hitscanGun);
+            StripColliders(shooter);
+
+            var hits = new List<DamageInfo>();
+            enemy.Health.Damaged += (info, amount) => hits.Add(info);
+
+            int reported = 0;
+            weapon.Hit += hit => reported++;
+
+            // Edit mode cannot strip a primitive's collider, so each shot's tracer and impact would stand in the way of
+            // the next. Everything made after this point is cleared between shots.
+            var keep = new HashSet<GameObject>(SceneManager.GetActiveScene().GetRootGameObjects());
+            void ClearDebris()
+            {
+                foreach (GameObject root in SceneManager.GetActiveScene().GetRootGameObjects())
+                    if (!keep.Contains(root)) Object.DestroyImmediate(root);
+                Physics.SyncTransforms();
+            }
+
+            // Level shots from a pace away, so the gun's spread cannot carry a round off a half-metre head.
+            void AimAt(Vector3 point)
+            {
+                shooter.transform.position = new Vector3(point.x, point.y, point.z - 2f);
+                shooter.transform.rotation = Quaternion.LookRotation(Vector3.forward);
+                Physics.SyncTransforms();
+            }
+
+            AimAt(chest);
+            string seen = Physics.Raycast(shooter.transform.position, Vector3.forward, out RaycastHit probe, 5f,
+                Layers.ShotMaskFor(Team.Player), QueryTriggerInteraction.Ignore)
+                ? probe.collider.name + " (" + probe.collider.GetType().Name + ", layer " + probe.collider.gameObject.layer + ", "
+                  + (Combat.FindDamageable(probe.collider) is IDamageable found ? "team " + found.Team + ", alive " + found.IsAlive : "not damageable") + ")"
+                : "nothing";
+
+            weapon.RefillMagazine();
+            weapon.FireNow();
+            List<DamageInfo> body = new List<DamageInfo>(hits);
+            int bodyReported = reported;
+            ClearDebris();
+
+            hits.Clear();
+            AimAt(headCentre);
+            weapon.RefillMagazine();
+            weapon.FireNow();
+            ClearDebris();
+
+            if (body.Count != 1 || body[0].IsHeadshot)
+                problems.Add("a hitscan round to the chest landed " + body.Count + " hits (" + bodyReported + " reported by the gun), headshot "
+                             + (body.Count > 0 && body[0].IsHeadshot) + "; before firing, the ray saw " + seen);
+            if (hits.Count != 1) problems.Add("a hitscan round to the head landed " + hits.Count + " hits; a head and its body are one target");
+            else if (!hits[0].IsHeadshot) problems.Add("a hitscan round to the head was not a headshot");
+            else if (body.Count == 1 && Mathf.Abs(hits[0].Amount / body[0].Amount - Combat.HeadshotMultiplier) > 0.02f)
+                problems.Add("a headshot dealt " + (hits[0].Amount / body[0].Amount).ToString("0.00") + " times a body shot, not " + Combat.HeadshotMultiplier);
+
+            // Low on the head, where it overlaps the top of the body, a round clips the body before it reaches the head.
+            Vector3 lowHead = new Vector3(headCentre.x, headCollider.bounds.min.y + 0.06f, headCentre.z);
+            hits.Clear();
+            AimAt(lowHead);
+            weapon.RefillMagazine();
+            weapon.FireNow();
+            ClearDebris();
+            if (hits.Count != 1 || !hits[0].IsHeadshot)
+                problems.Add("a round clipping the top of the body on its way into the head landed " + hits.Count + " hits, headshot "
+                             + (hits.Count > 0 && hits[0].IsHeadshot));
+
+            // A piercing round through that same overlap passes the body and the head, and still hits the enemy once.
+            WeaponDefinition piercing = hitscanGun.Clone();
+            piercing.MaxPierce = 3;
+            weapon.Equip(piercing);
+            StripColliders(shooter);
+            hits.Clear();
+            AimAt(lowHead);
+            weapon.RefillMagazine();
+            weapon.FireNow();
+            ClearDebris();
+            if (hits.Count != 1) problems.Add("a piercing round through a head and its body hit the enemy " + hits.Count + " times, not once");
+
+            // A gun's projectile.
+            weapon.Equip(projectileGun);
+            StripColliders(shooter);
+            hits.Clear();
+            AimAt(headCentre);
+            weapon.FireNow();
+
+            Projectile round = null;
+            foreach (Projectile p in Object.FindObjectsByType<Projectile>(FindObjectsSortMode.None))
+                if (p.SourceWeapon == weapon) round = p;
+
+            if (round == null) problems.Add(projectileGun.Id + " fired no projectile at the head");
+            else
+            {
+                for (int i = 0; i < 300 && hits.Count == 0; i++) round.Step(0.005f);
+                if (hits.Count == 0) problems.Add("a gun's projectile aimed at a head hit nothing");
+                else if (!hits[0].IsHeadshot) problems.Add("a gun's projectile striking a head was not a headshot");
+            }
+
+            // A spell's projectile has no gun behind it.
+            ClearDebris();
+            hits.Clear();
+            Projectile spellBolt = Projectile.Create(headCentre - Vector3.forward * 1.5f, Vector3.forward, Color.white, 0.1f);
+            spellBolt.OwnerTeam = Team.Player;
+            spellBolt.Damage = 10f;
+            spellBolt.Speed = 30f;
+            spellBolt.Lifetime = 5f;
+            spellBolt.Launch();
+            for (int i = 0; i < 300 && hits.Count == 0; i++) spellBolt.Step(0.005f);
+            if (hits.Count > 0 && hits[0].IsHeadshot) problems.Add("a spell's projectile scored a headshot; headshots are for guns");
+        }
+
         // ---------------------------------------------------------------- helpers
+
+        /// <summary>The gun model's primitives keep their colliders in edit mode, and would stop the gun's own rounds.</summary>
+        private static void StripColliders(GameObject owner)
+        {
+            foreach (Collider leftover in owner.GetComponentsInChildren<Collider>(true))
+                Object.DestroyImmediate(leftover);
+            Physics.SyncTransforms();
+        }
 
         /// <summary>A living thing on the given team, with health and statuses, that is never destroyed on death.</summary>
         private static Health Subject(Team team, float health, bool elite = false, string name = "Subject")

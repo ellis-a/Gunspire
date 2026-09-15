@@ -22,6 +22,7 @@ namespace Gunspire
         public const int Minion = 15;        // the player's summons that walk: they block enemies, never the player
         public const int NetherWall = 16;    // stops shots from both sides, and nothing else
         public const int Smoke = 17;         // stops the player's shots, to hand them to someone inside
+        public const int Hitbox = 18;        // enemy heads: struck by shots, solid to nothing
 
         public static readonly int WorldMask = (1 << Default) | (1 << Level) | (1 << Prop);
         public static readonly int BlockingMask = (1 << Default) | (1 << Level);
@@ -60,6 +61,14 @@ namespace Gunspire
         public static int HitMaskFor(Team team)
             => team == Team.Player ? PlayerHitMask : team == Team.Enemy ? EnemyHitMask : NeutralHitMask;
 
+        /// <summary>
+        /// What a gun round or projectile can strike: the team's hit mask, plus head hitboxes for anyone who shoots
+        /// enemies. Kept apart from <see cref="HitMaskFor"/>, which blasts and overlaps use, where a head would count
+        /// as a second body.
+        /// </summary>
+        public static int ShotMaskFor(Team team)
+            => team == Team.Enemy ? EnemyHitMask : HitMaskFor(team) | (1 << Hitbox);
+
         /// <summary>Only the hostile characters for the given team - no world geometry.</summary>
         public static int TargetMaskFor(Team team)
             => team == Team.Player ? EnemyMask : team == Team.Enemy ? EnemyTargetMask : NeutralTargetMask;
@@ -80,6 +89,10 @@ namespace Gunspire
 
         public static void ConfigureCollisionMatrix()
         {
+            // Head hitboxes exist only to be shot. They collide with nothing, so a head never snags a doorway or
+            // pushes against the body it sits on.
+            for (int layer = 0; layer < 32; layer++) Physics.IgnoreLayerCollision(Hitbox, layer, true);
+
             // Projectiles never collide with each other or with their own side.
             Physics.IgnoreLayerCollision(PlayerProjectile, PlayerProjectile, true);
             Physics.IgnoreLayerCollision(EnemyProjectile, EnemyProjectile, true);
@@ -122,7 +135,8 @@ namespace Gunspire
 
         public static void SetRecursively(GameObject go, int layer)
         {
-            go.layer = layer;
+            // A head hitbox keeps its own layer whichever side its body is moved to.
+            go.layer = go.GetComponent<HeadHitbox>() != null ? Hitbox : layer;
             Transform t = go.transform;
             for (int i = 0; i < t.childCount; i++)
                 SetRecursively(t.GetChild(i).gameObject, layer);

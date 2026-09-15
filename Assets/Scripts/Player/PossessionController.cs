@@ -88,6 +88,9 @@ namespace Gunspire
         private Quaternion _returnFromRotation;
         private readonly object _concealKey = new object();
 
+        /// <summary>Action keys already down when control began, ignored until they are let go.</summary>
+        private int _heldAtBegin;
+
         public void Bind(PlayerRig rig)
         {
             Rig = rig;
@@ -121,6 +124,13 @@ namespace Gunspire
 
             _yaw = target.Body.eulerAngles.y;
             _pitch = 0f;
+
+            // The key that cast the spell is still down this frame. Read as a press, it would fire the body's attack,
+            // or end a shapeshift the moment it began.
+            _heldAtBegin = 0;
+            if (Application.isPlaying)
+                for (int i = 0; i < ActionKeys.Length; i++)
+                    if (Input.GetKey(ActionKeys[i])) _heldAtBegin |= 1 << i;
 
             _eye = new GameObject("Possessed Eye").transform;
             _eye.SetParent(target.Body, false);
@@ -197,8 +207,17 @@ namespace Gunspire
 
             for (int i = 0; i < ActionKeys.Length; i++)
             {
-                if (Input.GetKeyDown(ActionKeys[i])) input.ActionsPressed |= 1 << i;
-                if (Input.GetKey(ActionKeys[i])) input.ActionsHeld |= 1 << i;
+                int bit = 1 << i;
+                bool held = Input.GetKey(ActionKeys[i]);
+
+                if ((_heldAtBegin & bit) != 0)
+                {
+                    if (held) continue;
+                    _heldAtBegin &= ~bit;
+                }
+
+                if (Input.GetKeyDown(ActionKeys[i])) input.ActionsPressed |= bit;
+                if (held) input.ActionsHeld |= bit;
             }
 
             return input;

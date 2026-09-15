@@ -216,8 +216,11 @@ namespace Gunspire
             Build.Cube(root, "Torso", new Vector3(0f, height * 0.55f, 0f),
                 new Vector3(width, height * 0.8f, width * 0.75f), bodyMaterial, collider: false);
 
-            Build.Cube(root, "Head", new Vector3(0f, height * 1.02f, 0f),
-                new Vector3(width * 0.62f, width * 0.62f, width * 0.62f), bodyMaterial, collider: false);
+            // The head sits above the movement capsule, so it needs its own collider or shots aimed at it pass over.
+            // The hitbox layer, set when the look is finished, keeps it solid to nothing but shots.
+            GameObject head = Build.Cube(root, "Head", new Vector3(0f, height * 1.02f, 0f),
+                new Vector3(width * 0.62f, width * 0.62f, width * 0.62f), bodyMaterial, collider: true);
+            head.AddComponent<HeadHitbox>();
 
             Build.Cube(root, "Eye", new Vector3(0f, height * 1.02f, width * 0.34f),
                 new Vector3(width * 0.42f, width * 0.13f, 0.06f), eyeMaterial, collider: false);

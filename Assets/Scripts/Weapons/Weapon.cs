@@ -561,8 +561,9 @@ namespace Gunspire
 
         private void FireHitscan(in ShotSpec spec, Vector3 origin, Vector3 direction, int round)
         {
-            int mask = Layers.HitMaskFor(OwnerTeam);
+            int mask = Layers.ShotMaskFor(OwnerTeam);
             float range = spec.Range;
+            ShotTargets.Clear();
             Vector3 endPoint = origin + direction * range;
 
             int count = Physics.RaycastNonAlloc(new Ray(origin, direction), HitBuffer, range, mask,
@@ -607,7 +608,17 @@ namespace Gunspire
                     break;
                 }
 
+                // A head and its body are two colliders on one target, and a round through both is one hit.
+                if (ShotTargets.Contains(target)) continue;
+                ShotTargets.Add(target);
+
                 DamageInfo damage = BuildShotDamage(spec, hit.point, hit.normal, direction, _roundInfusions);
+                if (CrossesHead(count, target))
+                {
+                    damage.Amount *= Combat.HeadshotMultiplier;
+                    damage.IsHeadshot = true;
+                }
+
                 target.TakeDamage(damage);
                 ReportHit(target, damage, hit.point, hit.normal, direction, _roundInfusions, round, _firingEcho);
                 Combat.SpawnImpact(hit.point, hit.normal, spec.Tint, 0.3f, spec.DamageType);
@@ -622,6 +633,20 @@ namespace Gunspire
 
             Vector3 tracerStart = Muzzle != null ? Muzzle.position : origin;
             Combat.SpawnTracer(tracerStart, endPoint, spec.Tint, 0.035f, 0.05f);
+        }
+
+        private static readonly List<IDamageable> ShotTargets = new List<IDamageable>();
+
+        /// <summary>
+        /// Whether the round's line passes through this target's head anywhere. The top of the body overlaps the bottom
+        /// of the head, so a round aimed at the head can clip the body first and must still count.
+        /// </summary>
+        private static bool CrossesHead(int count, IDamageable target)
+        {
+            for (int i = 0; i < count; i++)
+                if (Combat.IsHead(HitBuffer[i].collider) && ReferenceEquals(Combat.FindDamageable(HitBuffer[i].collider), target))
+                    return true;
+            return false;
         }
 
         private static void SortHitsByDistance(int count)
@@ -676,7 +701,7 @@ namespace Gunspire
             // Aim the projectile at whatever the crosshair is actually over, so the muzzle
             // offset does not throw shots off at close range.
             Vector3 aimPoint = origin + direction * 200f;
-            if (Physics.Raycast(origin, direction, out RaycastHit look, 200f, Layers.HitMaskFor(OwnerTeam),
+            if (Physics.Raycast(origin, direction, out RaycastHit look, 200f, Layers.ShotMaskFor(OwnerTeam),
                     QueryTriggerInteraction.Ignore))
                 aimPoint = look.point;
 

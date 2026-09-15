@@ -55,6 +55,11 @@ namespace Gunspire
             return collider.GetComponentInParent<IDamageable>();
         }
 
+        /// <summary>How much more a gun round deals when it strikes a head.</summary>
+        public const float HeadshotMultiplier = 1.5f;
+
+        public static bool IsHead(Collider collider) => collider != null && collider.GetComponent<HeadHitbox>() != null;
+
         /// <summary>Applies a hit if the collider belongs to something damageable. Returns true if it landed.</summary>
         public static bool ApplyHit(Collider collider, in DamageInfo info)
         {

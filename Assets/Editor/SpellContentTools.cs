@@ -662,7 +662,10 @@ namespace Gunspire.EditorTools
             if (rig.Concealment.Untargetable) problems.Add("the player stayed untargetable after Flicker's phase ended");
 
             // Unleashed: the gun fires itself, never runs dry and cannot be swapped.
+            if (rig.Weapon.Definition != null) rig.Weapon.SetAmmo(0);
             rig.Status.Apply(StatusLibrary.Unleashed(8f), rig.gameObject, Team.Player);
+            if (rig.Weapon.Definition == null || rig.Weapon.AmmoInMagazine < rig.Weapon.Definition.MagazineSize)
+                problems.Add("Superid did not reload the gun, so an empty magazine could not fire");
             if (!rig.AutoFire.Active || !rig.Weapon.InfiniteAmmo || !rig.Holster.SwapLocked) problems.Add("Superid did not start auto-fire, infinite ammo and the swap lock");
             rig.Status.Remove(StatusId.Unleashed);
             if (rig.AutoFire.Active || rig.Weapon.InfiniteAmmo || rig.Holster.SwapLocked) problems.Add("Superid's effects outlasted it");

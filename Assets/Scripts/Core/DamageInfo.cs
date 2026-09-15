@@ -62,6 +62,9 @@ namespace Gunspire
         public Vector3 Knockback;
         public bool IsCrit;
         public bool CanCrit;
+
+        /// <summary>A gun round that struck a head. The amount already includes the headshot multiplier.</summary>
+        public bool IsHeadshot;
         public DamageOrigin Origin;
 
         public List<StatusApplication> Statuses;
