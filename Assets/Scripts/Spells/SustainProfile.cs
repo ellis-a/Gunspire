@@ -111,6 +111,13 @@ namespace Gunspire
     {
         public string Name = "Mode";
         public Color Tint = Color.white;
+
+        /// <summary>
+        /// Shown in the slot while this is the mode a press would switch to. Null falls back to the spell's own icon,
+        /// which is also what an asset from before this field reads it as, so no migration is needed.
+        /// </summary>
+        public Texture2D Icon;
+
         public System.Collections.Generic.List<StatusApplication> BulletStatuses =
             new System.Collections.Generic.List<StatusApplication>();
 

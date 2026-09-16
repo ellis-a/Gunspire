@@ -153,6 +153,34 @@ namespace Gunspire
                 Mathf.CeilToInt(mana.Current) + " mana", UIStyles.Small, Color.white);
 
             DrawMovementSlot(player, x, y + 44f);
+            DrawMeleeSlot(player, x, y + 74f);
+        }
+
+        /// <summary>
+        /// The melee slot. It has no key of its own to advertise, since V swings whatever is bound, so this is about
+        /// knowing what you are swinging and whether it is ready.
+        /// </summary>
+        private static void DrawMeleeSlot(PlayerRig player, float x, float y)
+        {
+            PlayerCombat combat = player.CombatInput;
+            Spell melee = combat != null ? combat.MeleeSpell : null;
+
+            if (melee == null)
+            {
+                UIStyles.Text(new Rect(x, y, 240f, 16f), "V  empty", UIStyles.Small, UIStyles.Muted);
+                return;
+            }
+
+            UIStyles.Icon(new Rect(x, y - 5f, 26f, 26f), melee.Icon, melee.Tint, melee.ShortName);
+            x += 32f;
+
+            float cooldown = combat.MeleeCooldownFraction;
+            UIStyles.Bar(new Rect(x, y + 3f, 120f, 8f), 1f - cooldown, melee.Tint, new Color(1f, 1f, 1f, 0.10f));
+
+            string label = "V " + melee.DisplayName + (melee.MaxLevel > 1 ? "  L" + combat.MeleeLevel : "");
+            UIStyles.Text(new Rect(x + 128f, y, 260f, 16f),
+                label + (cooldown > 0f ? "  " + combat.MeleeCooldown.ToString("0.0") + "s" : ""),
+                UIStyles.Small, cooldown > 0f ? UIStyles.Muted : melee.Tint);
         }
 
         /// <summary>The masteries that are currencies: souls, psi charge, debt, and Arcane Warp's bonus. Only those held.</summary>
@@ -195,6 +223,11 @@ namespace Gunspire
                 UIStyles.Text(new Rect(x, y, 240f, 16f), "SHIFT  empty", UIStyles.Small, UIStyles.Muted);
                 return;
             }
+
+            // The icon sits left of the readout, so the two always-bound slots are recognised the same way as the
+            // cast slots along the bottom of the screen.
+            UIStyles.Icon(new Rect(x, y - 5f, 26f, 26f), ability.Icon, ability.Tint, ability.ShortName);
+            x += 32f;
 
             if (ability.UsesDashCharges)
             {
@@ -482,7 +515,11 @@ namespace Gunspire
                 // Icon on the left, three rows of text beside it. A slot has to read in a
                 // glance mid-fight, so the art carries recognition and the text carries state.
                 var iconRect = new Rect(rect.x + 7f, rect.y + 8f, 42f, 42f);
-                UIStyles.Icon(iconRect, spell.Icon, spell.Tint, spell.ShortName);
+
+                // A stance shows the form a press would switch to, since that is what the key does next.
+                StanceMode next = book.NextStanceMode(i);
+                Texture2D icon = next != null && next.Icon != null ? next.Icon : spell.Icon;
+                UIStyles.Icon(iconRect, icon, next != null ? next.Tint : spell.Tint, spell.ShortName);
 
                 float textX = iconRect.xMax + 8f;
                 float textWidth = rect.xMax - textX - 8f;
@@ -508,7 +545,8 @@ namespace Gunspire
 
                 if (stance != null)
                 {
-                    bottom = stance.Name;
+                    // The form you are in, then the one the icon is showing.
+                    bottom = stance.Name + (next != null && next != stance ? "  >  " + next.Name : "");
                     bottomColor = stance.Tint;
                 }
                 else if (book.IsSustainActive(i))

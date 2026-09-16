@@ -20,6 +20,10 @@ MonoBehaviour:
       else is spent.
     ManaCost: 4
     Cooldown: 0.7
+    SoulCost: 0
+    HealthCost: 0
+    PsiCost: 0
+    SpendsAllSouls: 0
     NoiseMultiplier: 1
     Rarity: 0
     Type: 0
@@ -28,16 +32,40 @@ MonoBehaviour:
     Slot: 2
     Sustain:
       ManaPerSecond: 0
+      HealthPerSecond: 0
+      Toggle: 0
       MaxDuration: 0
       MoveSpeedBonus: 0
       Invulnerable: 0
       BreakOnMovement: 0
+      HideFromSight: 0
+      BreakOnShoot: 0
+      BreakOnCast: 0
+      BreakOnMelee: 0
       WallZip: 0
+      Buoyant: 0
+      Trail:
+        Radius: 0
+        Spacing: 1.5
+        SegmentLifetime: 2.5
+        DamagePerTick: 3
+        TickInterval: 0.5
+        DamageType: 1
+        Tint: {r: 1, g: 0.5, b: 0.15, a: 1}
+        Statuses: []
+    Charge:
+      SecondsToFull: 0
+      MinimumFraction: 0
+    Stance:
+      Modes: []
+    VariantGroup: 
+    NeverEchoes: 0
+    DodgeCooldownRefund: 0
     MaxLevel: 1
     GrowthPerLevel: 0.22
     LevelUpNote: 
     TintOverride: {r: 1, g: 0.85, b: 0.6, a: 1}
-    Icon: {fileID: 0}
+    Icon: {fileID: 2800000, guid: 410105634e58afd4c9d03073f4b43462, type: 3}
     OnCast:
     - rid: 5643702153244311557
     - rid: 5643702153244311558
@@ -57,6 +85,7 @@ MonoBehaviour:
         Amount: 20.5
         CanCrit: 1
         Knockback: 0
+        KnockbackUp: 0
         FalloffFromPoint: 0
         FalloffRadius: 6
         MinFraction: 0.4

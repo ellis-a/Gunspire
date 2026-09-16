@@ -43,6 +43,16 @@ MonoBehaviour:
       BreakOnCast: 0
       BreakOnMelee: 0
       WallZip: 0
+      Buoyant: 0
+      Trail:
+        Radius: 0
+        Spacing: 1.5
+        SegmentLifetime: 2.5
+        DamagePerTick: 3
+        TickInterval: 0.5
+        DamageType: 1
+        Tint: {r: 1, g: 0.5, b: 0.15, a: 1}
+        Statuses: []
     Charge:
       SecondsToFull: 0
       MinimumFraction: 0
@@ -50,11 +60,12 @@ MonoBehaviour:
       Modes: []
     VariantGroup: 
     NeverEchoes: 0
+    DodgeCooldownRefund: 0
     MaxLevel: 3
     GrowthPerLevel: 0.22
     LevelUpNote: and one more charge
     TintOverride: {r: 0.6, g: 0.95, b: 1, a: 1}
-    Icon: {fileID: 0}
+    Icon: {fileID: 2800000, guid: 3986d7b47c8d7b24f936e237e683f2d7, type: 3}
     OnCast:
     - rid: 5643702153244311552
   references:

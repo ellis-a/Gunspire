@@ -309,6 +309,16 @@ namespace Gunspire
 
         public static string StanceInfusionId(Spell spell) => "stance:" + spell.Id;
 
+        /// <summary>The mode a press on this slot would switch to, or null if the slot holds no stance.</summary>
+        public StanceMode NextStanceMode(int slot)
+        {
+            Spell spell = GetSlot(slot);
+            if (spell == null || !spell.IsStance) return null;
+
+            int count = spell.Stance.Modes.Count;
+            return spell.Stance.Modes[(Mathf.Clamp(_stanceModes[slot], 0, count - 1) + 1) % count];
+        }
+
         private void EnterStance(int slot, int mode)
         {
             Spell spell = _slots[slot];

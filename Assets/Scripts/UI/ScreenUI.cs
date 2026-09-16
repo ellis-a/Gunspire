@@ -267,11 +267,14 @@ namespace Gunspire
             float startX = Screen.width * 0.5f - total * 0.5f;
             float y = Screen.height * 0.5f - cardHeight * 0.5f;
 
+            Spell hovered = null;
+
             for (int i = 0; i < offers.Count; i++)
             {
                 Spell spell = offers[i];
                 var rect = new Rect(startX + i * (cardWidth + gap), y, cardWidth, cardHeight);
                 bool hover = rect.Contains(Event.current.mousePosition);
+                if (hover) hovered = spell;
 
                 UIStyles.Card(rect, spell.Tint, hover);
 
@@ -283,10 +286,9 @@ namespace Gunspire
                 UIStyles.Text(new Rect(rect.x + 84f, rect.y + 38f, rect.width - 96f, 28f),
                     spell.DisplayName, UIStyles.Heading, UIStyles.Ink);
 
-                UIStyles.Text(new Rect(rect.x + 18f, rect.y + 78f, rect.width - 36f, 18f),
-                    spell.ManaCost.ToString("0") + " mana   "
-                    + spell.Cooldown.ToString("0.#") + "s cooldown",
-                    UIStyles.Small, UIStyles.Accent);
+                UIStyles.Text(new Rect(rect.x + 18f, rect.y + 78f, rect.width - 116f, 18f),
+                    spell.CostLine(), UIStyles.Small, UIStyles.Accent);
+                SchoolTag(new Rect(rect.xMax - 98f, rect.y + 77f, 80f, 19f), spell.School);
 
                 GUI.Label(new Rect(rect.x + 18f, rect.y + 100f, rect.width - 36f, 100f),
                     spell.Description, UIStyles.Wrap);
@@ -296,6 +298,10 @@ namespace Gunspire
                 if (GUI.Button(rect, GUIContent.none, GUIStyle.none)) _director.ChooseStarterSpell(i);
                 if (NumberPressed(i)) _director.ChooseStarterSpell(i);
             }
+
+            // What the school behind the spell grants, since the mastery is half of what a first pick decides.
+            if (hovered != null)
+                DrawMasteryBox(new Rect(Screen.width * 0.5f - 280f, y + cardHeight + 26f, 560f, 108f), hovered);
         }
 
         // ---------------------------------------------------------------- rooms
@@ -362,7 +368,10 @@ namespace Gunspire
 
             GUI.Label(new Rect(Screen.width * 0.5f - 280f, 186f, 560f, 60f), spell.Description, UIStyles.Wrap);
 
-            UIStyles.Text(new Rect(0f, 244f, Screen.width, 22f), "Bind it to a slot", UIStyles.Center, UIStyles.Muted);
+            UIStyles.Text(new Rect(0f, 250f, Screen.width, 18f), spell.CostLine(), UIStyles.Center, UIStyles.Accent);
+            SchoolTag(new Rect(Screen.width * 0.5f - 45f, 272f, 90f, 20f), spell.School);
+
+            UIStyles.Text(new Rect(0f, 300f, Screen.width, 22f), "Bind it to a slot", UIStyles.Center, UIStyles.Muted);
 
             const float buttonWidth = 240f;
             const float buttonHeight = 90f;
@@ -388,6 +397,8 @@ namespace Gunspire
 
             var cancel = new Rect(Screen.width * 0.5f - 90f, y + buttonHeight + 24f, 180f, 36f);
             if (UIStyles.Button(cancel, "Leave it", UIStyles.Muted)) _director.CancelSpellBinding();
+
+            DrawMasteryBox(new Rect(Screen.width * 0.5f - 280f, cancel.yMax + 22f, 560f, 108f), spell);
         }
 
         // ---------------------------------------------------------------- pause and run over
@@ -620,22 +631,36 @@ namespace Gunspire
                 : a.Rarity != b.Rarity ? a.Rarity.CompareTo(b.Rarity)
                 : string.CompareOrdinal(a.DisplayName, b.DisplayName));
 
+            float panelX = listX + 440f;
             Spell hovered = null;
+
             for (int i = 0; i < _trainingList.Count; i++)
             {
                 Spell spell = _trainingList[i];
                 var row = new Rect(listX, top + 36f + i * 30f, 420f, 26f);
-                bool equipped = player.Book.IsEquipped(spell);
                 if (row.Contains(Event.current.mousePosition)) hovered = spell;
 
-                string slot = spell.Slot == SpellSlot.Movement ? "   SHIFT" : spell.Slot == SpellSlot.Melee ? "   MELEE" : "";
-                string label = spell.DisplayName + "   " + Rarities.Name(spell.Rarity) + slot + (equipped ? "   (equipped)" : "");
-                if (UIStyles.Button(row, label, equipped ? UIStyles.Accent : spell.Tint)) EquipForTraining(player, spell);
+                if (SpellRow(row, spell, player.Book.IsEquipped(spell))) EquipForTraining(player, spell);
             }
 
-            if (hovered != null) DrawTrainingSpellText(hovered, listX, top + 36f + _trainingList.Count * 30f + 12f, 420f);
+            if (hovered != null)
+            {
+                // Beside the loadout panel where the window is wide enough for a fourth column, under the list where
+                // it is not.
+                float cardX = panelX + 352f;
+                float cardWidth = 300f;
+                float cardY = top;
 
-            float panelX = listX + 440f;
+                if (cardX + cardWidth > Screen.width - 16f)
+                {
+                    cardX = listX;
+                    cardWidth = 420f;
+                    cardY = top + 36f + _trainingList.Count * 30f + 12f;
+                }
+
+                DrawTrainingSpellText(hovered, cardX, cardY, cardWidth);
+            }
+
             float y = top;
 
             UIStyles.Text(new Rect(panelX, y, 340f, 26f), "Equipped", UIStyles.Heading, UIStyles.Ink);
@@ -682,20 +707,25 @@ namespace Gunspire
             if (UIStyles.Button(new Rect(panelX + 176f, y, 164f, 38f), "Leave", UIStyles.Warning)) _director.Restart();
         }
 
-        /// <summary>The hovered spell's card under the list: what kind of spell it is, what it costs, and its description.</summary>
-        private static void DrawTrainingSpellText(Spell spell, float x, float y, float width)
+        /// <summary>The hovered spell: what it is, what it costs, what it does, and what its school grants.</summary>
+        private void DrawTrainingSpellText(Spell spell, float x, float y, float width)
         {
-            var panel = new Rect(x, y, width, 136f);
+            var panel = new Rect(x, y, width, 176f);
             UIStyles.Fill(panel, UIStyles.Panel);
             UIStyles.Outline(panel, spell.Tint);
 
-            UIStyles.Text(new Rect(x + 12f, y + 8f, width - 24f, 24f), spell.DisplayName, UIStyles.Heading, spell.Tint);
-            UIStyles.Text(new Rect(x + 12f, y + 34f, width - 24f, 18f),
-                Rarities.Name(spell.Rarity) + "   " + spell.Type + " / " + DamageTypes.Name(spell.DamageType)
-                + "   " + spell.CostLine() + "   " + spell.Cooldown.ToString("0.#") + "s cooldown",
-                UIStyles.Small, UIStyles.Accent);
+            UIStyles.Icon(new Rect(x + 12f, y + 10f, 40f, 40f), spell.Icon, spell.Tint, spell.ShortName);
+            UIStyles.Text(new Rect(x + 60f, y + 10f, width - 72f, 22f), spell.DisplayName, UIStyles.Heading, spell.Tint);
+            UIStyles.Text(new Rect(x + 60f, y + 32f, width - 72f, 18f),
+                Rarities.Name(spell.Rarity) + "   " + spell.Type + " / " + DamageTypes.Name(spell.DamageType),
+                UIStyles.Small, UIStyles.Muted);
 
-            GUI.Label(new Rect(x + 12f, y + 56f, width - 24f, 74f), spell.Description, UIStyles.Wrap);
+            UIStyles.Text(new Rect(x + 12f, y + 58f, width - 108f, 18f), spell.CostLine(), UIStyles.Small, UIStyles.Accent);
+            SchoolTag(new Rect(x + width - 92f, y + 57f, 80f, 19f), spell.School);
+
+            GUI.Label(new Rect(x + 12f, y + 80f, width - 24f, 88f), spell.Description, UIStyles.Wrap);
+
+            DrawMasteryBox(new Rect(x, panel.yMax + 10f, width, 132f), spell);
         }
 
         /// <summary>One equipped slot: the spell, its level with buttons to change it, and for cast slots a button to empty it.</summary>
@@ -761,6 +791,78 @@ namespace Gunspire
             int next = ((position + step) % count + count) % count;
 
             player.Holster.SetSlot(hand, next < guns.Count ? guns[next] : null);
+        }
+
+        // ---------------------------------------------------------------- shared spell pieces
+
+        /// <summary>One spell in a list: its icon, its name, and what it is. Returns true when clicked.</summary>
+        private static bool SpellRow(Rect rect, Spell spell, bool equipped)
+        {
+            bool hover = rect.Contains(Event.current.mousePosition);
+            Color tint = equipped ? UIStyles.Accent : spell.Tint;
+
+            UIStyles.Fill(rect, hover ? new Color(tint.r, tint.g, tint.b, 0.22f) : UIStyles.PanelSoft);
+            UIStyles.Outline(rect, equipped ? UIStyles.Accent : new Color(1f, 1f, 1f, 0.12f));
+
+            var icon = new Rect(rect.x + 3f, rect.y + 3f, rect.height - 6f, rect.height - 6f);
+            UIStyles.Icon(icon, spell.Icon, spell.Tint, spell.ShortName);
+
+            string slot = spell.Slot == SpellSlot.Movement ? "   SHIFT" : spell.Slot == SpellSlot.Melee ? "   MELEE" : "";
+            string label = spell.DisplayName + "   " + Rarities.Name(spell.Rarity) + slot + (equipped ? "   equipped" : "");
+
+            UIStyles.Text(new Rect(icon.xMax + 8f, rect.y, rect.width - icon.width - 16f, rect.height),
+                label, UIStyles.Small, equipped ? UIStyles.Accent : UIStyles.Ink);
+
+            return GUI.Button(rect, GUIContent.none, GUIStyle.none);
+        }
+
+        /// <summary>
+        /// A small pill naming the school, in the school's own colour rather than the spell's. A spell's tint says what
+        /// it does; this says what it belongs to, and the two are often different colours.
+        /// </summary>
+        private static void SchoolTag(Rect rect, SpellSchool school)
+        {
+            Color tint = Schools.Tint(school);
+
+            UIStyles.Fill(rect, new Color(tint.r, tint.g, tint.b, 0.16f));
+            UIStyles.Outline(rect, new Color(tint.r, tint.g, tint.b, 0.6f));
+            UIStyles.Text(new Rect(rect.x + 7f, rect.y, rect.width - 14f, rect.height),
+                school.ToString().ToUpperInvariant(), UIStyles.Small, tint);
+        }
+
+        /// <summary>
+        /// What the spell's school grants and how far along it you are. A pick is half the spell and half the mastery
+        /// behind it, and the mastery is the half that is invisible until it is written down somewhere.
+        /// </summary>
+        private void DrawMasteryBox(Rect rect, Spell spell)
+        {
+            if (spell == null) return;
+
+            Color tint = Schools.Tint(spell.School);
+            UIStyles.Fill(rect, UIStyles.Panel);
+            UIStyles.Outline(rect, new Color(tint.r, tint.g, tint.b, 0.55f));
+
+            string name = Schools.MasteryName(spell.School);
+            float textTop = rect.y + 32f;
+
+            if (name == null)
+            {
+                UIStyles.Text(new Rect(rect.x + 14f, rect.y + 10f, rect.width - 28f, 20f), "No mastery",
+                    UIStyles.Label, UIStyles.Muted);
+            }
+            else
+            {
+                int rank = Schools.RankFor(_director.Player, spell.School);
+
+                UIStyles.Text(new Rect(rect.x + 14f, rect.y + 8f, rect.width - 28f, 20f), name, UIStyles.Label, tint);
+                UIStyles.Text(new Rect(rect.x + 14f, rect.y + 28f, rect.width - 28f, 18f),
+                    spell.School + " mastery   -   holding " + rank + " of " + Masteries.Cap,
+                    UIStyles.Small, UIStyles.Muted);
+                textTop = rect.y + 50f;
+            }
+
+            GUI.Label(new Rect(rect.x + 14f, textTop, rect.width - 28f, rect.yMax - textTop - 10f),
+                Schools.MasterySummary(spell.School), UIStyles.Wrap);
         }
 
         private static bool NumberPressed(int index)

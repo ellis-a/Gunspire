@@ -61,6 +61,7 @@ MonoBehaviour:
       Modes:
       - Name: Fire
         Tint: {r: 1, g: 0.48, b: 0.15, a: 1}
+        Icon: {fileID: 2800000, guid: 84ba329df1adf3e4eb604537bd1de11a, type: 3}
         BulletStatuses:
         - Id: 2
           Duration: 12
@@ -71,6 +72,7 @@ MonoBehaviour:
         AuraRadius: 4
       - Name: Ice
         Tint: {r: 0.55, g: 0.85, b: 1, a: 1}
+        Icon: {fileID: 2800000, guid: 695856ff46f02484ea7b2a18612822f7, type: 3}
         BulletStatuses:
         - Id: 0
           Duration: 4
@@ -85,6 +87,7 @@ MonoBehaviour:
         AuraRadius: 4
       - Name: Storm
         Tint: {r: 0.75, g: 0.8, b: 1, a: 1}
+        Icon: {fileID: 2800000, guid: 48bc9b3ef8c406342bac0d01204ec65f, type: 3}
         BulletStatuses:
         - Id: 4
           Duration: 3
@@ -102,7 +105,7 @@ MonoBehaviour:
     GrowthPerLevel: 0.22
     LevelUpNote: 
     TintOverride: {r: 0, g: 0, b: 0, a: 0}
-    Icon: {fileID: 0}
+    Icon: {fileID: 2800000, guid: 85cc65d96e1108040acbb8a4da80104d, type: 3}
     OnCast: []
   references:
     version: 2

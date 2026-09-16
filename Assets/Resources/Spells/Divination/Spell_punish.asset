@@ -64,7 +64,7 @@ MonoBehaviour:
     GrowthPerLevel: 0.22
     LevelUpNote: 
     TintOverride: {r: 1, g: 0.48, b: 0.15, a: 1}
-    Icon: {fileID: 0}
+    Icon: {fileID: 2800000, guid: 22a44f369612739418e33f15960fe05c, type: 3}
     OnCast:
     - rid: 5643702291623575688
     - rid: 5643702291623575689

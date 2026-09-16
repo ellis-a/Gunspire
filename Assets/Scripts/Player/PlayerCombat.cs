@@ -67,6 +67,9 @@ namespace Gunspire
 
         public int MeleeLevel => Book != null && MeleeSpell != null ? Mathf.Max(1, Book.GetLevel(MeleeSpell)) : 1;
 
+        /// <summary>Seconds until the melee slot is ready again, for the HUD's readout.</summary>
+        public float MeleeCooldown => Mathf.Max(0f, _bashTimer);
+
         /// <summary>The direction of the last melee attack, for anything recording it.</summary>
         public Vector3 LastMeleeForward { get; private set; }
 
