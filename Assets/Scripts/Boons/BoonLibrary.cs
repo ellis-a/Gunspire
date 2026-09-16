@@ -183,7 +183,7 @@ namespace Gunspire
 
             Add("conductive_rounds", "Conductive Rounds",
                 "Your bullets shock targets, making them take more damage.", Rarity.Uncommon, 3,
-                Bullets(StatusLibrary.Shock(4f, 1)));
+                Bullets(StatusLibrary.Shock(4f)));
 
             Add("withering_rounds", "Withering Rounds", "Your bullets weaken what they hit.", Rarity.Uncommon, 3,
                 Bullets(StatusLibrary.Weaken(4f, 1)));

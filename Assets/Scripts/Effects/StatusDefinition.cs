@@ -32,6 +32,19 @@ namespace Gunspire
         public readonly List<StatModifier> Mods = new List<StatModifier>();
 
         public float Normalized => Duration <= 0f ? 0f : Mathf.Clamp01(Remaining / Duration);
+
+        /// <summary>
+        /// For a status whose stacks expire separately: one entry per application still running. Empty for every
+        /// other status, whose stacks share <see cref="Remaining"/>.
+        /// </summary>
+        public readonly List<StackBatch> Batches = new List<StackBatch>();
+    }
+
+    /// <summary>Stacks that landed together, and fall off together when their own time runs out.</summary>
+    public class StackBatch
+    {
+        public int Count;
+        public float Remaining;
     }
 
     /// <summary>
@@ -47,6 +60,13 @@ namespace Gunspire
         public virtual int MaxStacks => 1;
         public virtual float TickInterval => 0.5f;
         public virtual bool IsDebuff => true;
+
+        /// <summary>
+        /// Each application's stacks keep their own timer and fall off when it runs out, rather than every stack
+        /// sharing one timer that each new application refreshes. For uncapped stacks, where a shared timer would
+        /// let steady application climb forever.
+        /// </summary>
+        public virtual bool StacksExpireSeparately => false;
 
         /// <summary>
         /// How fast this effect burns through its duration. One is real time; two wears off in

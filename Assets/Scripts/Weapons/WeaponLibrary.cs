@@ -640,7 +640,7 @@ namespace Gunspire
                     MaxPierce = 8,
                     Knockback = 4f,
                     Tint = new Color(1f, 0.85f, 0.45f),
-                    OnHitStatuses = { StatusLibrary.Shock(5f, 2), StatusLibrary.Mark(6f) }
+                    OnHitStatuses = { StatusLibrary.Shock(5f, 24), StatusLibrary.Mark(6f) }
                 }
             };
         }

@@ -331,7 +331,7 @@ namespace Gunspire
             OnCast =
             {
                 new SelectConeEffect { Range = 11f, HalfAngle = 30f },
-                new StatusPayloadEffect { Status = StatusId.Shock, Duration = 5f, Stacks = 1, StacksPerLevel = 1f, Magnitude = 0.12f },
+                new StatusPayloadEffect { Status = StatusId.Shock, Duration = 5f, Stacks = 12, StacksPerLevel = 12f, Magnitude = 0.01f },
                 new ApplyPayloadEffect(),
                 new VfxConeEffect { Range = 11f, HalfAngle = 30f },
                 new VfxShardsEffect { Range = 11f, SpreadDegrees = 30f }

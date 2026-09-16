@@ -71,8 +71,9 @@ namespace Gunspire
         public static StatusApplication Poison(float seconds = 7f, int stacks = 3, float swayPerStack = 1.4f)
             => new StatusApplication(StatusId.Poison, seconds, stacks, swayPerStack);
 
-        public static StatusApplication Shock(float seconds = 4f, int stacks = 1)
-            => new StatusApplication(StatusId.Shock, seconds, stacks, 0.12f);
+        /// <summary>Twelve stacks by default: what one shock from a spell applies. Each stack is 1% more damage taken.</summary>
+        public static StatusApplication Shock(float seconds = 4f, int stacks = ShockStatus.SpellStacks)
+            => new StatusApplication(StatusId.Shock, seconds, stacks, ShockStatus.DamagePerStack);
 
         public static StatusApplication Weaken(float seconds = 5f, int stacks = 1)
             => new StatusApplication(StatusId.Weaken, seconds, stacks, 0.15f);
@@ -403,22 +404,36 @@ namespace Gunspire
     /// </summary>
     public class ShockStatus : StatusDefinition
     {
-        /// <summary>How much of a shocked listener's hearing is lost, per stack.</summary>
-        public const float DeafnessPerStack = 0.25f;
+        /// <summary>Extra damage taken per stack. Fixed, so a shock's strength is simply how many stacks it carries.</summary>
+        public const float DamagePerStack = 0.01f;
+
+        /// <summary>What a spell's shock applies by default. Each spell's own count is editable on its asset.</summary>
+        public const int SpellStacks = 12;
+
+        /// <summary>
+        /// Hearing lost per stack. Scaled so a spell's twelve stacks cost a quarter of it, as one stack did when shock
+        /// was capped at three.
+        /// </summary>
+        public const float DeafnessPerStack = 0.25f / SpellStacks;
 
         public override StatusId Id => StatusId.Shock;
         public override string DisplayName => "Shocked";
-        public override string Description => "Takes increased damage, and hears far less.";
+        public override string Description => "Takes 1% more damage per stack, and hears less.";
         public override Color Tint => new Color(0.7f, 0.75f, 1f);
-        public override int MaxStacks => 3;
 
-        /// <summary>Only the damage amplification grows. Deafness stays per stack.</summary>
+        /// <summary>Uncapped in effect. Kept finite so adding stacks can never overflow.</summary>
+        public override int MaxStacks => 1000000;
+
+        /// <summary>Each hit's stacks fall off on their own, so steady fire holds a level rather than climbing forever.</summary>
+        public override bool StacksExpireSeparately => true;
+
+        /// <summary>Spell power adds stacks, since the strength of each stack is fixed.</summary>
         public override StatusApplication Empower(StatusApplication app, float spellPower)
-            => ScaleMagnitude(app, spellPower);
+            => ScaleStacks(app, spellPower);
 
         public override void BuildModifiers(StatusController c, ActiveStatus s)
         {
-            c.AddModifier(s, StatModifier.Percent(Attr.DamageTaken, s.Magnitude * s.Stacks, s));
+            c.AddModifier(s, StatModifier.Percent(Attr.DamageTaken, DamagePerStack * s.Stacks, s));
         }
 
         /// <summary>Fraction of normal hearing left. One when unshocked.</summary>

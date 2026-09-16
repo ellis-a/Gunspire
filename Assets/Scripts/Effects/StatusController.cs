@@ -131,7 +131,9 @@ namespace Gunspire
                 ActiveStatus s = _scratch[i];
                 if (!_active.Contains(s)) continue;
 
-                s.Remaining -= dt * Mathf.Max(0f, s.Def.DecayScale(this, s));
+                float decay = dt * Mathf.Max(0f, s.Def.DecayScale(this, s));
+                if (!s.Def.StacksExpireSeparately) s.Remaining -= decay;
+                else if (TickBatches(s, decay)) continue;
 
                 float interval = Mathf.Max(0.05f, s.Def.TickInterval);
                 s.TickTimer += dt;
@@ -197,9 +199,19 @@ namespace Gunspire
             ActiveStatus existing = Find(app.Id);
             if (existing != null)
             {
-                existing.Stacks = Mathf.Clamp(existing.Stacks + Mathf.Max(1, app.Stacks), 1, def.MaxStacks);
+                if (def.StacksExpireSeparately)
+                {
+                    int added = Mathf.Min(Mathf.Max(1, app.Stacks), def.MaxStacks - existing.Stacks);
+                    if (added > 0) existing.Batches.Add(new StackBatch { Count = added, Remaining = duration });
+                    SyncBatches(existing);
+                }
+                else
+                {
+                    existing.Stacks = Mathf.Clamp(existing.Stacks + Mathf.Max(1, app.Stacks), 1, def.MaxStacks);
+                    existing.Remaining = Mathf.Max(existing.Remaining, duration);
+                }
+
                 existing.Duration = Mathf.Max(existing.Duration, duration);
-                existing.Remaining = Mathf.Max(existing.Remaining, duration);
                 existing.Magnitude = Mathf.Max(existing.Magnitude, app.Magnitude);
                 existing.Source = source;
                 existing.SourceSheet = sourceSheet;
@@ -231,6 +243,8 @@ namespace Gunspire
                 SourcePosition = source != null ? source.transform.position : Vector3.zero,
                 HasSourcePosition = source != null
             };
+
+            if (def.StacksExpireSeparately) status.Batches.Add(new StackBatch { Count = status.Stacks, Remaining = duration });
 
             _active.Add(status);
             RebuildModifiers(status);
@@ -274,8 +288,18 @@ namespace Gunspire
                 ActiveStatus s = other._active[i];
                 if (skip != null && skip(s.Def.Id)) continue;
 
-                Apply(new StatusApplication(s.Def.Id, s.Remaining, s.Stacks, s.Magnitude),
-                    s.Source, s.SourceTeam, scaleForElite: false);
+                // Batch by batch, so a copy's stacks fall off when the original's would.
+                if (s.Batches.Count > 0)
+                {
+                    for (int b = 0; b < s.Batches.Count; b++)
+                        Apply(new StatusApplication(s.Def.Id, s.Batches[b].Remaining, s.Batches[b].Count, s.Magnitude),
+                            s.Source, s.SourceTeam, scaleForElite: false);
+                }
+                else
+                {
+                    Apply(new StatusApplication(s.Def.Id, s.Remaining, s.Stacks, s.Magnitude),
+                        s.Source, s.SourceTeam, scaleForElite: false);
+                }
 
                 ActiveStatus copied = Find(s.Def.Id);
                 if (copied != null && s.HasSourcePosition)
@@ -284,6 +308,50 @@ namespace Gunspire
                     copied.HasSourcePosition = true;
                 }
             }
+        }
+
+        /// <summary>
+        /// Runs each batch's own timer down, drops the finished ones, and refits the stack count and the modifiers
+        /// that depend on it. Returns true when nothing was left and the status was removed.
+        /// </summary>
+        private bool TickBatches(ActiveStatus s, float decay)
+        {
+            int before = s.Stacks;
+
+            for (int i = s.Batches.Count - 1; i >= 0; i--)
+            {
+                s.Batches[i].Remaining -= decay;
+                if (s.Batches[i].Remaining <= 0f) s.Batches.RemoveAt(i);
+            }
+
+            if (s.Batches.Count == 0)
+            {
+                RemoveInstance(s);
+                return true;
+            }
+
+            SyncBatches(s);
+            if (s.Stacks != before)
+            {
+                RebuildModifiers(s);
+                Changed?.Invoke();
+            }
+            return false;
+        }
+
+        /// <summary>The stack count is the batches' total, and the time left is the longest batch's.</summary>
+        private static void SyncBatches(ActiveStatus s)
+        {
+            int stacks = 0;
+            float longest = 0f;
+            for (int i = 0; i < s.Batches.Count; i++)
+            {
+                stacks += s.Batches[i].Count;
+                longest = Mathf.Max(longest, s.Batches[i].Remaining);
+            }
+
+            s.Stacks = Mathf.Max(1, stacks);
+            s.Remaining = longest;
         }
 
         private static bool AppliedBy(List<StatusApplication> apps, StatusId id)

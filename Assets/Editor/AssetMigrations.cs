@@ -79,7 +79,8 @@ namespace Gunspire.EditorTools
             new EnemyAttackReach(),
             new DashLevels(),
             new BlinkThroughWalls(),
-            new SpiderGravityName()
+            new SpiderGravityName(),
+            new ShockStacks()
         };
 
         [MenuItem("Gunspire/Migrations/1 - Report")]

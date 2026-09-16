@@ -17,6 +17,7 @@ MonoBehaviour:
     Name: Conductive Rounds
     Description: Your bullets shock targets, making them take more damage.
     Rarity: 1
+    Icon: {fileID: 0}
     MaxLevel: 3
     Effects:
     - rid: 5643702087564918796
@@ -34,6 +35,6 @@ MonoBehaviour:
         Status:
           Id: 4
           Duration: 4
-          Stacks: 1
-          Magnitude: 0.12
+          Stacks: 12
+          Magnitude: 0.01
         OnSpells: 0

@@ -28,6 +28,7 @@ namespace Gunspire.EditorTools
             CheckDeathmark(problems);
             CheckPlayerIsNeverExecuted(problems);
             CheckBleedEndsOnHeal(problems);
+            CheckShockStacks(problems);
             CheckBurnAndFrostCoexist(problems);
             CheckPowerScalesStatuses(problems);
             CheckSleep(problems);
@@ -293,6 +294,41 @@ namespace Gunspire.EditorTools
         }
 
         /// <summary>
+        /// Shock is uncapped at 1% a stack, and each application's stacks fall off on their own timer. A shared timer
+        /// would let steady fire climb without limit, which is the whole reason for the separate timers.
+        /// </summary>
+        private static void CheckShockStacks(List<string> problems)
+        {
+            GameObject go = Subject(Team.Enemy, 500f);
+            try
+            {
+                var status = go.GetComponent<StatusController>();
+                var sheet = go.GetComponent<CharacterSheet>();
+                float baseTaken = sheet.Get(Attr.DamageTaken);
+
+                status.Apply(StatusLibrary.Shock(1f, 12), null, Team.Player);
+                status.Apply(StatusLibrary.Shock(3f, 12), null, Team.Player);
+                if (status.Stacks(StatusId.Shock) != 24) problems.Add("two shocks of 12 stacks gave " + status.Stacks(StatusId.Shock) + " stacks, not 24");
+                if (Mathf.Abs(sheet.Get(Attr.DamageTaken) - baseTaken * 1.24f) > 0.005f)
+                    problems.Add("24 shock stacks raised damage taken to " + sheet.Get(Attr.DamageTaken).ToString("0.###") + ", not 24% more");
+
+                status.Tick(1.5f);
+                if (status.Stacks(StatusId.Shock) != 12)
+                    problems.Add("the first shock's stacks did not fall off on their own timer (" + status.Stacks(StatusId.Shock) + " left, not 12)");
+                if (Mathf.Abs(sheet.Get(Attr.DamageTaken) - baseTaken * 1.12f) > 0.005f)
+                    problems.Add("damage taken did not drop with the stacks that fell off");
+
+                status.Tick(2f);
+                if (status.Has(StatusId.Shock)) problems.Add("shock outlived its last stacks' timer");
+                if (Mathf.Abs(sheet.Get(Attr.DamageTaken) - baseTaken) > 0.005f) problems.Add("shock left its damage increase behind");
+
+                status.Apply(StatusLibrary.Shock(5f, 500), null, Team.Player);
+                if (status.Stacks(StatusId.Shock) != 500) problems.Add("shock was capped at " + status.Stacks(StatusId.Shock) + " stacks");
+            }
+            finally { Object.DestroyImmediate(go); }
+        }
+
+        /// <summary>
         /// Burning and frostbitten at the same time, applied in either order, with the frost
         /// stacks intact. These two used to cancel each other out, which quietly made any spell
         /// that applied both deliver only one - and made stacking frost toward the execute
@@ -345,11 +381,13 @@ namespace Gunspire.EditorTools
         {
             var scalesMagnitude = new HashSet<StatusId>
             {
-                StatusId.Burn, StatusId.Bleed, StatusId.Poison, StatusId.Shock,
+                StatusId.Burn, StatusId.Bleed, StatusId.Poison,
                 StatusId.Weaken, StatusId.Haste, StatusId.Fortify, StatusId.Mark,
                 StatusId.Torment, StatusId.Empowered, StatusId.Quickened
             };
-            var scalesStacks = new HashSet<StatusId> { StatusId.Frost };
+
+            // Shock's strength per stack is fixed, so spell power adds stacks, as it does for frost.
+            var scalesStacks = new HashSet<StatusId> { StatusId.Frost, StatusId.Shock };
 
             const float duration = 4f;
             const int stacks = 20;

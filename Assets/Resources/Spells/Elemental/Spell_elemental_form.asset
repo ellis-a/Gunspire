@@ -91,8 +91,8 @@ MonoBehaviour:
         BulletStatuses:
         - Id: 4
           Duration: 3
-          Stacks: 1
-          Magnitude: 0.12
+          Stacks: 6
+          Magnitude: 0.01
         Modifiers:
         - Attr: 4
           Percent: 0.2

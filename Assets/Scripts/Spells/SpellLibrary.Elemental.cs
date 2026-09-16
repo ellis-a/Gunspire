@@ -80,7 +80,7 @@ namespace Gunspire
                 {
                     new AimPointEffect { Range = 40f },
                     new StatusPayloadEffect { Status = StatusId.Frost, Duration = 3f, Stacks = 4, Magnitude = FrostStatus.SlowPerStack },
-                    new StatusPayloadEffect { Status = StatusId.Shock, Duration = 3f, Stacks = 1, Magnitude = 0.08f },
+                    new StatusPayloadEffect { Status = StatusId.Shock, Duration = 3f, Stacks = 6, Magnitude = 0.01f },
                     new LingeringZoneEffect { Radius = 8f, Duration = 15f, DamagePerTick = 3f, TickInterval = 0.5f, ScaleWithLevel = false }
                 }
             },
@@ -95,7 +95,7 @@ namespace Gunspire
                 {
                     new AimPointEffect { Range = 40f },
                     new TelegraphCircleEffect { Radius = 4f, Duration = 0.9f },
-                    new StatusPayloadEffect { Status = StatusId.Shock, Duration = 4f, Stacks = 1, Magnitude = 0.12f },
+                    new StatusPayloadEffect { Status = StatusId.Shock, Duration = 4f, Stacks = 12, Magnitude = 0.01f },
                     new DelayedBlastEffect { Delay = 0.9f, Radius = 4f, Damage = 30f, Knockback = 0f },
                     new SetDamageTypeEffect { Type = DamageType.Kinetic },
                     new DelayedBlastEffect { Delay = 0.95f, Radius = 4f, Damage = 30f, Knockback = 14f }
@@ -121,7 +121,7 @@ namespace Gunspire
                 {
                     new SelectSphereEffect { Radius = 9f },
                     new StatusPayloadEffect { Status = StatusId.Burn, Duration = 12f, Stacks = 1, Magnitude = 14f },
-                    new StatusPayloadEffect { Status = StatusId.Shock, Duration = 5f, Stacks = 1, Magnitude = 0.12f },
+                    new StatusPayloadEffect { Status = StatusId.Shock, Duration = 5f, Stacks = 12, Magnitude = 0.01f },
                     new StatusPayloadEffect { Status = StatusId.Frost, Duration = 5f, Stacks = 20, Magnitude = FrostStatus.SlowPerStack },
                     new ApplyPayloadEffect(),
                     new VfxGroundRingEffect { Radius = 9f }
@@ -158,7 +158,7 @@ namespace Gunspire
                         new StanceMode
                         {
                             Name = "Storm", Tint = Palette.Lightning,
-                            BulletStatuses = { StatusLibrary.Shock(3f) },
+                            BulletStatuses = { StatusLibrary.Shock(3f, 6) },
                             Modifiers = { new StanceModifier { Attr = Attr.MoveSpeed, Percent = 0.2f } }
                         }
                     }

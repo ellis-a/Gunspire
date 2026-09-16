@@ -93,9 +93,9 @@ MonoBehaviour:
       data:
         Status: 4
         Duration: 3
-        Stacks: 1
+        Stacks: 6
         StacksPerLevel: 0
-        Magnitude: 0.08
+        Magnitude: 0.01
         DurationPerLevel: 0
         MagnitudePerLevel: 0
     - rid: 5643702291623575589

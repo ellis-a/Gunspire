@@ -206,7 +206,7 @@ namespace Gunspire
                             new WaitEffect { Seconds = 1.1f },
                             new StatusPayloadEffect
                             {
-                                Status = StatusId.Shock, Duration = 3f, Stacks = 1, Magnitude = 0.12f
+                                Status = StatusId.Shock, Duration = 3f, Stacks = 12, Magnitude = 0.01f
                             },
                             new BeamEffect
                             {

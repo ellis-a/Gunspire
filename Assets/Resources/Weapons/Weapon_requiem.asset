@@ -28,7 +28,10 @@ MonoBehaviour:
     ReloadTime: 2.2
     BurstCount: 1
     BurstInterval: 0.06
+    SpinUpSeconds: 0
+    SpinDownMultiplier: 1.6
     SpreadDegrees: 0
+    NoiseMultiplier: 1
     MovingSpreadDegrees: 0.1
     RecoilPitch: 7
     RecoilYaw: 0.5
@@ -41,13 +44,14 @@ MonoBehaviour:
     ProjectileHoming: 0
     SplashRadius: 0
     SplashDamage: 0
+    Icon: {fileID: 0}
     ManaPerShot: 0
     Tint: {r: 1, g: 0.85, b: 0.45, a: 1}
     OnHitStatuses:
     - Id: 4
       Duration: 5
-      Stacks: 2
-      Magnitude: 0.12
+      Stacks: 24
+      Magnitude: 0.01
     - Id: 8
       Duration: 6
       Stacks: 1
