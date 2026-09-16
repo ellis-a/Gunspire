@@ -1,0 +1,109 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 742cfdfb30a993f448892174ad3ab0e9, type: 3}
+  m_Name: Spell_elemental_form
+  m_EditorClassIdentifier: Assembly-CSharp::Gunspire.SpellAsset
+  Definition:
+    Id: elemental_form
+    DisplayName: Elemental Form
+    ShortName: FORM
+    Description: 'A stance, always on. Tap to change form: fire burns what you shoot
+      and scorches what is near, ice freezes and steadies your aim, storm shocks
+      and quickens you.'
+    ManaCost: 0
+    Cooldown: 0
+    SoulCost: 0
+    HealthCost: 0
+    PsiCost: 0
+    SpendsAllSouls: 0
+    NoiseMultiplier: 1
+    Rarity: 3
+    Type: 3
+    DamageType: 1
+    School: 0
+    Slot: 0
+    Sustain:
+      ManaPerSecond: 0
+      HealthPerSecond: 0
+      Toggle: 0
+      MaxDuration: 0
+      MoveSpeedBonus: 0
+      Invulnerable: 0
+      BreakOnMovement: 0
+      HideFromSight: 0
+      BreakOnShoot: 0
+      BreakOnCast: 0
+      BreakOnMelee: 0
+      WallZip: 0
+      Buoyant: 0
+      Trail:
+        Radius: 0
+        Spacing: 1.5
+        SegmentLifetime: 2.5
+        DamagePerTick: 3
+        TickInterval: 0.5
+        DamageType: 1
+        Tint: {r: 1, g: 0.5, b: 0.15, a: 1}
+        Statuses: []
+    Charge:
+      SecondsToFull: 0
+      MinimumFraction: 0
+    Stance:
+      Modes:
+      - Name: Fire
+        Tint: {r: 1, g: 0.48, b: 0.15, a: 1}
+        BulletStatuses:
+        - Id: 2
+          Duration: 12
+          Stacks: 1
+          Magnitude: 6
+        Modifiers: []
+        AuraDamagePerSecond: 6
+        AuraRadius: 4
+      - Name: Ice
+        Tint: {r: 0.55, g: 0.85, b: 1, a: 1}
+        BulletStatuses:
+        - Id: 0
+          Duration: 4
+          Stacks: 6
+          Magnitude: 0.01
+        Modifiers:
+        - Attr: 21
+          Percent: -0.35
+        - Attr: 22
+          Percent: -0.35
+        AuraDamagePerSecond: 0
+        AuraRadius: 4
+      - Name: Storm
+        Tint: {r: 0.75, g: 0.8, b: 1, a: 1}
+        BulletStatuses:
+        - Id: 4
+          Duration: 3
+          Stacks: 1
+          Magnitude: 0.12
+        Modifiers:
+        - Attr: 4
+          Percent: 0.2
+        AuraDamagePerSecond: 0
+        AuraRadius: 4
+    VariantGroup: 
+    NeverEchoes: 0
+    DodgeCooldownRefund: 0
+    MaxLevel: 1
+    GrowthPerLevel: 0.22
+    LevelUpNote: 
+    TintOverride: {r: 0, g: 0, b: 0, a: 0}
+    Icon: {fileID: 0}
+    OnCast: []
+  references:
+    version: 2
+    RefIds: []

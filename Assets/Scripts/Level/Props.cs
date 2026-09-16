@@ -5,7 +5,7 @@ namespace Gunspire
     /// <summary>Breakable scenery. Any damage chips at it, whatever dealt it.</summary>
     public class Smashable : MonoBehaviour, IDamageable
     {
-        public float MaxHealth = 30f;
+        public float MaxHealth = 10f;
         public Color BodyColor = Palette.Crate;
         public bool DropsReward = true;
 

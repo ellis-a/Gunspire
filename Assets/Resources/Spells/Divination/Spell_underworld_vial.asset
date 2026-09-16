@@ -1,0 +1,115 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 742cfdfb30a993f448892174ad3ab0e9, type: 3}
+  m_Name: Spell_underworld_vial
+  m_EditorClassIdentifier: Assembly-CSharp::Gunspire.SpellAsset
+  Definition:
+    Id: underworld_vial
+    DisplayName: Underworld Vial
+    ShortName: VIAL
+    Description: A vial thrown like a grenade, splashing necrotic damage and poison.
+    ManaCost: 16
+    Cooldown: 7
+    SoulCost: 0
+    HealthCost: 0
+    PsiCost: 0
+    SpendsAllSouls: 0
+    NoiseMultiplier: 1
+    Rarity: 0
+    Type: 0
+    DamageType: 3
+    School: 3
+    Slot: 0
+    Sustain:
+      ManaPerSecond: 0
+      HealthPerSecond: 0
+      Toggle: 0
+      MaxDuration: 0
+      MoveSpeedBonus: 0
+      Invulnerable: 0
+      BreakOnMovement: 0
+      HideFromSight: 0
+      BreakOnShoot: 0
+      BreakOnCast: 0
+      BreakOnMelee: 0
+      WallZip: 0
+      Buoyant: 0
+      Trail:
+        Radius: 0
+        Spacing: 1.5
+        SegmentLifetime: 2.5
+        DamagePerTick: 3
+        TickInterval: 0.5
+        DamageType: 1
+        Tint: {r: 1, g: 0.5, b: 0.15, a: 1}
+        Statuses: []
+    Charge:
+      SecondsToFull: 0
+      MinimumFraction: 0
+    Stance:
+      Modes: []
+    VariantGroup: 
+    NeverEchoes: 0
+    DodgeCooldownRefund: 0
+    MaxLevel: 5
+    GrowthPerLevel: 0.22
+    LevelUpNote: 
+    TintOverride: {r: 0.55, g: 0.9, b: 0.35, a: 1}
+    Icon: {fileID: 0}
+    OnCast:
+    - rid: 5643702291623575669
+    - rid: 5643702291623575670
+  references:
+    version: 2
+    RefIds:
+    - rid: 5643702291623575669
+      type: {class: StatusPayloadEffect, ns: Gunspire, asm: Assembly-CSharp}
+      data:
+        Status: 3
+        Duration: 7
+        Stacks: 3
+        StacksPerLevel: 0
+        Magnitude: 1.4
+        DurationPerLevel: 0
+        MagnitudePerLevel: 0
+    - rid: 5643702291623575670
+      type: {class: SpawnProjectileEffect, ns: Gunspire, asm: Assembly-CSharp}
+      data:
+        Damage: 0
+        Speed: 22
+        Radius: 0.25
+        Lifetime: 4
+        Gravity: 14
+        Knockback: 0
+        Pierce: 0
+        Homing: 0
+        Count: 1
+        ArcSpreadDegrees: 0
+        SpreadDegrees: 0
+        SplashRadius: 3.5
+        SplashDamage: 26
+        ScaleSplashWithLevel: 1
+        SwayAmplitude: 0
+        SwayFrequency: 2
+        PassesThroughWalls: 0
+        Trail:
+          Radius: 0
+          Spacing: 1.5
+          SegmentLifetime: 2.5
+          DamagePerTick: 3
+          TickInterval: 0.5
+          DamageType: 1
+          Tint: {r: 1, g: 0.5, b: 0.15, a: 1}
+          Statuses: []
+        ExtraCountAtFullCharge: 0
+        ExtraCountPerSoul: 0
+        OnHit: []

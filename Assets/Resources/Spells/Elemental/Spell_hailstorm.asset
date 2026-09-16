@@ -1,0 +1,110 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 742cfdfb30a993f448892174ad3ab0e9, type: 3}
+  m_Name: Spell_hailstorm
+  m_EditorClassIdentifier: Assembly-CSharp::Gunspire.SpellAsset
+  Definition:
+    Id: hailstorm
+    DisplayName: Hailstorm
+    ShortName: HAIL
+    Description: A room-sized zone of hail and lightning for 15 seconds, applying
+      frost and shock.
+    ManaCost: 30
+    Cooldown: 20
+    SoulCost: 0
+    HealthCost: 0
+    PsiCost: 0
+    SpendsAllSouls: 0
+    NoiseMultiplier: 1
+    Rarity: 1
+    Type: 2
+    DamageType: 1
+    School: 0
+    Slot: 0
+    Sustain:
+      ManaPerSecond: 0
+      HealthPerSecond: 0
+      Toggle: 0
+      MaxDuration: 0
+      MoveSpeedBonus: 0
+      Invulnerable: 0
+      BreakOnMovement: 0
+      HideFromSight: 0
+      BreakOnShoot: 0
+      BreakOnCast: 0
+      BreakOnMelee: 0
+      WallZip: 0
+      Buoyant: 0
+      Trail:
+        Radius: 0
+        Spacing: 1.5
+        SegmentLifetime: 2.5
+        DamagePerTick: 3
+        TickInterval: 0.5
+        DamageType: 1
+        Tint: {r: 1, g: 0.5, b: 0.15, a: 1}
+        Statuses: []
+    Charge:
+      SecondsToFull: 0
+      MinimumFraction: 0
+    Stance:
+      Modes: []
+    VariantGroup: 
+    NeverEchoes: 0
+    DodgeCooldownRefund: 0
+    MaxLevel: 5
+    GrowthPerLevel: 0.22
+    LevelUpNote: 
+    TintOverride: {r: 0.55, g: 0.85, b: 1, a: 1}
+    Icon: {fileID: 0}
+    OnCast:
+    - rid: 5643702291623575586
+    - rid: 5643702291623575587
+    - rid: 5643702291623575588
+    - rid: 5643702291623575589
+  references:
+    version: 2
+    RefIds:
+    - rid: 5643702291623575586
+      type: {class: AimPointEffect, ns: Gunspire, asm: Assembly-CSharp}
+      data:
+        Range: 40
+    - rid: 5643702291623575587
+      type: {class: StatusPayloadEffect, ns: Gunspire, asm: Assembly-CSharp}
+      data:
+        Status: 0
+        Duration: 3
+        Stacks: 4
+        StacksPerLevel: 0
+        Magnitude: 0.01
+        DurationPerLevel: 0
+        MagnitudePerLevel: 0
+    - rid: 5643702291623575588
+      type: {class: StatusPayloadEffect, ns: Gunspire, asm: Assembly-CSharp}
+      data:
+        Status: 4
+        Duration: 3
+        Stacks: 1
+        StacksPerLevel: 0
+        Magnitude: 0.08
+        DurationPerLevel: 0
+        MagnitudePerLevel: 0
+    - rid: 5643702291623575589
+      type: {class: LingeringZoneEffect, ns: Gunspire, asm: Assembly-CSharp}
+      data:
+        Radius: 8
+        Duration: 15
+        DamagePerTick: 3
+        TickInterval: 0.5
+        ScaleWithLevel: 0
+        FollowCaster: 0
+        AllyStatuses: []
