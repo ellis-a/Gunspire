@@ -39,7 +39,7 @@ namespace Gunspire
 
         private static void Build()
         {
-            _all = BuiltIn();
+            _all = new List<LoadoutDefinition>();
 
             StartingLoadoutAsset[] authored = Resources.LoadAll<StartingLoadoutAsset>("");
             if (authored == null) return;
@@ -60,29 +60,6 @@ namespace Gunspire
         {
             return new List<LoadoutDefinition>
             {
-                new LoadoutDefinition
-                {
-                    Id = "fortune_hunter",
-                    DisplayName = "Fortune Hunter",
-                    Description = "Rides its luck. Rarer boons, rarer guns, and a rocket launcher " +
-                                  "that asks nothing of your aim.",
-                    Dexterity = 10, Power = 10, Athletics = 10, Endurance = 10, Luck = 11,
-                    WeaponId = "rocket_launcher",
-                    MovementAbilityId = "dash",
-                    SpellId = string.Empty
-                },
-
-                new LoadoutDefinition
-                {
-                    Id = "juggernaut",
-                    DisplayName = "Juggernaut",
-                    Description = "Soaks what the others dodge. The minigun takes a moment to " +
-                                  "spin up, so you have to commit to standing there.",
-                    Dexterity = 10, Power = 10, Athletics = 10, Endurance = 11, Luck = 10,
-                    WeaponId = "minigun",
-                    MovementAbilityId = "dash",
-                    SpellId = string.Empty
-                }
             };
         }
     }

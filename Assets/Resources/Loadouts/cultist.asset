@@ -10,19 +10,20 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: c13e835ccff8ac64baeb611612fcf70e, type: 3}
-  m_Name: Loadout_warlock
+  m_Name: cultist
   m_EditorClassIdentifier: Assembly-CSharp::Gunspire.StartingLoadoutAsset
   Loadout:
-    Id: warlock
-    DisplayName: Warlock
-    Description: Shred your enemies with a rapid fire SMG.
+    Id: cultist
+    DisplayName: Cultist
+    Description: Pay for spells with blood and blast enemies with the deep.
     Dexterity: 10
     Power: 10
-    Athletics: 11
+    Athletics: 10
     Endurance: 10
     Luck: 10
-    WeaponId: smg
+    WeaponId: revolver
     MovementAbilityId: dash
-    SpellId: 
+    MeleeSpellId: bash
+    SpellId: gush
     SpellSlot: 0
     TintOverride: {r: 0, g: 0, b: 0, a: 0}

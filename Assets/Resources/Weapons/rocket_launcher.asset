@@ -10,51 +10,51 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 48821f08f7c573342a9dd749bc0fa5b3, type: 3}
-  m_Name: revolver
+  m_Name: rocket_launcher
   m_EditorClassIdentifier: Assembly-CSharp::Gunspire.WeaponAsset
   Definition:
-    Id: revolver
-    DisplayName: Revolver
-    Flavor: 
+    Id: rocket_launcher
+    DisplayName: Rocket Launcher
+    Flavor: Points, fires, and asks nothing else of you.
     Rarity: 0
-    Class: 1
-    Delivery: 0
+    Class: 7
+    Delivery: 1
     Mode: 0
     DamageType: 0
-    Damage: 18
+    Damage: 20
     PelletsPerShot: 1
-    Knockback: 0
-    RoundsPerMinute: 320
-    MagazineSize: 6
-    ReloadTime: 2
+    Knockback: 8
+    RoundsPerMinute: 65
+    MagazineSize: 4
+    ReloadTime: 2.2
     BurstCount: 1
     BurstInterval: 0.06
-    DrawTime: 0.3
+    DrawTime: 0.8
     SpinUpSeconds: 0
     SpinDownMultiplier: 1.6
-    SpreadDegrees: 0.4
-    NoiseMultiplier: 1
-    MovingSpreadDegrees: 1.1
-    RecoilPitch: 1.3
-    RecoilYaw: 0.3
-    Range: 140
+    SpreadDegrees: 0.5
+    NoiseMultiplier: 2
+    MovingSpreadDegrees: 1.2
+    RecoilPitch: 5
+    RecoilYaw: 0.4
+    Range: 120
     MaxPierce: 0
-    ProjectileSpeed: 45
-    ProjectileRadius: 0.14
+    ProjectileSpeed: 44
+    ProjectileRadius: 0.28
     ProjectileGravity: 0
-    ProjectileLifetime: 4
+    ProjectileLifetime: 5
     ProjectileHoming: 0
-    SplashRadius: 0
-    SplashDamage: 0
+    SplashRadius: 4.4
+    SplashDamage: 46
     Icon: {fileID: 0}
     ManaPerShot: 0
-    Tint: {r: 1, g: 1, b: 1, a: 1}
+    Tint: {r: 1, g: 0.92, b: 0.7, a: 1}
     OnHitStatuses: []
     AltFire:
-      Kind: 2
-      Name: Fan the Hammer
-      Description: Empties the cylinder as fast as the hammer will fall.
-      Cooldown: 2.6
+      Kind: 0
+      Name: Alt Fire
+      Description: 
+      Cooldown: 1.2
       AmmoCost: 1
       ManaCost: 0
       Delivery: 1
@@ -71,8 +71,8 @@ MonoBehaviour:
       ProjectileLifetime: 5
       RecoilPitch: 3.2
       OnHitStatuses: []
-      SalvoRateMultiplier: 4.5
-      SalvoDamageMultiplier: 0.8
+      SalvoRateMultiplier: 3
+      SalvoDamageMultiplier: 0.85
       SalvoMaxRounds: 12
       FocusFov: 50
       FocusSpreadMultiplier: 0.15

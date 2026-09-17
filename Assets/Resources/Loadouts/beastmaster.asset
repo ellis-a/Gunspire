@@ -10,20 +10,20 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: c13e835ccff8ac64baeb611612fcf70e, type: 3}
-  m_Name: Loadout_fortune_hunter
+  m_Name: beastmaster
   m_EditorClassIdentifier: Assembly-CSharp::Gunspire.StartingLoadoutAsset
   Loadout:
-    Id: fortune_hunter
-    DisplayName: Fortune Hunter
-    Description: Rides its luck. Rarer boons, rarer guns, and a rocket launcher that
-      asks nothing of your aim.
+    Id: beastmaster
+    DisplayName: Beastmaster
+    Description: Command your furry companion and carve up your foes.
     Dexterity: 10
     Power: 10
     Athletics: 10
     Endurance: 10
-    Luck: 11
-    WeaponId: rocket_launcher
-    MovementAbilityId: spider_legs
-    SpellId: 
-    SpellSlot: 1
+    Luck: 10
+    WeaponId: minigun
+    MovementAbilityId: dash
+    MeleeSpellId: bash
+    SpellId: howl
+    SpellSlot: 0
     TintOverride: {r: 0, g: 0, b: 0, a: 0}

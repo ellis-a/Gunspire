@@ -10,20 +10,20 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: c13e835ccff8ac64baeb611612fcf70e, type: 3}
-  m_Name: Loadout_paladin
+  m_Name: psion
   m_EditorClassIdentifier: Assembly-CSharp::Gunspire.StartingLoadoutAsset
   Loadout:
-    Id: paladin
-    DisplayName: Paladin
-    Description: Maintain the law with your trusty sidearm.
-    Dexterity: 11
+    Id: psion
+    DisplayName: Psion
+    Description: Enter the minds of your foes and tear it in half.
+    Dexterity: 10
     Power: 10
     Athletics: 10
     Endurance: 10
     Luck: 10
-    WeaponId: revolver
+    WeaponId: smg
     MovementAbilityId: dash
     MeleeSpellId: bash
-    SpellId: 
+    SpellId: telekinesis
     SpellSlot: 0
     TintOverride: {r: 0, g: 0, b: 0, a: 0}

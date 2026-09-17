@@ -10,37 +10,37 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 48821f08f7c573342a9dd749bc0fa5b3, type: 3}
-  m_Name: Weapon_minigun
+  m_Name: sniper
   m_EditorClassIdentifier: Assembly-CSharp::Gunspire.WeaponAsset
   Definition:
-    Id: minigun
-    DisplayName: Minigun
-    Flavor: Takes a moment to get going. Then it does not stop.
+    Id: sniper
+    DisplayName: Sniper
+    Flavor: 
     Rarity: 0
-    Class: 6
+    Class: 5
     Delivery: 0
-    Mode: 1
+    Mode: 0
     DamageType: 0
-    Damage: 5
+    Damage: 40
     PelletsPerShot: 1
     Knockback: 0
-    RoundsPerMinute: 900
-    MagazineSize: 90
-    ReloadTime: 3
+    RoundsPerMinute: 60
+    MagazineSize: 4
+    ReloadTime: 1.5
     BurstCount: 1
     BurstInterval: 0.06
     DrawTime: 1
-    SpinUpSeconds: 0.7
+    SpinUpSeconds: 0
     SpinDownMultiplier: 1.6
-    SpreadDegrees: 5.5
+    SpreadDegrees: 0.2
     NoiseMultiplier: 2
-    MovingSpreadDegrees: 7.5
-    RecoilPitch: 0.22
-    RecoilYaw: 0.5
-    Range: 90
+    MovingSpreadDegrees: 3.4
+    RecoilPitch: 5
+    RecoilYaw: 0.4
+    Range: 250
     MaxPierce: 0
-    ProjectileSpeed: 45
-    ProjectileRadius: 0.14
+    ProjectileSpeed: 75
+    ProjectileRadius: 0.11
     ProjectileGravity: 0
     ProjectileLifetime: 4
     ProjectileHoming: 0
@@ -48,16 +48,20 @@ MonoBehaviour:
     SplashDamage: 0
     Icon: {fileID: 0}
     ManaPerShot: 0
-    Tint: {r: 1, g: 0.92, b: 0.7, a: 1}
-    OnHitStatuses: []
+    Tint: {r: 1, g: 1, b: 1, a: 1}
+    OnHitStatuses:
+    - Id: 2
+      Duration: 2.5
+      Stacks: 1
+      Magnitude: 3
     AltFire:
-      Kind: 0
-      Name: Alt Fire
-      Description: 
+      Kind: 3
+      Name: Zoom
+      Description: Hold to zoom
       Cooldown: 1.2
       AmmoCost: 1
       ManaCost: 0
-      Delivery: 1
+      Delivery: 0
       Damage: 40
       Pellets: 1
       SpreadDegrees: 0
@@ -74,8 +78,8 @@ MonoBehaviour:
       SalvoRateMultiplier: 3
       SalvoDamageMultiplier: 0.85
       SalvoMaxRounds: 12
-      FocusFov: 50
-      FocusSpreadMultiplier: 0.15
-      FocusDamageMultiplier: 1.25
+      FocusFov: 45
+      FocusSpreadMultiplier: 0.3
+      FocusDamageMultiplier: 1.15
       FocusMoveMultiplier: 0.55
-      FocusRateMultiplier: 0.8
+      FocusRateMultiplier: 0.85

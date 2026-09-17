@@ -10,42 +10,42 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 48821f08f7c573342a9dd749bc0fa5b3, type: 3}
-  m_Name: Weapon_rocket_launcher
+  m_Name: minigun
   m_EditorClassIdentifier: Assembly-CSharp::Gunspire.WeaponAsset
   Definition:
-    Id: rocket_launcher
-    DisplayName: Rocket Launcher
-    Flavor: Points, fires, and asks nothing else of you.
+    Id: minigun
+    DisplayName: Minigun
+    Flavor: Takes a moment to get going. Then it does not stop.
     Rarity: 0
-    Class: 7
-    Delivery: 1
-    Mode: 0
+    Class: 6
+    Delivery: 0
+    Mode: 1
     DamageType: 0
-    Damage: 20
+    Damage: 5
     PelletsPerShot: 1
-    Knockback: 8
-    RoundsPerMinute: 65
-    MagazineSize: 4
-    ReloadTime: 2.2
+    Knockback: 0
+    RoundsPerMinute: 900
+    MagazineSize: 90
+    ReloadTime: 3
     BurstCount: 1
     BurstInterval: 0.06
-    DrawTime: 0.8
-    SpinUpSeconds: 0
+    DrawTime: 1
+    SpinUpSeconds: 0.7
     SpinDownMultiplier: 1.6
-    SpreadDegrees: 0.5
+    SpreadDegrees: 5.5
     NoiseMultiplier: 2
-    MovingSpreadDegrees: 1.2
-    RecoilPitch: 5
-    RecoilYaw: 0.4
-    Range: 120
+    MovingSpreadDegrees: 7.5
+    RecoilPitch: 0.22
+    RecoilYaw: 0.5
+    Range: 90
     MaxPierce: 0
-    ProjectileSpeed: 44
-    ProjectileRadius: 0.28
+    ProjectileSpeed: 45
+    ProjectileRadius: 0.14
     ProjectileGravity: 0
-    ProjectileLifetime: 5
+    ProjectileLifetime: 4
     ProjectileHoming: 0
-    SplashRadius: 4.4
-    SplashDamage: 46
+    SplashRadius: 0
+    SplashDamage: 0
     Icon: {fileID: 0}
     ManaPerShot: 0
     Tint: {r: 1, g: 0.92, b: 0.7, a: 1}

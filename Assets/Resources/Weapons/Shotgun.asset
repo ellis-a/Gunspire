@@ -10,7 +10,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 48821f08f7c573342a9dd749bc0fa5b3, type: 3}
-  m_Name: Shotgun
+  m_Name: shotgun
   m_EditorClassIdentifier: Assembly-CSharp::Gunspire.WeaponAsset
   Definition:
     Id: shotgun
@@ -21,7 +21,7 @@ MonoBehaviour:
     Delivery: 0
     Mode: 0
     DamageType: 0
-    Damage: 4
+    Damage: 6
     PelletsPerShot: 12
     Knockback: 1
     RoundsPerMinute: 95

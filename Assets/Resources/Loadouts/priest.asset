@@ -10,21 +10,20 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: c13e835ccff8ac64baeb611612fcf70e, type: 3}
-  m_Name: Loadout_juggernaut
+  m_Name: priest
   m_EditorClassIdentifier: Assembly-CSharp::Gunspire.StartingLoadoutAsset
   Loadout:
-    Id: juggernaut
-    DisplayName: Juggernaut
-    Description: Soaks what the others dodge. The minigun takes a moment to spin
-      up, so you have to commit to standing there.
+    Id: priest
+    DisplayName: Priest
+    Description: See the future prophecised by the gods and enact their wrath.
     Dexterity: 10
     Power: 10
     Athletics: 10
-    Endurance: 11
+    Endurance: 10
     Luck: 10
-    WeaponId: minigun
+    WeaponId: rifle
     MovementAbilityId: dash
     MeleeSpellId: bash
-    SpellId: 
-    SpellSlot: 1
+    SpellId: prismatic_chains
+    SpellSlot: 0
     TintOverride: {r: 0, g: 0, b: 0, a: 0}

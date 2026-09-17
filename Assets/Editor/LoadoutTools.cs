@@ -25,7 +25,7 @@ namespace Gunspire.EditorTools
             if (!AssetDatabase.IsValidFolder(FolderPath))
                 AssetDatabase.CreateFolder(RootFolder, "Loadouts");
 
-            List<LoadoutDefinition> builtIn = LoadoutLibrary.BuiltIn();
+            List<LoadoutDefinition> builtIn = new List<LoadoutDefinition>();
             Object last = null;
             int created = 0;
 

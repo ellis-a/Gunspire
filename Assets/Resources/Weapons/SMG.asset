@@ -10,7 +10,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 48821f08f7c573342a9dd749bc0fa5b3, type: 3}
-  m_Name: SMG
+  m_Name: smg
   m_EditorClassIdentifier: Assembly-CSharp::Gunspire.WeaponAsset
   Definition:
     Id: smg
@@ -21,11 +21,11 @@ MonoBehaviour:
     Delivery: 0
     Mode: 1
     DamageType: 0
-    Damage: 6
+    Damage: 9
     PelletsPerShot: 1
     Knockback: 0
     RoundsPerMinute: 750
-    MagazineSize: 30
+    MagazineSize: 35
     ReloadTime: 1.5
     BurstCount: 1
     BurstInterval: 0.06
