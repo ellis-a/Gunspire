@@ -1,0 +1,37 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cf3f71eaef511144985c147b1a3c0095, type: 3}
+  m_Name: Familiar_aegis_mote
+  m_EditorClassIdentifier: Assembly-CSharp::Gunspire.FamiliarAsset
+  Familiar:
+    Id: aegis_mote
+    DisplayName: Aegis Mote
+    Description: Orbits you and blocks an enemy projectile every few seconds.
+    Health: 70
+    MoveSpeed: 12
+    Radius: 0.35
+    FollowDistance: 1.4
+    HoverHeight: 1.3
+    EngageRange: 18
+    BodyDiameter: 0.6
+    BodyColor: {r: 0.9, g: 0.85, b: 0.5, a: 1}
+    EyeColor: {r: 1, g: 1, b: 1, a: 1}
+    Attacks: []
+    Auras: []
+    Perk: 2
+    PerkInterval: 3
+    PerkAmount: 1
+    PerkRange: 4
+    DamageMultiplier: 1
+  references:
+    version: 2
+    RefIds: []

@@ -3,7 +3,7 @@
 How to build the roster in `BoonDesign.md` (229 boons) and the shillings currency on top of the code as it
 stands. The shop itself is out of scope; only what the shop boons need to store is covered. Built so far:
 retiring the old roster, the framework, the supporting systems and the whole roster (every step of the build
-order; each built section says so). Assets and icons are still to come.
+order; each built section says so), and the boon and familiar assets. Only the icon art is still to come.
 
 ---
 
@@ -610,15 +610,32 @@ Done, along with removing the alt fire lock.
 6. **Systems.** Done: familiars, Mirror Barrel, Third Hand, Twincast, Afterimage, Beetle Swarm, Ghostrealm,
    Doomed and Otherworldly Beauty.
 
-Still to do: generate the boon and familiar assets with `Create Boon Assets` and `Create Familiar Assets`, and
-assign icons.
+7. **Assets.** Done: 229 boon assets in `Resources/Boons` (a folder per family, and one per school under
+   `School`) and 13 familiar assets in `Resources/Familiars`.
 
-Authoring follows the spells: built-ins in code, then `Create Boon Assets` generates the assets, and icons are
-assigned on the assets afterwards.
+Authoring follows the spells: built-ins in code, then `Create Boon Assets` generates the assets. **The assets
+now win.** A change to a boon in code does nothing until its asset is deleted and regenerated, or the same
+change is made on the asset. `Create Boon Assets` never overwrites; it only adds boons that have no asset,
+matched by id wherever the asset sits.
+
+**Icons.** There is no boon art yet; until there is, the UI draws a tinted plate with initials. To add art:
+
+1. Put the images anywhere under `Assets/Art/Icons/Boons`, named by boon id. Dashes count as underscores
+   and case is ignored, so `dead-mans-hand.png` is Dead Man's Hand, the same naming as the spell icons.
+2. Run **Assign Boon Icons**. It fills in every boon asset that has no icon, never replaces one, and lists
+   images whose name matches no boon.
+3. **Log Missing Icons** lists what is left.
+
+Familiars have no icon of their own; the boon that grants each one carries it.
 
 ### Verification
 
-`Verify Boons`, in Verify All. Built, and bite-tested against 14 deliberate faults. It checks:
+`Verify Boons`, in Verify All. Built, and bite-tested against 17 deliberate faults. It checks the pool the game
+plays (code merged with assets), and:
+
+- **Assets.** Every boon in the code roster is in the pool and nothing else is. Each asset keeps its
+  built-in's family, group, effect types (behaviours by their own type) and gate types. Numbers, names and
+  levels are free to be tuned.
 
 - **Shape.**
   - Every boon has a name, description, group and at least one effect (Familiarity excepted), and ids are

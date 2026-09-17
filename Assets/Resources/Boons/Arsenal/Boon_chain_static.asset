@@ -1,0 +1,43 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 68fa3f1d514b1bc49ab86965246e01b4, type: 3}
+  m_Name: Boon_chain_static
+  m_EditorClassIdentifier: Assembly-CSharp::Gunspire.BoonAsset
+  Boon:
+    Id: chain_static
+    Name: Chain Static
+    Description: A gun hit sends a bolt of lightning to an enemy near the one you
+      hit, dealing energy damage.
+    Rarity: 1
+    Family: 1
+    Group: On-hit
+    Icon: {fileID: 0}
+    MaxLevel: 3
+    Tags: []
+    Effects:
+    - rid: 5643702320997859662
+    Requirements: []
+  references:
+    version: 2
+    RefIds:
+    - rid: 5643702320997859662
+      type: {class: BoonBehaviourEffect, ns: Gunspire, asm: Assembly-CSharp}
+      data:
+        MinLevel: 1
+        Behaviour:
+          rid: 5643702320997859663
+    - rid: 5643702320997859663
+      type: {class: ChainStaticBehaviour, ns: Gunspire, asm: Assembly-CSharp}
+      data:
+        SharePerLevel: 0.3
+        Range: 8
+        Cooldown: 0.2

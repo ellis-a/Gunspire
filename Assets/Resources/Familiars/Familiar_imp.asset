@@ -1,0 +1,88 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cf3f71eaef511144985c147b1a3c0095, type: 3}
+  m_Name: Familiar_imp
+  m_EditorClassIdentifier: Assembly-CSharp::Gunspire.FamiliarAsset
+  Familiar:
+    Id: imp
+    DisplayName: Imp
+    Description: Throws fireballs at whatever you are fighting.
+    Health: 55
+    MoveSpeed: 8
+    Radius: 0.35
+    FollowDistance: 2.8
+    HoverHeight: 1.9
+    EngageRange: 20
+    BodyDiameter: 0.6
+    BodyColor: {r: 1, g: 0.48, b: 0.15, a: 1}
+    EyeColor: {r: 1, g: 0.85, b: 0.4, a: 1}
+    Attacks:
+    - Name: Fireball
+      MinRange: 0
+      MaxRange: 22
+      Cooldown: 1.3
+      InitialDelay: 0.6
+      RequiresLineOfSight: 1
+      Priority: 0
+      Reach: 0
+      DamageType: 1
+      Category: 0
+      Tint: {r: 1, g: 0.48, b: 0.15, a: 1}
+      Sequence:
+      - rid: 5643702320999956482
+      - rid: 5643702320999956483
+    Auras: []
+    Perk: 0
+    PerkInterval: 4
+    PerkAmount: 1
+    PerkRange: 12
+    DamageMultiplier: 1
+  references:
+    version: 2
+    RefIds:
+    - rid: 5643702320999956482
+      type: {class: AimAtTargetEffect, ns: Gunspire, asm: Assembly-CSharp}
+      data:
+        AimHeight: 0.95
+        Flatten: 0
+    - rid: 5643702320999956483
+      type: {class: SpawnProjectileEffect, ns: Gunspire, asm: Assembly-CSharp}
+      data:
+        Damage: 16
+        Speed: 30
+        Radius: 0.2
+        Lifetime: 3
+        Gravity: 0
+        Knockback: 0
+        Pierce: 0
+        Homing: 0
+        Count: 1
+        ArcSpreadDegrees: 0
+        SpreadDegrees: 1
+        SplashRadius: 1.8
+        SplashDamage: 8
+        ScaleSplashWithLevel: 1
+        SwayAmplitude: 0
+        SwayFrequency: 2
+        PassesThroughWalls: 0
+        Trail:
+          Radius: 0
+          Spacing: 1.5
+          SegmentLifetime: 2.5
+          DamagePerTick: 3
+          TickInterval: 0.5
+          DamageType: 1
+          Tint: {r: 1, g: 0.5, b: 0.15, a: 1}
+          Statuses: []
+        ExtraCountAtFullCharge: 0
+        ExtraCountPerSoul: 0
+        OnHit: []

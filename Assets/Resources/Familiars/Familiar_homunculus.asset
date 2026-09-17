@@ -1,0 +1,38 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cf3f71eaef511144985c147b1a3c0095, type: 3}
+  m_Name: Familiar_homunculus
+  m_EditorClassIdentifier: Assembly-CSharp::Gunspire.FamiliarAsset
+  Familiar:
+    Id: homunculus
+    DisplayName: Homunculus
+    Description: Enemies attack it instead of you. If it dies, it stays dead until
+      the next floor.
+    Health: 100
+    MoveSpeed: 7
+    Radius: 0.45
+    FollowDistance: 3
+    HoverHeight: 0.8
+    EngageRange: 18
+    BodyDiameter: 0.8
+    BodyColor: {r: 0.75, g: 0.45, b: 0.4, a: 1}
+    EyeColor: {r: 1, g: 0.9, b: 0.5, a: 1}
+    Attacks: []
+    Auras: []
+    Perk: 6
+    PerkInterval: 4
+    PerkAmount: 1
+    PerkRange: 12
+    DamageMultiplier: 1
+  references:
+    version: 2
+    RefIds: []

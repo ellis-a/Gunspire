@@ -1,0 +1,61 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cf3f71eaef511144985c147b1a3c0095, type: 3}
+  m_Name: Familiar_wisp
+  m_EditorClassIdentifier: Assembly-CSharp::Gunspire.FamiliarAsset
+  Familiar:
+    Id: wisp
+    DisplayName: Wisp
+    Description: A mote of light that heals you while there is something to fight.
+    Health: 60
+    MoveSpeed: 8.5
+    Radius: 0.35
+    FollowDistance: 2.2
+    HoverHeight: 1.9
+    EngageRange: 24
+    BodyDiameter: 0.6
+    BodyColor: {r: 0.7, g: 1, b: 0.8, a: 1}
+    EyeColor: {r: 1, g: 1, b: 0.9, a: 1}
+    Attacks:
+    - Name: Mend
+      MinRange: 0
+      MaxRange: 999
+      Cooldown: 4
+      InitialDelay: 2
+      RequiresLineOfSight: 0
+      Priority: 0
+      Reach: 0
+      DamageType: 1
+      Category: 0
+      Tint: {r: 0.7, g: 1, b: 0.8, a: 1}
+      Sequence:
+      - rid: 5643702320999956480
+      - rid: 5643702320999956481
+    Auras: []
+    Perk: 0
+    PerkInterval: 4
+    PerkAmount: 1
+    PerkRange: 12
+    DamageMultiplier: 1
+  references:
+    version: 2
+    RefIds:
+    - rid: 5643702320999956480
+      type: {class: HealOwnerEffect, ns: Gunspire, asm: Assembly-CSharp}
+      data:
+        Amount: 12
+        ScaleWithPower: 1
+    - rid: 5643702320999956481
+      type: {class: VfxOnOwnerEffect, ns: Gunspire, asm: Assembly-CSharp}
+      data:
+        Diameter: 1.4
+        Lifetime: 0.4

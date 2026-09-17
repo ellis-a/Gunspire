@@ -1,0 +1,49 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 68fa3f1d514b1bc49ab86965246e01b4, type: 3}
+  m_Name: Boon_perfect_timing
+  m_EditorClassIdentifier: Assembly-CSharp::Gunspire.BoonAsset
+  Boon:
+    Id: perfect_timing
+    Name: Perfect Timing
+    Description: Using your movement spell just before an enemy attack lands refunds
+      it and blinds the attacker.
+    Rarity: 2
+    Family: 3
+    Group: Divination
+    Icon: {fileID: 0}
+    MaxLevel: 2
+    Tags: []
+    Effects:
+    - rid: 5643702320997859778
+    Requirements:
+    - rid: 5643702320997859779
+  references:
+    version: 2
+    RefIds:
+    - rid: 5643702320997859778
+      type: {class: BoonBehaviourEffect, ns: Gunspire, asm: Assembly-CSharp}
+      data:
+        MinLevel: 1
+        Behaviour:
+          rid: 5643702320997859780
+    - rid: 5643702320997859779
+      type: {class: SchoolEquippedRequirement, ns: Gunspire, asm: Assembly-CSharp}
+      data:
+        School: 3
+    - rid: 5643702320997859780
+      type: {class: PerfectTimingBehaviour, ns: Gunspire, asm: Assembly-CSharp}
+      data:
+        Range: 20
+        Window: 0.35
+        WindowPerLevel: 0.15
+        BlindSeconds: 3

@@ -1,0 +1,45 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 68fa3f1d514b1bc49ab86965246e01b4, type: 3}
+  m_Name: Boon_grave_hunger
+  m_EditorClassIdentifier: Assembly-CSharp::Gunspire.BoonAsset
+  Boon:
+    Id: grave_hunger
+    Name: Grave Hunger
+    Description: Kills have a chance to leave an extra soul.
+    Rarity: 0
+    Family: 3
+    Group: Death
+    Icon: {fileID: 0}
+    MaxLevel: 5
+    Tags: []
+    Effects:
+    - rid: 5643702320997859794
+    Requirements:
+    - rid: 5643702320997859795
+  references:
+    version: 2
+    RefIds:
+    - rid: 5643702320997859794
+      type: {class: BoonBehaviourEffect, ns: Gunspire, asm: Assembly-CSharp}
+      data:
+        MinLevel: 1
+        Behaviour:
+          rid: 5643702320997859796
+    - rid: 5643702320997859795
+      type: {class: SchoolEquippedRequirement, ns: Gunspire, asm: Assembly-CSharp}
+      data:
+        School: 4
+    - rid: 5643702320997859796
+      type: {class: GraveHungerBehaviour, ns: Gunspire, asm: Assembly-CSharp}
+      data:
+        ChancePerLevel: 0.05

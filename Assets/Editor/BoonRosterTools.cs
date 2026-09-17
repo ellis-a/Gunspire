@@ -41,7 +41,11 @@ namespace Gunspire.EditorTools
                 WorldClock.Reset();
                 TargetRegistry.Clear();
 
-                List<Boon> roster = BoonLibrary.BuiltIn();
+                // The pool the game plays: the code roster with any authored assets merged over it. Checking
+                // this rather than the built-ins alone catches an asset that lost part of a boon on the way.
+                BoonLibrary.Reload();
+                var roster = new List<Boon>(BoonLibrary.All);
+                CheckAssetsMatchRoster(roster, problems);
                 CheckStructure(roster, problems);
                 CheckSmoke(roster, problems);
                 CheckOffers(problems);
@@ -134,6 +138,54 @@ namespace Gunspire.EditorTools
             Expect(counts, Rarity.Uncommon, Uncommons, problems);
             Expect(counts, Rarity.Rare, Rares, problems);
             Expect(counts, Rarity.Mythic, Mythics, problems);
+        }
+
+        /// <summary>
+        /// Every built-in boon is in the pool and nothing else is, and an asset keeps its built-in's shape: family,
+        /// group, effect types and gate types. Numbers, names and levels are free to be tuned.
+        /// </summary>
+        private static void CheckAssetsMatchRoster(List<Boon> pool, List<string> problems)
+        {
+            var builtIn = new Dictionary<string, Boon>();
+            foreach (Boon boon in BoonLibrary.BuiltIn()) builtIn[boon.Id] = boon;
+
+            var seen = new HashSet<string>();
+            foreach (Boon boon in pool)
+            {
+                seen.Add(boon.Id);
+                if (!builtIn.TryGetValue(boon.Id, out Boon code))
+                {
+                    problems.Add("an asset adds \"" + boon.Id + "\", which is not in the code roster");
+                    continue;
+                }
+                if (ReferenceEquals(boon, code)) continue;
+
+                if (boon.Family != code.Family || boon.Group != code.Group)
+                    problems.Add("the asset for \"" + boon.Id + "\" moved it to " + boon.Family + "/" + boon.Group);
+                if (Shape(boon.Effects) != Shape(code.Effects))
+                    problems.Add("the asset for \"" + boon.Id + "\" has effects [" + Shape(boon.Effects) + "], the code has ["
+                                 + Shape(code.Effects) + "]");
+                if (Shape(boon.Requirements) != Shape(code.Requirements))
+                    problems.Add("the asset for \"" + boon.Id + "\" has gates [" + Shape(boon.Requirements) + "], the code has ["
+                                 + Shape(code.Requirements) + "]");
+            }
+
+            foreach (string id in builtIn.Keys)
+                if (!seen.Contains(id)) problems.Add("\"" + id + "\" is missing from the pool");
+        }
+
+        /// <summary>The type names of a list's entries, behaviours by their own type.</summary>
+        private static string Shape<T>(List<T> items)
+        {
+            if (items == null) return string.Empty;
+            var names = new List<string>();
+            foreach (T item in items)
+            {
+                if (item == null) names.Add("null");
+                else if (item is BoonBehaviourEffect be) names.Add(be.Behaviour != null ? be.Behaviour.GetType().Name : "empty behaviour");
+                else names.Add(item.GetType().Name);
+            }
+            return string.Join(", ", names);
         }
 
         private static void Expect(Dictionary<Rarity, int> counts, Rarity rarity, int expected, List<string> problems)

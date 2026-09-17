@@ -1,0 +1,61 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 68fa3f1d514b1bc49ab86965246e01b4, type: 3}
+  m_Name: Boon_commando
+  m_EditorClassIdentifier: Assembly-CSharp::Gunspire.BoonAsset
+  Boon:
+    Id: commando
+    Name: Commando
+    Description: +1 Dexterity, +1 Athletics, +1 Endurance.
+    Rarity: 1
+    Family: 0
+    Group: Stats
+    Icon: {fileID: 0}
+    MaxLevel: 5
+    Tags:
+    - health
+    Effects:
+    - rid: 5643702320997859363
+    - rid: 5643702320997859364
+    - rid: 5643702320997859365
+    Requirements:
+    - rid: 5643702320997859366
+    - rid: 5643702320997859367
+  references:
+    version: 2
+    RefIds:
+    - rid: 5643702320997859363
+      type: {class: ModifyStatEffect, ns: Gunspire, asm: Assembly-CSharp}
+      data:
+        MinLevel: 1
+        Stat: 0
+        Points: 1
+    - rid: 5643702320997859364
+      type: {class: ModifyStatEffect, ns: Gunspire, asm: Assembly-CSharp}
+      data:
+        MinLevel: 1
+        Stat: 2
+        Points: 1
+    - rid: 5643702320997859365
+      type: {class: ModifyStatEffect, ns: Gunspire, asm: Assembly-CSharp}
+      data:
+        MinLevel: 1
+        Stat: 3
+        Points: 1
+    - rid: 5643702320997859366
+      type: {class: NotWithBoonRequirement, ns: Gunspire, asm: Assembly-CSharp}
+      data:
+        BoonId: cocky
+    - rid: 5643702320997859367
+      type: {class: NotWithBoonRequirement, ns: Gunspire, asm: Assembly-CSharp}
+      data:
+        BoonId: glass_soul

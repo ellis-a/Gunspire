@@ -1,0 +1,43 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 68fa3f1d514b1bc49ab86965246e01b4, type: 3}
+  m_Name: Boon_kill_streak
+  m_EditorClassIdentifier: Assembly-CSharp::Gunspire.BoonAsset
+  Boon:
+    Id: kill_streak
+    Name: Kill Streak
+    Description: A kill within 3 seconds of another grants a short, stacking damage
+      bonus.
+    Rarity: 0
+    Family: 0
+    Group: Damage
+    Icon: {fileID: 0}
+    MaxLevel: 3
+    Tags: []
+    Effects:
+    - rid: 5643702320997859465
+    Requirements: []
+  references:
+    version: 2
+    RefIds:
+    - rid: 5643702320997859465
+      type: {class: BoonBehaviourEffect, ns: Gunspire, asm: Assembly-CSharp}
+      data:
+        MinLevel: 1
+        Behaviour:
+          rid: 5643702320997859466
+    - rid: 5643702320997859466
+      type: {class: KillStreakBehaviour, ns: Gunspire, asm: Assembly-CSharp}
+      data:
+        Window: 3
+        MaxStacks: 10
+        PerStackPerLevel: 0.02

@@ -1,0 +1,100 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cf3f71eaef511144985c147b1a3c0095, type: 3}
+  m_Name: Familiar_seer
+  m_EditorClassIdentifier: Assembly-CSharp::Gunspire.FamiliarAsset
+  Familiar:
+    Id: seer
+    DisplayName: Seer
+    Description: Zaps the enemy nearest your crosshair and marks it, so your next
+      hit on it lands harder.
+    Health: 45
+    MoveSpeed: 8
+    Radius: 0.35
+    FollowDistance: 2.8
+    HoverHeight: 1.9
+    EngageRange: 30
+    BodyDiameter: 0.6
+    BodyColor: {r: 0.8, g: 0.5, b: 1, a: 1}
+    EyeColor: {r: 1, g: 0.95, b: 0.6, a: 1}
+    Attacks:
+    - Name: Glimpse
+      MinRange: 0
+      MaxRange: 22
+      Cooldown: 2
+      InitialDelay: 0.6
+      RequiresLineOfSight: 1
+      Priority: 0
+      Reach: 0
+      DamageType: 2
+      Category: 0
+      Tint: {r: 0.8, g: 0.5, b: 1, a: 1}
+      Sequence:
+      - rid: 5643702320999956489
+      - rid: 5643702320999956490
+      - rid: 5643702320999956491
+    Auras: []
+    Perk: 1
+    PerkInterval: 4
+    PerkAmount: 1
+    PerkRange: 12
+    DamageMultiplier: 1
+  references:
+    version: 2
+    RefIds:
+    - rid: 5643702320999956489
+      type: {class: AimAtTargetEffect, ns: Gunspire, asm: Assembly-CSharp}
+      data:
+        AimHeight: 0.95
+        Flatten: 0
+    - rid: 5643702320999956490
+      type: {class: StatusPayloadEffect, ns: Gunspire, asm: Assembly-CSharp}
+      data:
+        Status: 8
+        Duration: 6
+        Stacks: 1
+        StacksPerLevel: 0
+        Magnitude: 0.3
+        DurationPerLevel: 0
+        MagnitudePerLevel: 0
+    - rid: 5643702320999956491
+      type: {class: SpawnProjectileEffect, ns: Gunspire, asm: Assembly-CSharp}
+      data:
+        Damage: 9
+        Speed: 90
+        Radius: 0.12
+        Lifetime: 3
+        Gravity: 0
+        Knockback: 0
+        Pierce: 0
+        Homing: 0
+        Count: 1
+        ArcSpreadDegrees: 0
+        SpreadDegrees: 1
+        SplashRadius: 0
+        SplashDamage: 0
+        ScaleSplashWithLevel: 1
+        SwayAmplitude: 0
+        SwayFrequency: 2
+        PassesThroughWalls: 0
+        Trail:
+          Radius: 0
+          Spacing: 1.5
+          SegmentLifetime: 2.5
+          DamagePerTick: 3
+          TickInterval: 0.5
+          DamageType: 1
+          Tint: {r: 1, g: 0.5, b: 0.15, a: 1}
+          Statuses: []
+        ExtraCountAtFullCharge: 0
+        ExtraCountPerSoul: 0
+        OnHit: []

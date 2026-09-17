@@ -1,0 +1,37 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cf3f71eaef511144985c147b1a3c0095, type: 3}
+  m_Name: Familiar_magpie
+  m_EditorClassIdentifier: Assembly-CSharp::Gunspire.FamiliarAsset
+  Familiar:
+    Id: magpie
+    DisplayName: Magpie
+    Description: Fetches health and mana orbs for you.
+    Health: 50
+    MoveSpeed: 10
+    Radius: 0.35
+    FollowDistance: 2.8
+    HoverHeight: 1.9
+    EngageRange: 18
+    BodyDiameter: 0.6
+    BodyColor: {r: 0.15, g: 0.2, b: 0.35, a: 1}
+    EyeColor: {r: 0.9, g: 0.95, b: 1, a: 1}
+    Attacks: []
+    Auras: []
+    Perk: 3
+    PerkInterval: 4
+    PerkAmount: 1
+    PerkRange: 25
+    DamageMultiplier: 1
+  references:
+    version: 2
+    RefIds: []

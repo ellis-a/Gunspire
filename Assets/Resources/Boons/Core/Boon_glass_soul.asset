@@ -1,0 +1,47 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 68fa3f1d514b1bc49ab86965246e01b4, type: 3}
+  m_Name: Boon_glass_soul
+  m_EditorClassIdentifier: Assembly-CSharp::Gunspire.BoonAsset
+  Boon:
+    Id: glass_soul
+    Name: Glass Soul
+    Description: Your health is set to 1, but you gain a shield that fully refills
+      after 3 seconds without taking damage.
+    Rarity: 3
+    Family: 0
+    Group: Combat
+    Icon: {fileID: 0}
+    MaxLevel: 1
+    Tags: []
+    Effects:
+    - rid: 5643702320997859551
+    Requirements:
+    - rid: 5643702320997859552
+  references:
+    version: 2
+    RefIds:
+    - rid: 5643702320997859551
+      type: {class: BoonBehaviourEffect, ns: Gunspire, asm: Assembly-CSharp}
+      data:
+        MinLevel: 1
+        Behaviour:
+          rid: 5643702320997859553
+    - rid: 5643702320997859552
+      type: {class: NotWithBoonRequirement, ns: Gunspire, asm: Assembly-CSharp}
+      data:
+        BoonId: cocky
+    - rid: 5643702320997859553
+      type: {class: GlassSoulBehaviour, ns: Gunspire, asm: Assembly-CSharp}
+      data:
+        Capacity: 100
+        RefillDelay: 3

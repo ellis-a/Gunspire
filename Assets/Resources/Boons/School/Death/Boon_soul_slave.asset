@@ -1,0 +1,50 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 68fa3f1d514b1bc49ab86965246e01b4, type: 3}
+  m_Name: Boon_soul_slave
+  m_EditorClassIdentifier: Assembly-CSharp::Gunspire.BoonAsset
+  Boon:
+    Id: soul_slave
+    Name: Soul Slave
+    Description: Spending a soul summons a short-lived ghost that flies at an enemy
+      and explodes, dealing necrotic damage around it.
+    Rarity: 1
+    Family: 3
+    Group: Death
+    Icon: {fileID: 0}
+    MaxLevel: 3
+    Tags:
+    - summon
+    Effects:
+    - rid: 5643702320997859800
+    Requirements:
+    - rid: 5643702320997859801
+  references:
+    version: 2
+    RefIds:
+    - rid: 5643702320997859800
+      type: {class: BoonBehaviourEffect, ns: Gunspire, asm: Assembly-CSharp}
+      data:
+        MinLevel: 1
+        Behaviour:
+          rid: 5643702320997859802
+    - rid: 5643702320997859801
+      type: {class: SchoolEquippedRequirement, ns: Gunspire, asm: Assembly-CSharp}
+      data:
+        School: 4
+    - rid: 5643702320997859802
+      type: {class: SoulSlaveBehaviour, ns: Gunspire, asm: Assembly-CSharp}
+      data:
+        Damage: 15
+        DamagePerLevel: 10
+        Radius: 2.5
+        Range: 30

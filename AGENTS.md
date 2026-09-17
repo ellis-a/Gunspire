@@ -50,6 +50,7 @@ Everything lives under **Gunspire** in the menu bar.
 | Generate assets from the code rosters | Create **Weapon / Spell / Boon / Enemy / Familiar / Starting Loadout** Assets |
 | Read a roster as a table | Log **Weapon Balance / Spell / Boon / Enemy / Familiar / Loadout / Sound** Table |
 | Check things resolve | Verify Enemy Roster, Log Valid Ids, Log Missing Icons |
+| Give boons their icons | Assign Boon Icons (images in `Assets/Art/Icons/Boons`, named by boon id) |
 | Check the rules hold | Verify Stats / Debuffs / Combat Core / Enemy AI / World Systems / Player Systems / Spell Content / Boon Framework / Boon Systems / Boons / Rooms / Spell Slots / Holster / Shot Spread / Perception / Wall Zip Math / Maze Generator / Maze Navigation |
 | Run every check at once | Verify All - also works from batch mode with `-executeMethod Gunspire.EditorTools.VerifyAll.Run` |
 | Migrate authored assets | Migrations / 1 - Report, 2 - Apply, 3 - Verify Nothing Pending |

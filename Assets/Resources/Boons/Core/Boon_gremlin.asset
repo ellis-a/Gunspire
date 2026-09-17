@@ -1,0 +1,46 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 68fa3f1d514b1bc49ab86965246e01b4, type: 3}
+  m_Name: Boon_gremlin
+  m_EditorClassIdentifier: Assembly-CSharp::Gunspire.BoonAsset
+  Boon:
+    Id: gremlin
+    Name: Gremlin
+    Description: A gremlin that reloads your holstered gun.
+    Rarity: 1
+    Family: 0
+    Group: Familiars
+    Icon: {fileID: 0}
+    MaxLevel: 1
+    Tags:
+    - familiar
+    Effects:
+    - rid: 5643702320997859511
+    Requirements:
+    - rid: 5643702320997859512
+  references:
+    version: 2
+    RefIds:
+    - rid: 5643702320997859511
+      type: {class: GrantFamiliarEffect, ns: Gunspire, asm: Assembly-CSharp}
+      data:
+        MinLevel: 1
+        FamiliarId: gremlin
+        DamagePerLevel: 0.35
+        HealthPerLevel: 0.3
+    - rid: 5643702320997859512
+      type: {class: TagLimitRequirement, ns: Gunspire, asm: Assembly-CSharp}
+      data:
+        Tag: familiar
+        Limit: 1
+        RaisedByBoon: familiarity
+        OwnBoonId: gremlin

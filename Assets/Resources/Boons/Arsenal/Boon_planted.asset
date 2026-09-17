@@ -1,0 +1,46 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 68fa3f1d514b1bc49ab86965246e01b4, type: 3}
+  m_Name: Boon_planted
+  m_EditorClassIdentifier: Assembly-CSharp::Gunspire.BoonAsset
+  Boon:
+    Id: planted
+    Name: Planted
+    Description: While you stand still, heavy guns have no spread and never spin
+      down.
+    Rarity: 2
+    Family: 1
+    Group: Classes
+    Icon: {fileID: 0}
+    MaxLevel: 1
+    Tags: []
+    Effects:
+    - rid: 5643702320997859614
+    Requirements:
+    - rid: 5643702320997859615
+  references:
+    version: 2
+    RefIds:
+    - rid: 5643702320997859614
+      type: {class: BoonBehaviourEffect, ns: Gunspire, asm: Assembly-CSharp}
+      data:
+        MinLevel: 1
+        Behaviour:
+          rid: 5643702320997859616
+    - rid: 5643702320997859615
+      type: {class: WeaponClassCarriedRequirement, ns: Gunspire, asm: Assembly-CSharp}
+      data:
+        Class: 6
+    - rid: 5643702320997859616
+      type: {class: PlantedBehaviour, ns: Gunspire, asm: Assembly-CSharp}
+      data:
+        StillSpeed: 0.5

@@ -1,0 +1,59 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 68fa3f1d514b1bc49ab86965246e01b4, type: 3}
+  m_Name: Boon_quickdraw
+  m_EditorClassIdentifier: Assembly-CSharp::Gunspire.BoonAsset
+  Boon:
+    Id: quickdraw
+    Name: Quickdraw
+    Description: Swapping to a handgun is instant, and its first shot deals more
+      damage.
+    Rarity: 0
+    Family: 1
+    Group: Classes
+    Icon: {fileID: 0}
+    MaxLevel: 3
+    Tags: []
+    Effects:
+    - rid: 5643702320997859568
+    - rid: 5643702320997859569
+    Requirements:
+    - rid: 5643702320997859570
+  references:
+    version: 2
+    RefIds:
+    - rid: 5643702320997859568
+      type: {class: ModifyGunClassEffect, ns: Gunspire, asm: Assembly-CSharp}
+      data:
+        MinLevel: 1
+        Class: 1
+        Attribute: 31
+        Mode: 1
+        Amount: 10
+    - rid: 5643702320997859569
+      type: {class: BoonBehaviourEffect, ns: Gunspire, asm: Assembly-CSharp}
+      data:
+        MinLevel: 1
+        Behaviour:
+          rid: 5643702320997859571
+    - rid: 5643702320997859570
+      type: {class: WeaponClassCarriedRequirement, ns: Gunspire, asm: Assembly-CSharp}
+      data:
+        Class: 1
+    - rid: 5643702320997859571
+      type: {class: ClassRoundBehaviour, ns: Gunspire, asm: Assembly-CSharp}
+      data:
+        Class: 1
+        When: 0
+        Threshold: 0.25
+        PerLevel: 0.15
+        Multiplier: 1

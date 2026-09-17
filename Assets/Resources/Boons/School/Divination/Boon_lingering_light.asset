@@ -1,0 +1,55 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 68fa3f1d514b1bc49ab86965246e01b4, type: 3}
+  m_Name: Boon_lingering_light
+  m_EditorClassIdentifier: Assembly-CSharp::Gunspire.BoonAsset
+  Boon:
+    Id: lingering_light
+    Name: Lingering Light
+    Description: Divination zones and buffs last longer, such as Consecrate, Foretell
+      and Path of Light.
+    Rarity: 0
+    Family: 3
+    Group: Divination
+    Icon: {fileID: 0}
+    MaxLevel: 5
+    Tags: []
+    Effects:
+    - rid: 5643702320997859767
+    - rid: 5643702320997859768
+    Requirements:
+    - rid: 5643702320997859769
+  references:
+    version: 2
+    RefIds:
+    - rid: 5643702320997859767
+      type: {class: ModifySpellEffectEffect, ns: Gunspire, asm: Assembly-CSharp}
+      data:
+        MinLevel: 1
+        Channel: 1
+        AnySchool: 0
+        School: 3
+        Statuses: 
+        Amount: 0.1
+    - rid: 5643702320997859768
+      type: {class: ModifySpellEffectEffect, ns: Gunspire, asm: Assembly-CSharp}
+      data:
+        MinLevel: 1
+        Channel: 2
+        AnySchool: 0
+        School: 3
+        Statuses: 
+        Amount: 0.1
+    - rid: 5643702320997859769
+      type: {class: SchoolEquippedRequirement, ns: Gunspire, asm: Assembly-CSharp}
+      data:
+        School: 3
