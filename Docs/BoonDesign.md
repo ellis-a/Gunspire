@@ -235,7 +235,7 @@ To be written.
 | Cold Blood | Rare | 1 | At full health, your critical hit chance is doubled |
 | Monarch | Rare | 1 | Faster cooldowns and mana regeneration. Taking damage loses the effect until the enemy that dealt it dies |
 | Mana Shield | Rare | 1 | Half of the damage you take drains mana instead. Your maximum health is halved |
-| Cocky | Rare | 1 | Your maximum health becomes 1 and cannot be raised. You deal double damage |
+| Cocky | Rare | 1 | Your maximum health becomes 1 and cannot be raised. You deal triple damage |
 | Phylactery | Rare | 1 | Survive one killing blow per run, returning to half health. Can only ever be taken once |
 | Pinball Wizard | Uncommon | 3 | Your knockback throws enemies further and its impacts deal more damage, and knocked enemies knock back what they hit |
 | Glass Soul | Mythic | 1 | Your health is set to 1, but you gain a shield that fully refills after 3 seconds without taking damage |
