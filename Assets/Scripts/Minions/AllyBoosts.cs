@@ -15,15 +15,16 @@ namespace Gunspire
         public float MoveSpeed;
 
         public float CompanionHealth;
+        public float UndeadHealth;
         public float CompanionDamage;
         public float CompanionMoveSpeed;
 
         /// <summary>Puts the bonuses on a freshly summoned minion's sheet.</summary>
-        public void ApplyTo(CharacterSheet sheet, bool companion)
+        public void ApplyTo(CharacterSheet sheet, bool companion, bool undead = false)
         {
             if (sheet == null) return;
 
-            float health = Health + (companion ? CompanionHealth : 0f);
+            float health = Health + (companion ? CompanionHealth : 0f) + (undead ? UndeadHealth : 0f);
             float damage = Damage + (companion ? CompanionDamage : 0f);
             float speed = MoveSpeed + (companion ? CompanionMoveSpeed : 0f);
 

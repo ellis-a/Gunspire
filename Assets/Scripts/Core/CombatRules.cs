@@ -33,11 +33,12 @@ namespace Gunspire
     /// <summary>Adjusts a crit roll, knowing who is being hit.</summary>
     public interface ICritRule
     {
-        void AdjustCrit(CharacterSheet attacker, IDamageable target, ref float chance, ref bool forced);
+        /// <summary><paramref name="weapon"/> is the gun for a gun's round, null for anything else.</summary>
+        void AdjustCrit(CharacterSheet attacker, IDamageable target, Weapon weapon, ref float chance, ref bool forced);
     }
 
     /// <summary>
-    /// The rules boons add to combat, read by <see cref="Health"/> and <see cref="Combat.RollCrit(CharacterSheet, IDamageable, out float)"/>.
+    /// The rules boons add to combat, read by <see cref="Health"/> and <see cref="Combat.RollCrit(CharacterSheet, IDamageable, out float, Weapon)"/>.
     /// Static so edit-mode tooling can use them without a run, and cleared when a run starts.
     /// Registering never allocates per hit: each list is walked in place.
     /// </summary>
@@ -107,10 +108,10 @@ namespace Gunspire
             return false;
         }
 
-        public static void AdjustCrit(CharacterSheet attacker, IDamageable target, ref float chance, ref bool forced)
+        public static void AdjustCrit(CharacterSheet attacker, IDamageable target, Weapon weapon, ref float chance, ref bool forced)
         {
             for (int i = 0; i < Crits.Count; i++)
-                Crits[i].AdjustCrit(attacker, target, ref chance, ref forced);
+                Crits[i].AdjustCrit(attacker, target, weapon, ref chance, ref forced);
         }
     }
 }

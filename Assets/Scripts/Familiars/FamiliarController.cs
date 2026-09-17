@@ -37,6 +37,11 @@ namespace Gunspire
         private float _retargetTimer;
         private float _bobPhase;
         private bool _auraApplied;
+        private float _perkTimer;
+        private TargetRegistry.Entry _decoyEntry;
+
+        /// <summary>Enemy projectiles this familiar has blocked, for tooling.</summary>
+        public int Blocked { get; private set; }
 
         // ---- empowerment, driven by spells like Fel Empowerment ----
         private float _empowerTimer;
@@ -80,6 +85,9 @@ namespace Gunspire
                 Health.Damaged += OnDamaged;
             }
 
+            if (def.Perk == FamiliarPerk.Decoy && _decoyEntry == null)
+                _decoyEntry = TargetRegistry.RegisterMinion(transform, Health);
+
             ApplyAura();
         }
 
@@ -96,6 +104,7 @@ namespace Gunspire
 
         private void OnDestroy()
         {
+            ReleaseDecoy();
             if (Health == null) return;
             Health.Died -= OnDied;
             Health.Damaged -= OnDamaged;
@@ -118,6 +127,9 @@ namespace Gunspire
                     _owner.Sheet.AddFlat(aura.Attribute, aura.Amount, this, Definition.DisplayName);
             }
 
+            if (Definition.Perk == FamiliarPerk.LuckAura)
+                _owner.Sheet.SetStatBonus(this, StatType.Luck, Mathf.RoundToInt(Definition.PerkAmount));
+
             _auraApplied = true;
         }
 
@@ -128,12 +140,21 @@ namespace Gunspire
             // Keyed on this component, so it lifts exactly this familiar's contribution even
             // with several of them granting the same attribute.
             _owner.Sheet.RemoveModifiersFrom(this);
+            _owner.Sheet.RemoveStatBonuses(this);
             _auraApplied = false;
+        }
+
+        private void ReleaseDecoy()
+        {
+            if (_decoyEntry == null) return;
+            TargetRegistry.Unregister(_decoyEntry);
+            _decoyEntry = null;
         }
 
         private void OnDied(DamageInfo info)
         {
             RemoveAura();
+            ReleaseDecoy();
 
             Vector3 at = transform.position;
             Color tint = Definition != null ? Definition.BodyColor : Palette.Arcane;
@@ -219,6 +240,90 @@ namespace Gunspire
             Drift();
             FaceTarget();
             TryAttack();
+            StepPerk(WorldClock.DeltaTime);
+        }
+
+        // ---------------------------------------------------------------- perks
+
+        /// <summary>One step of the familiar's perk. Update calls it; public so tooling can drive it.</summary>
+        public void StepPerk(float dt)
+        {
+            if (Definition == null || _owner == null) return;
+            Vector3 around = _owner.transform.position;
+            float range = Definition.PerkRange;
+
+            switch (Definition.Perk)
+            {
+                case FamiliarPerk.BlockProjectiles:
+                    if ((_perkTimer -= dt) > 0f) return;
+                    if (BlockNearestProjectile(around, range)) _perkTimer = Definition.PerkInterval;
+                    return;
+
+                case FamiliarPerk.FetchOrbs:
+                    foreach (OrbPickup orb in OrbPickup.Live)
+                        if ((orb.transform.position - around).sqrMagnitude <= range * range) orb.Attracted = true;
+                    return;
+
+                case FamiliarPerk.ManaNearEnemies:
+                    if (_owner.Mana != null && EnemyNear(around, range)) _owner.Mana.Add(Definition.PerkAmount * dt);
+                    return;
+
+                case FamiliarPerk.ReloadHolstered:
+                    if ((_perkTimer -= dt) > 0f) return;
+                    _perkTimer = Definition.PerkInterval;
+                    ReloadHolstered();
+                    return;
+            }
+        }
+
+        private bool BlockNearestProjectile(Vector3 around, float range)
+        {
+            Projectile nearest = null;
+            float best = range * range;
+            foreach (Projectile p in Projectile.Live)
+            {
+                if (p == null || p.OwnerTeam == Team.Player) continue;
+                float distance = (p.transform.position - around).sqrMagnitude;
+                if (distance > best) continue;
+                best = distance;
+                nearest = p;
+            }
+
+            if (nearest == null) return false;
+
+            Combat.SpawnImpact(nearest.transform.position, Vector3.up, Definition.BodyColor, 0.4f);
+            if (Application.isPlaying) Destroy(nearest.gameObject);
+            else DestroyImmediate(nearest.gameObject);
+            Blocked++;
+            return true;
+        }
+
+        private static bool EnemyNear(Vector3 around, float range)
+        {
+            int count = Physics.OverlapSphereNonAlloc(around, range, SearchBuffer, Layers.EnemyMask, QueryTriggerInteraction.Ignore);
+            for (int i = 0; i < count; i++)
+            {
+                IDamageable candidate = Combat.FindDamageable(SearchBuffer[i]);
+                if (candidate != null && candidate.IsAlive && candidate.Team == Team.Enemy) return true;
+            }
+            return false;
+        }
+
+        /// <summary>Puts a share of a magazine back into every gun the player is not holding.</summary>
+        private void ReloadHolstered()
+        {
+            Holster holster = _owner.Holster;
+            if (holster == null) return;
+
+            for (int i = 0; i < holster.SlotCount; i++)
+            {
+                if (i == holster.ActiveIndex || holster.GetSlot(i) == null) continue;
+
+                int full = holster.MagazineIn(i);
+                int ammo = holster.AmmoIn(i);
+                if (ammo >= full) continue;
+                holster.SetAmmo(i, ammo + Mathf.Max(1, Mathf.CeilToInt(full * Definition.PerkAmount)));
+            }
         }
 
         private void AcquireTarget()
@@ -233,13 +338,21 @@ namespace Gunspire
             int count = Physics.OverlapSphereNonAlloc(_owner.transform.position, Definition.EngageRange,
                 SearchBuffer, Layers.EnemyMask, QueryTriggerInteraction.Ignore);
 
+            // The Seer picks by angle from the player's aim instead of by distance.
+            bool byCrosshair = Definition.Perk == FamiliarPerk.CrosshairTarget;
+            Transform aim = byCrosshair && _owner.SpellContext != null && _owner.SpellContext.Aim != null
+                ? _owner.SpellContext.Aim
+                : _owner.transform;
+
             float best = float.MaxValue;
             for (int i = 0; i < count; i++)
             {
                 IDamageable candidate = Combat.FindDamageable(SearchBuffer[i]);
                 if (candidate == null || !candidate.IsAlive || candidate.Team != Team.Enemy) continue;
 
-                float distance = Vector3.SqrMagnitude(candidate.Transform.position - transform.position);
+                float distance = byCrosshair
+                    ? Vector3.Angle(aim.forward, candidate.Transform.position + Vector3.up * 0.9f - aim.position)
+                    : Vector3.SqrMagnitude(candidate.Transform.position - transform.position);
                 if (distance >= best) continue;
 
                 best = distance;

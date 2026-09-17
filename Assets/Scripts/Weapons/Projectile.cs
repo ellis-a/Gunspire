@@ -52,6 +52,17 @@ namespace Gunspire
         /// <summary>Where it was launched from, for distance rules. Set by <see cref="Launch"/>.</summary>
         public Vector3 LaunchPoint { get; private set; }
 
+        /// <summary>The round's place in its gun's rhythm when fired, carried to its hits.</summary>
+        public ShotContext Shot;
+
+        /// <summary>Any projectile set off. Magnetised Ammo steers the player's here.</summary>
+        public static event System.Action<Projectile> AnyLaunched;
+
+        /// <summary>Any projectile exploding, with where. Rocket Jump.</summary>
+        public static event System.Action<Projectile, Vector3> AnyDetonated;
+
+        private bool _struckAny;
+
         /// <summary>Which round of its gun this is, so a round striking several things still counts once. Zero for anything else.</summary>
         public int Round;
 
@@ -179,12 +190,14 @@ namespace Gunspire
         public void Launch()
         {
             LaunchPoint = transform.position;
+            _struckAny = false;
             _velocity = transform.forward * Speed;
             _hitMask = MaskFor(OwnerTeam);
             Layers.SetRecursively(gameObject,
                 OwnerTeam == Team.Player ? Layers.PlayerProjectile : Layers.EnemyProjectile);
 
             if (!LiveList.Contains(this)) LiveList.Add(this);
+            AnyLaunched?.Invoke(this);
         }
 
         private int MaskFor(Team team)
@@ -346,6 +359,7 @@ namespace Gunspire
             if (hitTarget)
             {
                 _alreadyHit.Add(target);
+                _struckAny = true;
                 DamageInfo info = BuildHitDamage(point, normal, target);
 
                 // Headshots are for guns: a spell's projectile has no weapon behind it.
@@ -373,6 +387,7 @@ namespace Gunspire
 
             // Hit the world.
             Combat.SpawnImpact(point, normal, Tint, 0.25f, DamageType);
+            ReportMissIfNothingStruck();
             RunOnHit(point);
             Destroy(gameObject);
             return true;
@@ -384,7 +399,7 @@ namespace Gunspire
             float amount = Damage;
             bool crit = false;
 
-            if (CanCrit && Combat.RollCrit(OwnerSheet, target, out float critMultiplier))
+            if (CanCrit && Combat.RollCrit(OwnerSheet, target, out float critMultiplier, SourceWeapon))
             {
                 amount *= critMultiplier;
                 crit = true;
@@ -397,6 +412,7 @@ namespace Gunspire
             info.Knockback = transform.forward * Knockback;
             info.Weapon = SourceWeapon;
             info.Spell = SourceSpell;
+            info.Shot = Shot;
             info = info.From(LaunchPoint).At(point, normal).WithStatuses(Statuses);
             return info;
         }
@@ -409,6 +425,7 @@ namespace Gunspire
             template.Origin = Origin;
             template.Weapon = SourceWeapon;
             template.Spell = SourceSpell;
+            template.Shot = Shot;
             template = template.From(LaunchPoint).WithStatuses(Statuses);
 
             // Everything a gun's blast catches is a hit from that gun, so its on-hit hook fires
@@ -426,7 +443,10 @@ namespace Gunspire
                         weapon.ReportHit(target, info, info.HitPoint, info.HitNormal, direction, infusions, round, echo);
                 };
 
-            Combat.Explode(point, SplashRadius, template, Layers.HitMaskFor(OwnerTeam), 0.4f, Knockback, onHit);
+            int caught = Combat.Explode(point, SplashRadius, template, Layers.HitMaskFor(OwnerTeam), 0.4f, Knockback, onHit);
+            if (caught > 0) _struckAny = true;
+            else ReportMissIfNothingStruck();
+            AnyDetonated?.Invoke(this, point);
 
             GameObject blast = Build.Sphere(null, "Blast", point, SplashRadius * 0.5f,
                 MaterialLibrary.Transparent(new Color(Tint.r, Tint.g, Tint.b, 0.5f)), collider: false);
@@ -440,7 +460,19 @@ namespace Gunspire
         private void Expire()
         {
             if (SplashRadius > 0f) Detonate(transform.position);
-            else Destroy(gameObject);
+            else
+            {
+                ReportMissIfNothingStruck();
+                Destroy(gameObject);
+            }
+        }
+
+        /// <summary>A gun round that ends having struck nothing alive tells its gun, once.</summary>
+        private void ReportMissIfNothingStruck()
+        {
+            if (_struckAny || SourceWeapon == null || IsEcho) return;
+            _struckAny = true;
+            SourceWeapon.ReportMiss(Round);
         }
 
         private void ApplyHoming(float dt)

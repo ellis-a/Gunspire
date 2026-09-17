@@ -75,6 +75,9 @@ namespace Gunspire
         /// </summary>
         public bool IsAlerted { get; private set; }
 
+        /// <summary>An enemy that had not noticed anything saw the player's body in its cone. Otherworldly Beauty.</summary>
+        public static event System.Action<EnemyController> SawPlayer;
+
         /// <summary>
         /// Drops nothing when it dies: no shillings, no orbs, nothing Gilded carried. Split copies, summoned enemies and
         /// training dummies, so none of them can be farmed.
@@ -388,7 +391,11 @@ namespace Gunspire
         private bool NoticesSomething()
         {
             if (Status != null && Status.IsBlind) return false;
-            if (CanSee(TargetRegistry.PlayerBody)) return true;
+            if (CanSee(TargetRegistry.PlayerBody))
+            {
+                SawPlayer?.Invoke(this);
+                return true;
+            }
 
             _minionSightTimer -= WorldClock.DeltaTime;
             if (_minionSightTimer > 0f) return false;

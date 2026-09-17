@@ -36,6 +36,9 @@ namespace Gunspire
         /// <summary>A detonation leaves the elements that caused it in place. Fusion.</summary>
         public bool KeepsElements;
 
+        /// <summary>Multiplies the time an enemy waits between reactions. Fusion's second level lowers it.</summary>
+        public float ReactionCooldownScale = 1f;
+
         /// <summary>A reaction went off: on whom, the incoming element, and whether it was a detonation.</summary>
         public event System.Action<StatusController, StatusId, bool> Reacted;
 
@@ -95,6 +98,7 @@ namespace Gunspire
             Reactions = 0;
             Detonations = 0;
             KeepsElements = false;
+            ReactionCooldownScale = 1f;
         }
 
         private void OnApplied(StatusController target, StatusId id, GameObject source, Team team)
@@ -111,7 +115,7 @@ namespace Gunspire
             if (_nextReaction.TryGetValue(target, out float next) && now < next) return;
 
             // Set before anything is dealt, so a chain that comes back round to this enemy finds it spent.
-            _nextReaction[target] = now + ReactionCooldown;
+            _nextReaction[target] = now + ReactionCooldown * Mathf.Max(0f, ReactionCooldownScale);
 
             if (Rank >= 3 && others >= 2) Detonate(target, id);
             else Burst(target, id);

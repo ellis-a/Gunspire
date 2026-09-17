@@ -67,7 +67,7 @@ namespace Gunspire
             // Boons strengthen what is summoned from here on, before Initialise so the health it starts with is full.
             if (AllyBoosts.Active != null)
             {
-                AllyBoosts.Active.ApplyTo(sheet, BeastMastery.IsCompanion(def.Id));
+                AllyBoosts.Active.ApplyTo(sheet, BeastMastery.IsCompanion(def.Id), MinionLibrary.IsUndead(def.Id));
                 health.ConfigureMaxHealth(sheet.Get(Attr.MaxHealth));
             }
 

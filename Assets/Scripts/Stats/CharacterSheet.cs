@@ -47,6 +47,9 @@ namespace Gunspire
         private readonly TypedModifierSet<SpellSchool> _schoolCost = new TypedModifierSet<SpellSchool>();
         private readonly TypedModifierSet<SpellSchool> _schoolCooldown = new TypedModifierSet<SpellSchool>();
 
+        // What spells' statuses and zones come out as, by channel, school and status. School status boons.
+        private readonly TypedModifierSet<int> _spellEffects = new TypedModifierSet<int>();
+
         // Attribute modifiers that only apply to one class of gun, read through GetFor. Class boons.
         private readonly List<ClassModifier> _classModifiers = new List<ClassModifier>();
         private readonly Dictionary<int, float> _classCache = new Dictionary<int, float>();
@@ -214,6 +217,42 @@ namespace Gunspire
             return value;
         }
 
+        // ---------------------------------------------------------------- spell effects
+
+        private const int AnySchool = 999;
+        private const int AnyStatus = 999;
+
+        private static int SpellEffectKey(SpellEffectChannel channel, int school, int status)
+            => (int)channel * 1000000 + school * 1000 + status;
+
+        /// <summary>
+        /// Adds to a spell-effect channel. A null school means every school, a null status every status: Lingering
+        /// Doubt names statuses from any school, Lingering Light names a school's every status.
+        /// </summary>
+        public TypedModifier<int> AddSpellEffect(SpellEffectChannel channel, SpellSchool? school, StatusId? status,
+            float value, object source = null)
+        {
+            int key = SpellEffectKey(channel, school.HasValue ? (int)school.Value : AnySchool,
+                status.HasValue ? (int)status.Value : AnyStatus);
+            var mod = _spellEffects.Add(key, value, source);
+            MarkDirty();
+            return mod;
+        }
+
+        /// <summary>The multiplier a channel gives one school's status (or zone, with no status). One when untouched.</summary>
+        public float SpellEffectMultiplier(SpellEffectChannel channel, SpellSchool school, StatusId? status)
+        {
+            int s = (int)school;
+            int id = status.HasValue ? (int)status.Value : AnyStatus;
+
+            float sum = _spellEffects.Sum(SpellEffectKey(channel, s, AnyStatus))
+                        + _spellEffects.Sum(SpellEffectKey(channel, AnySchool, AnyStatus));
+            if (status.HasValue)
+                sum += _spellEffects.Sum(SpellEffectKey(channel, s, id)) + _spellEffects.Sum(SpellEffectKey(channel, AnySchool, id));
+
+            return Mathf.Max(0f, 1f + sum);
+        }
+
         // ---------------------------------------------------------------- per school
 
         /// <summary>Outgoing multiplier for one school's spells. 1.0 when nothing has buffed it.</summary>
@@ -257,6 +296,7 @@ namespace Gunspire
             _schoolDamage.ClearModifiers();
             _schoolCost.ClearModifiers();
             _schoolCooldown.ClearModifiers();
+            _spellEffects.ClearModifiers();
             MarkDirty();
         }
 
@@ -313,6 +353,7 @@ namespace Gunspire
             _schoolDamage.RemoveFrom(source);
             _schoolCost.RemoveFrom(source);
             _schoolCooldown.RemoveFrom(source);
+            _spellEffects.RemoveFrom(source);
             MarkDirty();
         }
 
@@ -434,6 +475,7 @@ namespace Gunspire
                 case Attr.PickupRadius:     return 1f;
                 case Attr.DebuffPotency:    return 1f;
                 case Attr.ShillingGain:     return 1f;
+                case Attr.MovingSpread:     return 1f;
             }
             return 0f;
         }
@@ -475,6 +517,7 @@ namespace Gunspire
                 case Attr.PickupRadius:    return Mathf.Max(0.1f, v);
                 case Attr.DebuffPotency:   return Mathf.Max(0f, v);
                 case Attr.ShillingGain:    return Mathf.Max(0f, v);
+                case Attr.MovingSpread:    return Mathf.Clamp(v, 0.1f, 2f);
                 default:                   return v;
             }
         }

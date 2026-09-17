@@ -93,7 +93,27 @@ namespace Gunspire
             return _levels.TryGetValue(spell.Id, out int level) ? level : 0;
         }
 
-        public int GetSlotLevel(int index) => GetLevel(GetSlot(index));
+        public int GetSlotLevel(int index) => GetLevel(GetSlot(index)) + SlotLevelBonus(index);
+
+        private readonly int[] _slotBonus = new int[SlotCount];
+
+        /// <summary>
+        /// Levels added to whatever is cast from a slot, above the spell's own and past its cap. Quiss, Esarl and Fex.
+        /// A spell moved out of the slot loses it.
+        /// </summary>
+        public int SlotLevelBonus(int index) => index >= 0 && index < SlotCount ? _slotBonus[index] : 0;
+
+        public void AddSlotLevelBonus(int index, int levels)
+        {
+            if (index < 0 || index >= SlotCount) return;
+            _slotBonus[index] = Mathf.Max(0, _slotBonus[index] + levels);
+            Changed?.Invoke();
+        }
+
+        public void ClearSlotLevelBonuses()
+        {
+            for (int i = 0; i < SlotCount; i++) _slotBonus[i] = 0;
+        }
 
         public bool Knows(Spell spell) => spell != null && _levels.ContainsKey(spell.Id);
 
@@ -539,7 +559,7 @@ namespace Gunspire
         private CastOutcome CastNow(int slot, float charge)
         {
             Spell spell = _slots[slot];
-            int level = Mathf.Max(1, GetLevel(spell));
+            int level = Mathf.Max(1, GetLevel(spell)) + SlotLevelBonus(slot);
             Vector3 forward = Context.Aim != null ? Context.Aim.forward : Context.Caster.transform.forward;
 
             Context.Charge = charge;
@@ -578,7 +598,7 @@ namespace Gunspire
             }
 
             Spell spell = _slots[slot];
-            int level = Mathf.Max(1, GetLevel(spell));
+            int level = Mathf.Max(1, GetLevel(spell)) + SlotLevelBonus(slot);
             if (!runner.Begin(spell, Context, level)) return CastOutcome.NoRoom;
 
             LastCast = new CastRecord { Spell = spell, Slot = slot, Level = level, Charge = 1f };
@@ -631,6 +651,14 @@ namespace Gunspire
                 _cooldowns[i] = Mathf.Max(0f, _cooldowns[i] - seconds);
         }
 
+        /// <summary>Shortens the cooldowns of one school's spells in the cast slots only. Blooded.</summary>
+        public void ReduceCooldowns(float seconds, SpellSchool school)
+        {
+            for (int i = 0; i < SlotCount; i++)
+                if (_slots[i] != null && _slots[i].School == school)
+                    _cooldowns[i] = Mathf.Max(0f, _cooldowns[i] - seconds);
+        }
+
         public void ResetCooldowns()
         {
             for (int i = 0; i < SlotCount; i++) _cooldowns[i] = 0f;
@@ -658,6 +686,7 @@ namespace Gunspire
 
             _known.Clear();
             _levels.Clear();
+            ClearSlotLevelBonuses();
             _movement = null;
             _melee = null;
             Changed?.Invoke();

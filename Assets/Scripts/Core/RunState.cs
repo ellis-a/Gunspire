@@ -195,8 +195,12 @@ namespace Gunspire
         /// <summary>One frame of boon behaviours, on game time. The director calls it while playing.</summary>
         public void Tick(float dt)
         {
+            Clock += dt;
             for (int i = 0; i < _liveBehaviours.Count; i++) _liveBehaviours[i].Tick(dt);
         }
+
+        /// <summary>Game seconds the run has been ticked for. Boon behaviours time windows and cooldowns against it.</summary>
+        public float Clock { get; private set; }
 
         private void OnFloorEntered(RoomRuntime room)
         {

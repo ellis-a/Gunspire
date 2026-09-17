@@ -32,17 +32,17 @@ namespace Gunspire
         public static bool RollCrit(CharacterSheet sheet, out float multiplier) => RollCrit(sheet, null, out multiplier);
 
         /// <summary>
-        /// Rolls a crit at the moment of the hit. The target is passed so boon rules can raise the
-        /// chance or force a crit against a particular enemy; it may be null.
+        /// Rolls a crit at the moment of the hit. The target, and the gun for a gun's round, are passed so boon
+        /// rules can raise the chance or force a crit; either may be null.
         /// </summary>
-        public static bool RollCrit(CharacterSheet sheet, IDamageable target, out float multiplier)
+        public static bool RollCrit(CharacterSheet sheet, IDamageable target, out float multiplier, Weapon weapon = null)
         {
             multiplier = 1f;
             if (sheet == null) return false;
 
             float chance = sheet.Get(Attr.CritChance);
             bool forced = false;
-            CombatRules.AdjustCrit(sheet, target, ref chance, ref forced);
+            CombatRules.AdjustCrit(sheet, target, weapon, ref chance, ref forced);
 
             if (forced || Random.value < chance)
             {
@@ -92,15 +92,22 @@ namespace Gunspire
             int count = Physics.OverlapSphereNonAlloc(center, radius, OverlapBuffer, layerMask,
                 QueryTriggerInteraction.Ignore);
 
-            var hitOnce = new HashSet<IDamageable>();
-            int hits = 0;
-
+            // Gathered before anything is hit: a hit can set off another explosion (a boon on a kill, a
+            // volatile enemy), which would overwrite the shared buffer mid-walk.
+            var targets = new List<IDamageable>(count);
             for (int i = 0; i < count; i++)
             {
-                IDamageable target = FindDamageable(OverlapBuffer[i]);
+                IDamageable found = FindDamageable(OverlapBuffer[i]);
+                if (found != null && !targets.Contains(found)) targets.Add(found);
+            }
+
+            int hits = 0;
+
+            for (int i = 0; i < targets.Count; i++)
+            {
+                IDamageable target = targets[i];
                 if (target == null || !target.IsAlive) continue;
                 if (target.Team == template.SourceTeam && target.Team != Team.Neutral) continue;
-                if (!hitOnce.Add(target)) continue;
 
                 Vector3 toTarget = target.Transform.position + Vector3.up * 0.9f - center;
                 float distance = toTarget.magnitude;

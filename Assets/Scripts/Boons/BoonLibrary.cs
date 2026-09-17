@@ -11,7 +11,7 @@ namespace Gunspire
     /// <see cref="BoonAsset"/> found under a Resources folder is merged in: a matching id
     /// replaces the built-in, a new id joins the pool at whatever rarity it declares.
     /// </summary>
-    public static class BoonLibrary
+    public static partial class BoonLibrary
     {
         private static List<Boon> _all;
 
@@ -151,9 +151,12 @@ namespace Gunspire
         /// <summary>The code roster. Also what the editor tool seeds new assets from.</summary>
         public static List<Boon> BuiltIn()
         {
-            // Empty while the redesigned roster in Docs/BoonDesign.md is built. Offers with an
-            // empty pool fall straight through to the room choice.
+            // The roster in Docs/BoonDesign.md, one file per family.
             _building = new List<Boon>();
+            AddCore();
+            AddArsenal();
+            AddSlots();
+            AddSchools();
 
             List<Boon> result = _building;
             _building = null;
@@ -195,10 +198,44 @@ namespace Gunspire
         private static ModifyAttributeEffect Flat(Attr attr, float amount) =>
             new ModifyAttributeEffect { Attribute = attr, Mode = ModifierMode.Flat, Amount = amount };
 
-        private static AddOnHitStatusEffect Bullets(StatusApplication status) =>
-            new AddOnHitStatusEffect { Status = status, OnSpells = false };
+        private static ModifyStatEffect Stat(StatType stat, int points) =>
+            new ModifyStatEffect { Stat = stat, Points = points };
 
-        private static AddOnHitStatusEffect Spells(StatusApplication status) =>
-            new AddOnHitStatusEffect { Status = status, OnSpells = true };
+        private static BoonBehaviourEffect Behave(BoonBehaviour behaviour) =>
+            new BoonBehaviourEffect { Behaviour = behaviour };
+
+        private static ModifyGunClassEffect ClassPercent(WeaponClass weaponClass, Attr attr, float amount) =>
+            new ModifyGunClassEffect { Class = weaponClass, Attribute = attr, Mode = ModifierMode.Percent, Amount = amount };
+
+        private static ModifyGunClassEffect ClassFlat(WeaponClass weaponClass, Attr attr, float amount) =>
+            new ModifyGunClassEffect { Class = weaponClass, Attribute = attr, Mode = ModifierMode.Flat, Amount = amount };
+
+        private static RunSettingEffect Setting(RunSetting setting, float amount) =>
+            new RunSettingEffect { Setting = setting, Amount = amount };
+
+        private static MasterySettingEffect Mastery(MasterySetting setting, float amount, int fromLevel = 1) =>
+            new MasterySettingEffect { Setting = setting, Amount = amount, FromLevel = fromLevel };
+
+        private static Boon Needs(this Boon boon, params BoonRequirement[] requirements)
+        {
+            boon.Requirements.AddRange(requirements);
+            return boon;
+        }
+
+        private static Boon Tagged(this Boon boon, params string[] tags)
+        {
+            boon.Tags.AddRange(tags);
+            return boon;
+        }
+
+        private static WeaponClassCarriedRequirement Carries(WeaponClass weaponClass) =>
+            new WeaponClassCarriedRequirement { Class = weaponClass };
+
+        private static SchoolEquippedRequirement Holds(SpellSchool school) =>
+            new SchoolEquippedRequirement { School = school };
+
+        private static SlotFilledRequirement Filled(SpellSlot slot) => new SlotFilledRequirement { Slot = slot };
+
+        private static NotWithBoonRequirement NotWith(string boonId) => new NotWithBoonRequirement { BoonId = boonId };
     }
 }

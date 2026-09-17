@@ -43,6 +43,9 @@ namespace Gunspire
         /// <summary>How much of the closing speed a struck body takes on. Under one, so cascades die out.</summary>
         public const float Transfer = 0.5f;
 
+        /// <summary>Multiplies impact damage from knockback the player caused. Pinball Wizard.</summary>
+        public static float PlayerImpactScale = 1f;
+
         public static float WallClosingSpeed(Vector3 knockback, Vector3 wallNormal)
             => Mathf.Max(0f, -Vector3.Dot(knockback, wallNormal));
 
@@ -133,6 +136,8 @@ namespace Gunspire
             if (health == null || !health.IsAlive || damage <= 0f) return;
 
             Team issuing = health.Team == instigatorTeam ? Team.Neutral : instigatorTeam;
+            if (instigator != null && PlayerRig.Instance != null && instigator == PlayerRig.Instance.gameObject)
+                damage *= Mathf.Max(0f, PlayerImpactScale);
             GameObject source = instigator == health.gameObject ? null : instigator;
 
             DamageInfo info = DamageInfo.OnBehalfOf(damage, DamageType.Kinetic, issuing, source, DamageOrigin.Collision);

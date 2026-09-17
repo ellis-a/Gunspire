@@ -1,7 +1,7 @@
 # Boon design notes
 
-Planning only: nothing here is built, and every number is a placeholder. The spells in `SpellDesign.md` are the
-reference for what each spell does; this doc only says how a boon changes it.
+Every boon here is built (see `BoonImplementation.md`), and every number is a placeholder. The spells in
+`SpellDesign.md` are the reference for what each spell does; this doc only says how a boon changes it.
 
 ---
 
@@ -63,8 +63,6 @@ exception: all of them cap at 5.
 ---
 
 ## Boons
-
-To be written.
 
 ### Core
 
@@ -566,7 +564,8 @@ Statuses the boons need that the game does not have yet.
 
 ## Open questions
 
-Numbers are placeholders that play will settle, so this list only tracks design decisions.
+Numbers are placeholders that play will settle, so this list only tracks design decisions. The roster is built
+with a placeholder answer to each; `BoonImplementation.md` lists them under "Defaults for the open questions".
 
 - **Offer weights.** Are Core 30, Arsenal 20, Slots 10, School 15, Spell 25 roughly right, or should a
   build's own spells come up more often?

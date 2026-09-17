@@ -31,8 +31,34 @@ namespace Gunspire
             Jackalope(),
             Fox(),
             Wolf(),
-            Bear()
+            Bear(),
+            Beetle()
         };
+
+        /// <summary>Beetle Swarm's: tiny, quick and short-lived, and gone with its floor.</summary>
+        private static MinionDefinition Beetle() => new MinionDefinition
+        {
+            Id = BeetleId,
+            DisplayName = "Beetle",
+            Health = 12f,
+            MoveSpeed = 8f,
+            Radius = 0.2f,
+            BodyHeight = 0.4f,
+            BodyWidth = 0.45f,
+            BodyColor = new Color(0.2f, 0.3f, 0.25f),
+            EyeColor = new Color(0.6f, 1f, 0.8f),
+            FollowDistance = 2f,
+            EngageRange = 16f,
+            PreferredRange = 0.8f,
+            Persistent = false,
+            LifetimeSeconds = 15f,
+            Attacks = { Strike("Nip", 4f, 0.7f, 1.2f, new Color(0.5f, 0.9f, 0.6f)) }
+        };
+
+        public const string BeetleId = "beetle";
+
+        /// <summary>The risen dead, which Bone Density strengthens.</summary>
+        public static bool IsUndead(string id) => id == "zombie" || id == "plague_zombie" || id == "monstrosity";
 
         /// <summary>The reference minion: slow, fragile, and a body in the way. Raise Dead's zombie.</summary>
         private static MinionDefinition Zombie() => new MinionDefinition

@@ -26,6 +26,7 @@ namespace Gunspire.EditorTools
             "Gunspire/Verify Spell Content",
             "Gunspire/Verify Boon Framework",
             "Gunspire/Verify Boon Systems",
+            "Gunspire/Verify Boons",
             "Gunspire/Verify Rooms",
             "Gunspire/Verify Spell Slots",
             "Gunspire/Verify Holster",

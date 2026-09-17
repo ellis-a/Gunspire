@@ -137,10 +137,13 @@ namespace Gunspire
         public GameObject Instigator { get; private set; }
         public Team InstigatorTeam { get; private set; }
 
+        /// <summary>Holders that make the player immune to knockback. Juggernaut.</summary>
+        public int KnockbackImmunity { get; set; }
+
         /// <summary>Knockback from a hit, which can slam the player into walls and bodies.</summary>
         public void AddKnockback(Vector3 velocity, GameObject instigator, Team instigatorTeam)
         {
-            if (velocity.sqrMagnitude < 0.0001f) return;
+            if (velocity.sqrMagnitude < 0.0001f || KnockbackImmunity > 0) return;
 
             _velocity += velocity;
             _knockback += velocity;
@@ -871,6 +874,12 @@ namespace Gunspire
         public void AddImpulse(Vector3 impulse)
         {
             _velocity += impulse;
+        }
+
+        /// <summary>Gives back one spent dash charge, if any is spent. Perfect Timing.</summary>
+        public void RestoreDashCharge()
+        {
+            if (DashCharges < MaxDashCharges) DashCharges++;
         }
 
         public void RefillDashes()

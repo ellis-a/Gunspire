@@ -27,6 +27,33 @@ namespace Gunspire
         }
     }
 
+    /// <summary>Something a familiar does beyond its attacks and auras. Stored as an integer; append only.</summary>
+    public enum FamiliarPerk
+    {
+        None,
+
+        /// <summary>Targets the enemy nearest the player's crosshair rather than the nearest enemy. The Seer.</summary>
+        CrosshairTarget,
+
+        /// <summary>Destroys an enemy projectile near the player every interval. The Aegis Mote.</summary>
+        BlockProjectiles,
+
+        /// <summary>Draws orbs within range to the player. The Magpie.</summary>
+        FetchOrbs,
+
+        /// <summary>Restores mana each second while an enemy is within range of the player. The Mana Sprite.</summary>
+        ManaNearEnemies,
+
+        /// <summary>Raises the player's Luck while it lives. The Coin Imp.</summary>
+        LuckAura,
+
+        /// <summary>Enemies attack it as they would a minion. The Homunculus.</summary>
+        Decoy,
+
+        /// <summary>Puts rounds back in the player's holstered guns every interval. The Gremlin.</summary>
+        ReloadHolstered
+    }
+
     /// <summary>
     /// One familiar archetype, as data.
     ///
@@ -71,6 +98,18 @@ namespace Gunspire
 
         /// <summary>Granted to the owner while this is alive, and taken back when it dies.</summary>
         public List<FamiliarAura> Auras = new List<FamiliarAura>();
+
+        [Header("Perk")]
+        public FamiliarPerk Perk = FamiliarPerk.None;
+
+        /// <summary>Seconds between a perk's actions, for perks that act on a timer.</summary>
+        public float PerkInterval = 4f;
+
+        /// <summary>How much a perk gives: mana a second, Luck, or the share of a magazine put back.</summary>
+        public float PerkAmount = 1f;
+
+        /// <summary>How far from the player a perk reaches.</summary>
+        public float PerkRange = 12f;
 
         /// <summary>
         /// Multiplies every damage number in its attacks. Raised by the boon level, so taking

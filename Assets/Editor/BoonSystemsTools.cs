@@ -677,7 +677,7 @@ namespace Gunspire.EditorTools
             rig.Book.Bind(PlayerTools.TestSpell("hook_abyss", SpellSchool.Abyssal), 1);
             float repaid = -1f;
             bool cleared = false;
-            debt.Repaid += (amount, done) => { repaid = amount; cleared = done; };
+            debt.Repaid += (amount, done, victim) => { repaid = amount; cleared = done; };
             debt.RepayBonus = 10f;
             debt.Record(30f);
             debt.RepayOnKill();

@@ -4,7 +4,7 @@ using UnityEngine;
 namespace Gunspire
 {
     /// <summary>
-    /// The two guns the player is carrying, and which of them is in their hands.
+    /// The guns the player is carrying, two unless Third Hand opens a third, and which of them is in their hands.
     ///
     /// There is still only one <see cref="Weapon"/> component. It always reflects the active
     /// slot, and the holstered slot is just a definition plus the rounds it was put away with -
@@ -17,15 +17,22 @@ namespace Gunspire
     /// </summary>
     public class Holster : MonoBehaviour
     {
-        public const int SlotCount = 2;
+        /// <summary>Hands a player can ever carry guns in. Third Hand opens the last.</summary>
+        public const int MaxSlots = 3;
+
+        /// <summary>Hands a player starts with.</summary>
+        public const int BaseSlots = 2;
+
+        /// <summary>Hands open right now.</summary>
+        public int SlotCount { get; private set; } = BaseSlots;
 
         /// <summary>Keys that swap, alongside the mouse wheel.</summary>
         public static readonly KeyCode SwapKey = KeyCode.C;
 
         public Weapon Weapon;
 
-        private readonly WeaponDefinition[] _slots = new WeaponDefinition[SlotCount];
-        private readonly int[] _ammo = new int[SlotCount];
+        private readonly WeaponDefinition[] _slots = new WeaponDefinition[MaxSlots];
+        private readonly int[] _ammo = new int[MaxSlots];
 
         public int ActiveIndex { get; private set; }
 
@@ -83,7 +90,39 @@ namespace Gunspire
             if (key != null && _swapLocks.Remove(key)) Changed?.Invoke();
         }
 
-        private int OtherIndex => (ActiveIndex + 1) % SlotCount;
+        /// <summary>The next filled slot after the one in hand, wrapping round: what a swap draws. The active slot when it is the only one.</summary>
+        public int NextIndex
+        {
+            get
+            {
+                for (int step = 1; step <= SlotCount; step++)
+                {
+                    int index = (ActiveIndex + step) % SlotCount;
+                    if (_slots[index] != null) return index;
+                }
+                return ActiveIndex;
+            }
+        }
+
+        /// <summary>
+        /// Opens or closes hands. Guns in a closed hand are dropped, and if the gun in hand was one of them, the first
+        /// hand is drawn. Third Hand.
+        /// </summary>
+        public void SetSlotCount(int count)
+        {
+            count = Mathf.Clamp(count, BaseSlots, MaxSlots);
+            if (count == SlotCount) return;
+
+            for (int i = count; i < MaxSlots; i++)
+            {
+                _slots[i] = null;
+                _ammo[i] = 0;
+            }
+
+            SlotCount = count;
+            if (ActiveIndex >= count) SetActive(0);
+            Changed?.Invoke();
+        }
 
         // ---------------------------------------------------------------- equipping
 
@@ -144,7 +183,7 @@ namespace Gunspire
         public void Swap()
         {
             if (!CanSwap) return;
-            SetActive(OtherIndex);
+            SetActive(NextIndex);
             if (Weapon != null) Weapon.BeginDraw();
         }
 
@@ -204,7 +243,8 @@ namespace Gunspire
         /// <summary>Empties the pair, for a restart.</summary>
         public void Clear()
         {
-            for (int i = 0; i < SlotCount; i++)
+            SlotCount = BaseSlots;
+            for (int i = 0; i < MaxSlots; i++)
             {
                 _slots[i] = null;
                 _ammo[i] = 0;

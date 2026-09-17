@@ -170,8 +170,24 @@ namespace Gunspire
         public StatusApplication Empower(StatusApplication status)
         {
             StatusDefinition def = StatusLibrary.Get(status.Id);
-            return def != null ? def.Empower(status, StatusPower) : status;
+            if (def == null) return status;
+
+            status = def.Empower(status, StatusPower);
+
+            // A spell's statuses also answer to the caster's spell-effect boons for its school.
+            if (Spell != null && Sheet != null)
+            {
+                float amount = Sheet.SpellEffectMultiplier(SpellEffectChannel.StatusAmount, Spell.School, status.Id);
+                if (!Mathf.Approximately(amount, 1f)) status = def.Empower(status, amount);
+                status.Duration *= Sheet.SpellEffectMultiplier(SpellEffectChannel.StatusDuration, Spell.School, status.Id);
+            }
+            return status;
         }
+
+        /// <summary>How much longer this cast's zones last, from the caster's boons for its school.</summary>
+        public float ZoneDurationScale => Spell != null && Sheet != null
+            ? Sheet.SpellEffectMultiplier(SpellEffectChannel.ZoneDuration, Spell.School, null)
+            : 1f;
 
         /// <summary>A copy of a status list as this cast delivers it. Null stays null.</summary>
         public List<StatusApplication> EmpowerAll(List<StatusApplication> statuses)

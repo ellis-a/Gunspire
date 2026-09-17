@@ -489,7 +489,7 @@ namespace Gunspire
 
             Vector3 at = FollowCaster && ctx.Caster != null ? ctx.Caster.transform.position : ctx.Point;
 
-            LingeringZone zone = LingeringZone.Spawn(at, Radius * scale, Duration * scale,
+            LingeringZone zone = LingeringZone.Spawn(at, Radius * scale, Duration * scale * ctx.ZoneDurationScale,
                 DamagePerTick * ctx.Power, TickInterval, ctx.DamageType, ctx.Team, ctx.Caster,
                 new List<StatusApplication>(ctx.Payload), ctx.Tint, ctx.DamageOrigin);
 

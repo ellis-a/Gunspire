@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace Gunspire
@@ -59,8 +60,41 @@ namespace Gunspire
         public bool IsMana;
         public float Amount = 20f;
 
+        /// <summary>Seconds before it vanishes uncollected. Zero lasts the floor. Minor orbs use ten.</summary>
+        public float Lifetime;
+
+        /// <summary>Flies to the player instead of hovering. Magnetism, and the Magpie.</summary>
+        public bool Attracted;
+
+        /// <summary>
+        /// Offered a health orb the player cannot use because their health is full. Returning true takes the orb.
+        /// Bottled Orb.
+        /// </summary>
+        public static System.Func<OrbPickup, PlayerRig, bool> FullHealthCollector;
+
+        /// <summary>An orb was collected: which kind, and what it restored before any bonus. Magnetism.</summary>
+        public static event System.Action<OrbPickup, PlayerRig> Collected;
+
+        public const float AttractSpeed = 22f;
+
+        private static readonly List<OrbPickup> LiveList = new List<OrbPickup>();
+
+        /// <summary>Every orb on the floor.</summary>
+        public static IReadOnlyList<OrbPickup> Live
+        {
+            get
+            {
+                LiveList.RemoveAll(o => o == null);
+                return LiveList;
+            }
+        }
+
+        // Registered by Spawn rather than OnEnable, which edit-mode tooling never runs.
+        private void OnDestroy() => LiveList.Remove(this);
+
         private Vector3 _home;
         private float _phase;
+        private float _age;
 
         public static OrbPickup SpawnHealth(Vector3 position, float amount)
             => Spawn(position, amount, false, new Color(1f, 0.35f, 0.4f));
@@ -83,20 +117,47 @@ namespace Gunspire
             orb.Amount = amount;
             orb._home = position;
             orb._phase = Random.Range(0f, 10f);
+            LiveList.Add(orb);
             return orb;
         }
 
         /// <summary>How far the trigger reaches with no pickup radius bonus.</summary>
         public const float BaseRadius = 1.4f;
 
+        /// <summary>A half-strength orb that fades if not taken. Vampire Sight and Demon Sight.</summary>
+        public static OrbPickup SpawnMinor(Vector3 position, bool mana, float fullAmount, float lifetime = 10f)
+        {
+            OrbPickup orb = mana ? SpawnMana(position, fullAmount * 0.5f) : SpawnHealth(position, fullAmount * 0.5f);
+            orb.Lifetime = lifetime;
+            orb.transform.localScale *= 0.65f;
+            return orb;
+        }
+
         private void Update()
         {
             _phase += Time.deltaTime;
+            _age += Time.deltaTime;
+            if (Lifetime > 0f && _age >= Lifetime)
+            {
+                Destroy(gameObject);
+                return;
+            }
+
+            PlayerRig rig = PlayerRig.Instance;
+
+            if (Attracted && rig != null)
+            {
+                Vector3 target = rig.transform.position + Vector3.up;
+                _home = Vector3.MoveTowards(_home, target, AttractSpeed * Time.deltaTime);
+                transform.position = _home;
+                if ((target - _home).sqrMagnitude < 1f) TryCollect(rig);
+                return;
+            }
+
             transform.position = _home + Vector3.up * (Mathf.Sin(_phase * 2.2f) * 0.16f);
             transform.Rotate(Vector3.up, 90f * Time.deltaTime, Space.World);
 
             // A pickup radius above normal reaches past the trigger.
-            PlayerRig rig = PlayerRig.Instance;
             if (rig == null || rig.Sheet == null) return;
 
             float reach = BaseRadius * rig.Sheet.Get(Attr.PickupRadius);
@@ -120,7 +181,12 @@ namespace Gunspire
 
             float amount = Amount * (rig.Sheet != null ? rig.Sheet.Get(Attr.OrbPotency) : 1f);
             if (IsMana) rig.Mana.Add(amount);
-            else if (rig.Health.Heal(amount) <= 0f && rig.Health.Fraction >= 1f) return false;
+            else if (rig.Health.Heal(amount) <= 0f && rig.Health.Fraction >= 1f)
+            {
+                if (FullHealthCollector == null || !FullHealthCollector(this, rig)) return false;
+            }
+
+            Collected?.Invoke(this, rig);
 
             var color = IsMana ? new Color(0.45f, 0.6f, 1f) : new Color(1f, 0.35f, 0.4f);
             GameObject pop = Build.Sphere(null, "OrbPop", transform.position, 0.8f,
@@ -179,7 +245,7 @@ namespace Gunspire
         {
             PlayerRig rig = PlayerRig.Instance;
             Holster holster = rig != null ? rig.Holster : null;
-            if (holster == null || holster.FilledSlots < Holster.SlotCount) return null;
+            if (holster == null || holster.FilledSlots < holster.SlotCount) return null;
 
             WeaponDefinition held = holster.GetSlot(holster.ActiveIndex);
             return held != null ? held.DisplayName : null;

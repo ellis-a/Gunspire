@@ -27,6 +27,26 @@ namespace Gunspire
 
         public IReadOnlyList<ActiveStatus> Active => _active;
 
+        // Statuses that cannot land, counted per holder so two sources of the same immunity cannot undo each other.
+        private readonly Dictionary<StatusId, int> _immunities = new Dictionary<StatusId, int>();
+
+        public bool IsImmune(StatusId id) => _immunities.TryGetValue(id, out int count) && count > 0;
+
+        /// <summary>Makes a status unable to land, and removes it if it is running. Juggernaut.</summary>
+        public void AddImmunity(StatusId id)
+        {
+            _immunities.TryGetValue(id, out int count);
+            _immunities[id] = count + 1;
+            Remove(id);
+        }
+
+        public void RemoveImmunity(StatusId id)
+        {
+            if (_immunities.TryGetValue(id, out int count)) _immunities[id] = Mathf.Max(0, count - 1);
+        }
+
+        public void ClearImmunities() => _immunities.Clear();
+
         /// <summary>Raised when effects are added or removed, for HUD refreshes.</summary>
         public event Action Changed;
 
@@ -185,7 +205,7 @@ namespace Gunspire
             if (Health != null && !Health.IsAlive) return;
 
             StatusDefinition def = StatusLibrary.Get(incoming.Id);
-            if (def == null || !def.CanApplyTo(this)) return;
+            if (def == null || !def.CanApplyTo(this) || IsImmune(incoming.Id)) return;
 
             StatusApplication app = incoming;
             if (def.IsDebuff && !Resist(def, ref app)) return;

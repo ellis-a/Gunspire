@@ -43,6 +43,33 @@ namespace Gunspire
         /// <summary>The gun is firing itself; the trigger is ignored. <see cref="AutoFireDriver"/> pulls it.</summary>
         public bool AutoFire;
 
+        /// <summary>Multiplies everything this gun's rounds deal. Mirror Barrel's half-strength copy.</summary>
+        public float DamageScale = 1f;
+
+        /// <summary>
+        /// Offered each round before ammo is spent, with the round's ammo cost. Returning true means the round was paid
+        /// for some other way and takes no ammo. Gunmage.
+        /// </summary>
+        public System.Func<Weapon, int, bool> RoundPayer;
+
+        /// <summary>The barrels do not wind down when the trigger is let go. Planted.</summary>
+        public bool HoldSpin;
+
+        /// <summary>Rounds fly dead straight, whatever the gun's spread. Planted.</summary>
+        public bool NoSpread;
+
+        /// <summary>When focusing last began, in unscaled seconds since startup. Quickscope.</summary>
+        public float FocusStartedAt { get; private set; } = float.NegativeInfinity;
+
+        /// <summary>A round that struck nothing alive, with its round number. Dead Man's Hand.</summary>
+        public event System.Action<Weapon, int> Missed;
+
+        private ShotContext _shot;
+        private bool _burstEnd;
+
+        /// <summary>The context of the round most recently fired.</summary>
+        public ShotContext LastShot => _shot;
+
         private int _nextRound;
         private bool _firingEcho;
 
@@ -320,6 +347,20 @@ namespace Gunspire
             Hit?.Invoke(hit);
         }
 
+        /// <summary>A round that struck nothing alive. Hitscan calls this itself; a projectile calls it when it lands on nothing.</summary>
+        public void ReportMiss(int round)
+        {
+            if (IsPhantom || _firingEcho) return;
+            Missed?.Invoke(this, round);
+        }
+
+        /// <summary>Puts rounds back in the magazine, up to full, without touching a reload in progress. Lock and Load.</summary>
+        public void AddRounds(int rounds)
+        {
+            if (Definition == null || rounds <= 0) return;
+            AmmoInMagazine = Mathf.Min(MagazineSize, AmmoInMagazine + rounds);
+        }
+
         // ---------------------------------------------------------------- input
 
         public void HandleInput(bool triggerDown, bool altDown, bool reloadPressed)
@@ -431,6 +472,7 @@ namespace Gunspire
                 return;
             }
 
+            if (HoldSpin) return;
             _spin = Mathf.Max(0f, _spin - Time.deltaTime * Mathf.Max(0.1f, Definition.SpinDownMultiplier));
             if (_spin <= 0f) _spinSoundPlayed = false;
         }
@@ -465,7 +507,9 @@ namespace Gunspire
         private void HandleAltInput(bool altDown, bool altPressedThisFrame)
         {
             bool focusable = Alt != null && Alt.Kind == AltFireKind.Focus && !IsReloading;
+            bool wasFocusing = IsFocusing;
             IsFocusing = focusable && altDown;
+            if (IsFocusing && !wasFocusing) FocusStartedAt = Time.unscaledTime;
 
             if (!altPressedThisFrame || Alt == null || Alt.IsHeld) return;
             if (EvaluateAlt() != AltOutcome.Fired) return;
@@ -512,7 +556,9 @@ namespace Gunspire
             for (int i = 0; i < Definition.BurstCount; i++)
             {
                 if (!FreeRounds && AmmoInMagazine <= 0) break;
+                _burstEnd = i == Definition.BurstCount - 1 || (!FreeRounds && AmmoInMagazine <= 1);
                 FireOnce();
+                _burstEnd = false;
                 yield return new WaitForSeconds(Definition.BurstInterval);
             }
             _burstRoutine = null;
@@ -531,12 +577,21 @@ namespace Gunspire
         /// </summary>
         private void FireRound(ShotSpec spec, int ammoCost, Vector3? directionOverride = null)
         {
-            if (!FreeRounds) AmmoInMagazine -= Mathf.Max(0, ammoCost);
+            bool paidElsewhere = !FreeRounds && RoundPayer != null && RoundPayer(this, ammoCost);
+            if (!FreeRounds && !paidElsewhere) AmmoInMagazine -= Mathf.Max(0, ammoCost);
             if (!_firingEcho && !IsPhantom)
             {
                 RoundsSinceReload++;
                 RoundsSinceDraw++;
             }
+
+            _shot = new ShotContext
+            {
+                SinceReload = RoundsSinceReload,
+                SinceDraw = RoundsSinceDraw,
+                MagazineLeft = MagazineSize > 0 ? Mathf.Clamp01(AmmoInMagazine / (float)MagazineSize) : 0f,
+                BurstEnd = _burstEnd
+            };
 
             Vector3 origin = AimOrigin != null ? AimOrigin.position : transform.position;
             Vector3 forward = directionOverride ?? (AimOrigin != null ? AimOrigin.forward : transform.forward);
@@ -551,7 +606,7 @@ namespace Gunspire
 
             // Dexterity steadies the hands: one multiplier on the cone, one on the kick. Applied
             // here rather than to the definition, so both triggers pick them up.
-            float spreadScale = Stat(Attr.Spread);
+            float spreadScale = NoSpread ? 0f : Stat(Attr.Spread);
             float recoilScale = Stat(Attr.Recoil);
 
             // Taken once per round, so every pellet carries the same charge and a one-round
@@ -611,6 +666,7 @@ namespace Gunspire
 
             // Holding focus is what actually makes an inaccurate gun usable at range.
             if (IsFocusing) spread *= Definition.AltFire.FocusSpreadMultiplier;
+            if (moving) spread *= Stat(Attr.MovingSpread);
             return spread;
         }
 
@@ -654,6 +710,7 @@ namespace Gunspire
 
             int pierceBudget = spec.MaxPierce + ExtraPierce;
             bool anythingHit = false;
+            bool struckTarget = false;
 
             for (int i = 0; i < count; i++)
             {
@@ -669,6 +726,7 @@ namespace Gunspire
 
                     Vector3 at = AbilityContext.CenterOf(handed);
                     DamageInfo handedDamage = BuildShotDamage(spec, at, -direction, direction, _roundInfusions, handed);
+                    struckTarget = true;
                     handed.TakeDamage(handedDamage);
                     ReportHit(handed, handedDamage, at, -direction, direction, _roundInfusions, round, _firingEcho);
                     Combat.SpawnImpact(at, -direction, spec.Tint, 0.3f, spec.DamageType);
@@ -701,6 +759,7 @@ namespace Gunspire
                     damage.IsHeadshot = true;
                 }
 
+                struckTarget = true;
                 target.TakeDamage(damage);
                 ReportHit(target, damage, hit.point, hit.normal, direction, _roundInfusions, round, _firingEcho);
                 Combat.SpawnImpact(hit.point, hit.normal, spec.Tint, 0.3f, spec.DamageType);
@@ -712,6 +771,7 @@ namespace Gunspire
             }
 
             if (!anythingHit) endPoint = origin + direction * range;
+            if (!struckTarget) ReportMiss(round);
 
             Vector3 tracerStart = Muzzle != null ? Muzzle.position : origin;
             Combat.SpawnTracer(tracerStart, endPoint, spec.Tint, 0.035f, 0.05f);
@@ -756,9 +816,9 @@ namespace Gunspire
         {
             if (infusions == null) infusions = ActiveInfusions();
 
-            float amount = spec.Damage * Combat.OutgoingMultiplier(OwnerSheet, false, spec.DamageType);
+            float amount = spec.Damage * DamageScale * Combat.OutgoingMultiplier(OwnerSheet, false, spec.DamageType);
             bool crit = false;
-            if (Combat.RollCrit(OwnerSheet, target, out float critMultiplier))
+            if (Combat.RollCrit(OwnerSheet, target, out float critMultiplier, this))
             {
                 amount *= critMultiplier;
                 crit = true;
@@ -768,6 +828,7 @@ namespace Gunspire
             info.IsCrit = crit;
             info.Origin = DamageOrigin.Gun;
             info.Weapon = this;
+            info.Shot = _shot;
             info = info.From(AimOrigin != null ? AimOrigin.position : transform.position);
             info.Knockback = direction * spec.Knockback;
             info = info.At(point, normal)
@@ -797,7 +858,7 @@ namespace Gunspire
             p.OwnerTeam = OwnerTeam;
             p.Owner = Owner;
             p.OwnerSheet = OwnerSheet;
-            p.Damage = spec.Damage * outgoing;
+            p.Damage = spec.Damage * DamageScale * outgoing;
             p.DamageType = spec.DamageType;
             p.Origin = DamageOrigin.Gun;
             p.Speed = spec.ProjectileSpeed * Stat(Attr.ProjectileSpeed);
@@ -805,7 +866,7 @@ namespace Gunspire
             p.Lifetime = spec.ProjectileLifetime;
             p.Knockback = spec.Knockback;
             p.SplashRadius = spec.SplashRadius * Stat(Attr.SplashRadius);
-            p.SplashDamage = spec.SplashDamage * outgoing;
+            p.SplashDamage = spec.SplashDamage * DamageScale * outgoing;
             p.Pierce = spec.MaxPierce + ExtraPierce;
             p.HomingEnabled = spec.ProjectileHoming;
 
@@ -820,6 +881,7 @@ namespace Gunspire
             p.Infusions = infusions;
             p.Round = round;
             p.IsEcho = _firingEcho;
+            p.Shot = _shot;
 
             // "Never misses" for a projectile gun means its rounds steer onto the target.
             if (ForcedTarget != null && !_firingEcho)

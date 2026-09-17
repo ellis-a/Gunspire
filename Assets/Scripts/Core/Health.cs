@@ -67,6 +67,9 @@ namespace Gunspire
         public static event Action<Health, DamageInfo, float> AnyDamaged;
         public static event Action<Health, DamageInfo> AnyDied;
 
+        /// <summary>Raised as something dies, before its statuses are cleared. Excess Force reads them here.</summary>
+        public static event Action<Health, DamageInfo> AnyDying;
+
         private void Awake()
         {
             _sheet = GetComponent<CharacterSheet>();
@@ -428,6 +431,7 @@ namespace Gunspire
             if (!IsAlive) return;
             IsAlive = false;
 
+            AnyDying?.Invoke(this, info);
             if (Status != null) Status.ClearAll();
 
             Died?.Invoke(info);

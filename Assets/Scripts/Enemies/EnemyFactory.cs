@@ -17,6 +17,9 @@ namespace Gunspire
         public static float HealthScale(int floor) => 1f + (floor - 1) * 0.28f;
         public static float DamageScale(int floor) => 1f + (floor - 1) * 0.16f;
 
+        /// <summary>Any enemy built, copies included. Ghostrealm and Courageous change enemies as they arrive.</summary>
+        public static event System.Action<EnemyController> Spawned;
+
         public static EnemyController Spawn(string id, Vector3 position, int floor, bool elite = false)
         {
             EnemyDefinition def = EnemyLibrary.Get(id);
@@ -43,6 +46,7 @@ namespace Gunspire
 
             enemy.Definition = def;
             enemy.Floor = floor;
+            Spawned?.Invoke(enemy);
             return enemy;
         }
 

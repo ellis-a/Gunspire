@@ -2,8 +2,8 @@
 
 How to build the roster in `BoonDesign.md` (229 boons) and the shillings currency on top of the code as it
 stands. The shop itself is out of scope; only what the shop boons need to store is covered. Built so far:
-retiring the old roster, the framework and the supporting systems (steps 1 and 2 of the build order; each
-built section says so).
+retiring the old roster, the framework, the supporting systems and the whole roster (every step of the build
+order; each built section says so). Assets and icons are still to come.
 
 ---
 
@@ -90,7 +90,7 @@ Built, in `Boons/BoonRequirements.cs`, with the tags they read in `BoonTags`:
 | `SlotFilled(Movement / Melee)` | Movement boons, Afterimage, Tailwind. |
 | `CanSummon` | Master Summoner, Blood Pact: a summon spell, the Bestial mastery, or Beetle Swarm. |
 | `CarriesProjectileGun` | Magnetised Ammo. |
-| `HasBoon(id)`, `NotWithBoon(id)`, `NotWithTag(tag)` | Cocky excludes `health` boons, and Cocky and Glass Soul if they are made exclusive. |
+| `HasBoon(id)`, `NotWithBoon(id)`, `NotWithTag(tag)` | Every `health` boon is refused while Cocky or Glass Soul is held, and those two exclude each other. |
 | `TagLimit(tag, limit, raisedBy, ownBoon)` | One familiar, raised by Familiarity. A held familiar can still level up. |
 | `HasTag(tag)` | Familiarity only once a familiar is held. |
 
@@ -453,11 +453,11 @@ and to familiars (through their definitions).
 | Mastery | Settings | Events |
 |---|---|---|
 | Souls | `CapBonus` | `Spent`, `WastedAtCap` |
-| Blood Debt | `InterestMultiplier`, `RepayBonus` | `Repaid(amount, cleared)` |
+| Blood Debt | `InterestMultiplier`, `RepayBonus` | `Repaid(amount, cleared, victim)` |
 | Psi Blades | `ChargeMultiplier`, `MeleeBonusExtra` | `Spent`, `EmpoweredMeleeLanded` |
 | Arcane Warp | `RateMultiplier`, `ManaPerHitBonus`, `LingerSeconds` | `BonusEnded` |
-| Conflux | `KeepsElements` | `Reacted(target, element, detonated)` |
-| Divine Knowledge | `RangeMultiplier` | |
+| Conflux | `KeepsElements`, `ReactionCooldownScale` | `Reacted(target, element, detonated)` |
+| Divine Knowledge | `RangeMultiplier`, `WarningLead` | |
 | Beast | | `CompanionDied`, `IsCompanionSource` |
 
 Two of these need a design decision:
@@ -471,6 +471,110 @@ Two of these need a design decision:
 **Statuses.** Charmed, Hex, Volatile, Gilded and Dread are built (see New statuses below). Fear and Blind
 already had their behaviour. Statuses gained hooks for a top-up (`OnTopUp`), damage taken (`OnOwnerDamaged`),
 refusal (`CanApplyTo`) and a running total (`ActiveStatus.Stored`).
+
+---
+
+## The roster (phase 4)
+
+Built: all 229 boons (101 Common, 60 Uncommon, 53 Rare, 15 Mythic) and the 13 familiars. Checked by Verify
+Boons.
+
+**Where it lives.**
+
+| File | What |
+|---|---|
+| `Boons/BoonLibrary.cs` | The offer roll, the pool and the shorthands the roster uses |
+| `Boons/BoonRosterCore.cs` | Core, including the 36 stat boons and the familiars |
+| `Boons/BoonRosterArsenal.cs` | Arsenal |
+| `Boons/BoonRosterSchools.cs` | Slots and the seven schools |
+| `Boons/BoonDataEffects.cs` | The number-only effects: school, gun class, spell effects, allies, run and mastery settings |
+| `Boons/Behaviours/*.cs` | One behaviour class per rule, grouped by family |
+
+**How the boons split.**
+
+- **Data.** Around 110 boons are plain effects: stat points, sheet attributes, the class and school
+  channels, spell effect scaling (status amount, status duration, zone duration), ally boosts, run settings
+  and mastery settings. A mastery setting can start at a later level, which is how Fusion's second level cuts
+  the reaction cooldown.
+- **Rules.** Damage, incoming, lethal and crit rules are behaviours that implement the rule interfaces.
+  Class-conditional damage (Quickdraw, Point Blank, Closing Round, Fresh Mag, Tail End) is one behaviour with a
+  condition, read from the round's `ShotContext`.
+- **Listeners.** Everything else is a behaviour on the common hooks (kill, damage, gun hit, fire, miss, cast)
+  or on the mastery events. The four school on-hit statuses (Hemorrhage, Blinding Light, Enfeeble,
+  Displacement) share one behaviour.
+- **Enchantments.** One behaviour with a status and a multiplier. The live ones are listed, so Shared Instinct
+  can apply them from companion hits.
+
+**What the engine gained for them.**
+
+- Guns: a damage scale, a round payer (Gunmage), held spin and no spread (Planted), the focus start time
+  (Quickscope), a miss event, each round's `ShotContext` on its damage, and rounds put back (Lock and Load).
+  Projectiles raise launched and detonated events.
+- The holster has a slot count, so Third Hand opens a third slot; swap cycles through the filled ones and the
+  HUD lists every other hand.
+- Health raises `AnyDying` before statuses are cleared (Excess Force). Statuses take immunities (Juggernaut),
+  and the motor ignores knockback while immune.
+- Orbs: a lifetime for minor orbs, attraction, a full-health collector (Bottled Orb) and a collected event.
+- The spell book: level bonuses per slot, and cooldown cuts per school. The movement slot raises `Used` with
+  where the player started, and can refund a use. Melee can be replaced outright (Thrown Blade).
+- Enemies raise `Spawned` and `SawPlayer`. Rooms expose their enemies.
+- Familiars have perks: the crosshair target, projectile blocking, fetching orbs, mana near enemies, a Luck
+  aura, a decoy and reloading the holstered gun.
+- The run has a clock that behaviours time windows against, and knockback impacts have a player-side scale
+  (Pinball Wizard).
+
+**Defaults for the open questions.** The roster had to pick something for each open question in
+`BoonDesign.md`. These are placeholders until the questions are settled:
+
+- **Shock Enchantment:** round damage × multiplier × level stacks, first round after a reload only.
+- **Chain Static:** 30% of the hit per level, to the nearest other enemy within 8 m, at most once every 0.2
+  seconds. The bolt sets off nothing.
+- **Birthday Party:** the blast never hurts you, and every pellet that lands on a head explodes.
+- **Quiss, Esarl and Fex:** the bonus can lift a spell past its level cap.
+- **Lock and Load:** any kill; the round goes to the gun in hand.
+- **Bigger Bullets:** every critical hit, spells included.
+- **Mag Dimension:** +50% per level, additive (level 2 is +100%).
+- **Familiarity:** offered only once you hold a familiar.
+- **Low Interest:** raises the interest (the repayment bonus). The description is left vague until decided.
+- **Riding the Current:** capped at +45% speed.
+- **Overflow:** spending psi again refreshes the timer.
+- **Blinding Light:** once per enemy every 6 seconds. Each level of the four on-hit statuses raises the
+  status's strength (Blinding Light's duration).
+- **School Rares' second levels:**
+  - Fusion: reaction cooldown −30%.
+  - Soul Shield: twice per floor.
+  - Void Pocket: 10 seconds.
+  - Void Rounds: pierce 2.
+  - Prophecy: the first two attacks miss.
+  - The rest: bigger numbers.
+- **Perfect Timing:**
+  - Uses `RefundUse`: a dash charge back, and the cooldown reset.
+  - Blinds the attacker.
+  - Triggers for an enemy within 20 m that is targeting you and is mid-attack or within the window of its
+    next one.
+- **Spell Magazine:** free, ignores the cooldown, always the Q slot. It goes through the echo path, so a spell
+  that never echoes is not cast.
+- **Glass Soul:**
+  - Health boons are not offered, the same as under Cocky.
+  - The shield holds 100.
+  - Health orbs do not refill it.
+- **Cocky:** health boons are not offered, and it cannot be taken with Glass Soul.
+- **Juggernaut:** immune to snare (which covers stuns) and frost, and to knockback.
+- **Gunmage:** mana guns pay only their own cost; other guns pay 1.5 mana per round.
+- **Third Hand:** the swap cycles through all three; the HUD lists every hand not drawn.
+- **Excess Force:** only elements the player applied.
+- **Master Summoner:** its gate also opens for familiars and summon-tagged boons (Beetle Swarm, Soul Slave).
+- **Rewarded:** +1 pick and +1 card per level.
+- **Clear Sight:** raises how early the attack timer turns to its warning colour.
+
+**Known limits.**
+
+- Ally boosts apply at the next summon, so a companion boon taken mid-floor shows on the next floor.
+- Rewind still records two hands, so a third gun is not rewound.
+- Imbued Rounds takes its element from any burn, frost or shock the player applies while the last cast was
+  Elemental, so a Burn Enchantment can set it too.
+- Twincast and Spell Magazine go through the echo path, which refuses toggles, stances and spells marked
+  never to echo.
 
 ---
 
@@ -500,29 +604,45 @@ Done, along with removing the alt fire lock.
    Retiring the old roster and the alt fire lock is also done.
 2. **Supporting systems.** Done: shillings, draw time, the new attributes and channels, ally boosts, the
    mastery hooks and the new statuses. Checked by Verify Boon Systems.
-3. **Data boons.** Stat, template, class and multiplier boons: about 110 boons with almost no per-boon code.
-4. **Behaviours.** Damage rules first (one pattern, many boons), then incoming and lethal, then listeners, then
-   gun behaviours, then enchantments.
-5. **School Rares.** One school at a time, on the mastery hooks already built.
-6. **Systems.** Familiars, Third Hand, Afterimage, Beetle Swarm.
+3. **Data boons.** Done: stat, template, class and multiplier boons, with almost no per-boon code.
+4. **Behaviours.** Done: damage rules, incoming and lethal rules, listeners, gun behaviours and enchantments.
+5. **School Rares.** Done, on the mastery hooks.
+6. **Systems.** Done: familiars, Mirror Barrel, Third Hand, Twincast, Afterimage, Beetle Swarm, Ghostrealm,
+   Doomed and Otherworldly Beauty.
+
+Still to do: generate the boon and familiar assets with `Create Boon Assets` and `Create Familiar Assets`, and
+assign icons.
 
 Authoring follows the spells: built-ins in code, then `Create Boon Assets` generates the assets, and icons are
 assigned on the assets afterwards.
 
 ### Verification
 
-`Verify Boons`, added to Verify All:
+`Verify Boons`, in Verify All. Built, and bite-tested against 14 deliberate faults. It checks:
 
-- Every boon has a name, description, family, rarity and at least one effect; ids are unique.
-- School and class boons carry the matching gate; every stat boon caps at 5.
-- Every level of every boon applies without an exception on a test rig.
-- A swap waits out the draw time before the gun can fire, and alt fire works on every gun from the start.
-- Damage rules: a scripted hit under each condition gets the expected multiplier, and none apply to enemies' hits.
-- Lethal order: Soul Shield fires before Phylactery.
-- Offers never contain a boon whose gate fails, a capped boon at its cap, or a second familiar.
+- **Shape.**
+  - Every boon has a name, description, group and at least one effect (Familiarity excepted), and ids are
+    unique.
+  - Level caps follow the rarity, and every stat boon caps at 5.
+  - School boons are gated on their own school, and class boons on a gun class.
+  - Familiars are limited to one, raised by Familiarity.
+  - Every boon that raises maximum health is kept away from Cocky and Glass Soul.
+  - The counts are 101, 60, 53 and 15.
+- **Every boon to its cap.** Each boon is taken to its cap on a fresh rig, then goes through a round of floor
+  events, gun hits and misses, a shot, melee, damage taken, shillings and a kill without an exception. No rule
+  is left registered after the runs end.
+- **Offers.** The familiar limit, Familiarity's gate, health boons under Cocky, and the school and summon
+  gates.
+- **Behaviours.** A representative test for each group. Examples:
+  - Executioner, Charge Up, and the lethal order (Soul Shield before Phylactery).
+  - Cocky, Glass Soul, Juggernaut, Every Reaction, Prophecy, Monarch and Mana Shield.
+  - Recovery, shillings, world boons and Otherworldly Beauty.
+  - Every enchantment, Shock's reload rule, class rounds, Dead Man's Hand, Pinpoint, Gunmage, Third Hand,
+    Mirror Barrel, Chain Static and Birthday Party.
+  - The slot bonuses, Twincast, Spell Magazine, Afterimage, Tailwind and Gorelust.
+  - One or more behaviours from every school.
 
-Plus a count check that the roster matches the design doc's rarity targets
-(101, 60, 53, 15).
+Verify Boon Systems covers the draw time. Alt fire has no lock left in the code to check.
 
 ---
 

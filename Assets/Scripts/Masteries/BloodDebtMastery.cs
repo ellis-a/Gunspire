@@ -38,8 +38,8 @@ namespace Gunspire
         /// <summary>Extra debt each kill repays. Deep Pockets.</summary>
         public float RepayBonus;
 
-        /// <summary>A kill repaid debt: how much, and whether that cleared it. Foreclosure, Tidal Surge.</summary>
-        public event System.Action<float, bool> Repaid;
+        /// <summary>A kill repaid debt: how much, whether that cleared it, and the enemy killed (null when unknown). Foreclosure, Tidal Surge.</summary>
+        public event System.Action<float, bool, Health> Repaid;
 
         private StatModifier _power;
         private bool _bound;
@@ -73,11 +73,11 @@ namespace Gunspire
         private void OnAnyDied(Health victim, DamageInfo info)
         {
             if (this == null) return;
-            if (RunState.CountsAsKill(victim)) RepayOnKill();
+            if (RunState.CountsAsKill(victim)) RepayOnKill(victim);
         }
 
         /// <summary>One kill's repayment. Returns the healing it was worth.</summary>
-        public float RepayOnKill()
+        public float RepayOnKill(Health victim = null)
         {
             if (Debt <= 0f || Rig == null || Rig.Health == null || !Rig.Health.IsAlive) return 0f;
 
@@ -93,7 +93,7 @@ namespace Gunspire
 
             RefreshPower();
             RaiseChanged();
-            Repaid?.Invoke(repaid, Debt <= 0f);
+            Repaid?.Invoke(repaid, Debt <= 0f, victim);
             return owed;
         }
 

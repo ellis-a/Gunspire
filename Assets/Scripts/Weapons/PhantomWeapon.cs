@@ -22,7 +22,7 @@ namespace Gunspire
         public bool FollowsOtherHand { get; private set; }
 
         public WeaponDefinition OtherHand =>
-            Follow != null ? Follow.GetSlot((Follow.ActiveIndex + 1) % Holster.SlotCount) : null;
+            Follow != null && Follow.NextIndex != Follow.ActiveIndex ? Follow.GetSlot(Follow.NextIndex) : null;
 
         public static PhantomWeapon Create(Holster follow, Transform aimOrigin, GameObject owner,
             bool useOwnerStats, bool shareInfusions, bool followOtherHand)

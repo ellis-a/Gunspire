@@ -26,6 +26,9 @@ namespace Gunspire
 
         public bool IsCleared => _cleared;
         public int EnemiesRemaining => _enemies.Count;
+
+        /// <summary>The enemies still holding the room shut.</summary>
+        public IReadOnlyList<EnemyController> Enemies => _enemies;
         public int EnemiesAtStart { get; private set; }
 
         public event Action Cleared;

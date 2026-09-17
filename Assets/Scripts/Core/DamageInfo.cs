@@ -77,6 +77,9 @@ namespace Gunspire
         public Vector3 SourcePosition;
         public bool HasSourcePosition;
 
+        /// <summary>The round's place in its gun's rhythm when it was fired. Only set when <see cref="Weapon"/> is.</summary>
+        public ShotContext Shot;
+
         public List<StatusApplication> Statuses;
 
         public static DamageInfo Create(float amount, DamageType type, Team team, GameObject source)
@@ -134,6 +137,25 @@ namespace Gunspire
             HitNormal = normal;
             return this;
         }
+    }
+
+    /// <summary>
+    /// Where a round sat in its gun's rhythm at the moment it was fired, so a projectile landing later still knows.
+    /// Fresh Mag, Tail End, Closing Round and Quickdraw read it.
+    /// </summary>
+    public struct ShotContext
+    {
+        /// <summary>Rounds fired since the last reload, this one included: 1 is the first round of a magazine.</summary>
+        public int SinceReload;
+
+        /// <summary>Rounds fired since the gun was drawn, this one included.</summary>
+        public int SinceDraw;
+
+        /// <summary>Rounds left in the magazine after this one, as a share of a full magazine.</summary>
+        public float MagazineLeft;
+
+        /// <summary>The last round of a burst.</summary>
+        public bool BurstEnd;
     }
 
     public interface IDamageable

@@ -127,7 +127,7 @@ namespace Gunspire
         {
             PlayerRig rig = ctx.Caster != null ? ctx.Caster.GetComponent<PlayerRig>() : null;
             if (rig == null || rig.Holster == null || rig.Weapon == null) return false;
-            if (rig.Holster.GetSlot((rig.Holster.ActiveIndex + 1) % Holster.SlotCount) == null) return false;
+            if (rig.Holster.NextIndex == rig.Holster.ActiveIndex) return false;
 
             MirrorGun.Begin(rig, Seconds * ctx.LevelScale);
             return true;

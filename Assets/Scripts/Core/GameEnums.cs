@@ -207,7 +207,23 @@ namespace Gunspire
         DebuffPotency,
 
         /// <summary>Multiplies shillings earned from kills.</summary>
-        ShillingGain
+        ShillingGain,
+
+        /// <summary>Multiplies a gun's spread while moving, on top of <see cref="Spread"/>. Spray and Pray.</summary>
+        MovingSpread
+    }
+
+    /// <summary>What a spell-effect modifier on the sheet changes. See <c>CharacterSheet.AddSpellEffect</c>.</summary>
+    public enum SpellEffectChannel
+    {
+        /// <summary>The amount a spell's status applies, scaled the way spell power scales it.</summary>
+        StatusAmount,
+
+        /// <summary>How long a spell's status lasts.</summary>
+        StatusDuration,
+
+        /// <summary>How long a spell's zones last.</summary>
+        ZoneDuration
     }
 
     /// <summary>Status effect identifiers. See <c>StatusLibrary</c> for behaviour.</summary>

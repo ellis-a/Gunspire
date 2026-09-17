@@ -345,20 +345,21 @@ namespace Gunspire
             Holster holster = player.Holster;
             if (holster == null) return;
 
-            int other = (holster.ActiveIndex + 1) % Holster.SlotCount;
-            WeaponDefinition stowed = holster.GetSlot(other);
-
-            if (stowed == null)
+            // Every other hand, the one a swap draws first and nearest the gun in hand. Third Hand opens a third.
+            float lineY = y;
+            for (int step = 1; step < holster.SlotCount; step++)
             {
-                UIStyles.Text(new Rect(x, y, width, 18f), "second hand empty",
-                    UIStyles.Right, UIStyles.Muted);
-                return;
+                int other = (holster.ActiveIndex + step) % holster.SlotCount;
+                WeaponDefinition stowed = holster.GetSlot(other);
+
+                string label = stowed == null
+                    ? "hand empty"
+                    : (other == holster.NextIndex ? "[" + Holster.SwapKey + "/wheel]  " : "") + stowed.DisplayName
+                      + "   " + holster.AmmoIn(other) + " / " + holster.MagazineIn(other);
+
+                UIStyles.Text(new Rect(x, lineY, width, 18f), label, UIStyles.Right, UIStyles.Muted);
+                lineY -= 18f;
             }
-
-            string label = "[" + Holster.SwapKey + "/wheel]  " + stowed.DisplayName
-                           + "   " + holster.AmmoIn(other) + " / " + holster.MagazineIn(other);
-
-            UIStyles.Text(new Rect(x, y, width, 18f), label, UIStyles.Right, UIStyles.Muted);
         }
 
         /// <summary>

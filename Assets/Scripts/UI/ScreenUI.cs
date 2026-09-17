@@ -692,7 +692,7 @@ namespace Gunspire
             y += 32f;
             if (player.Holster != null)
             {
-                for (int hand = 0; hand < Holster.SlotCount; hand++)
+                for (int hand = 0; hand < player.Holster.SlotCount; hand++)
                 {
                     WeaponDefinition gun = player.Holster.GetSlot(hand);
                     UIStyles.Text(new Rect(panelX, y, 60f, 24f), "Hand " + (hand + 1), UIStyles.Small, UIStyles.Muted);

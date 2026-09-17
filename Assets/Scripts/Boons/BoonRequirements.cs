@@ -43,7 +43,7 @@ namespace Gunspire
             Holster holster = run != null && run.Player != null ? run.Player.Holster : null;
             if (holster == null) return false;
 
-            for (int i = 0; i < Holster.SlotCount; i++)
+            for (int i = 0; i < holster.SlotCount; i++)
             {
                 WeaponDefinition gun = holster.GetSlot(i);
                 if (gun != null && gun.Class == Class) return true;
@@ -71,7 +71,7 @@ namespace Gunspire
 
     /// <summary>
     /// The build has minions to strengthen: a summon spell equipped, the Bestial mastery (whose
-    /// companion is one), or a boon that brings its own.
+    /// companion is one), a familiar, or a boon that brings its own.
     /// </summary>
     [System.Serializable]
     public class CanSummonRequirement : BoonRequirement
@@ -87,7 +87,7 @@ namespace Gunspire
         public override bool IsMet(RunState run)
         {
             if (run == null) return false;
-            if (run.HasTaggedBoon(SummonTag)) return true;
+            if (run.HasTaggedBoon(SummonTag) || run.HasTaggedBoon(BoonTags.Familiar)) return true;
 
             SpellBook book = BoonGates.Book(run);
             if (book == null) return false;
@@ -110,7 +110,7 @@ namespace Gunspire
             Holster holster = run != null && run.Player != null ? run.Player.Holster : null;
             if (holster == null) return false;
 
-            for (int i = 0; i < Holster.SlotCount; i++)
+            for (int i = 0; i < holster.SlotCount; i++)
             {
                 WeaponDefinition gun = holster.GetSlot(i);
                 if (gun != null && gun.Delivery == DeliveryKind.Projectile) return true;

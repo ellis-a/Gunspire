@@ -24,7 +24,17 @@ namespace Gunspire
         /// <summary>How far the readouts reach now.</summary>
         public float CurrentRange => Range * Mathf.Max(0f, RangeMultiplier);
 
-        public override void ResetForRun() => RangeMultiplier = 1f;
+        /// <summary>Seconds earlier an attack timer turns to a warning. Set by boons, cleared each run. Clear Sight.</summary>
+        public float WarningLead;
+
+        /// <summary>An attack timer shows as a warning at or below this.</summary>
+        public float WarningAt => 0.5f + Mathf.Max(0f, WarningLead);
+
+        public override void ResetForRun()
+        {
+            RangeMultiplier = 1f;
+            WarningLead = 0f;
+        }
         private const float EnemyRefreshSeconds = 0.5f;
 
         public override SpellSchool School => SpellSchool.Divination;
@@ -171,7 +181,7 @@ namespace Gunspire
                 {
                     string timer = readout.NextAttackIn <= 0.05f ? "!" : readout.NextAttackIn.ToString("0.0");
                     UIStyles.Text(new Rect(x - 30f, y - 24f, 60f, 18f), timer, UIStyles.Center,
-                        readout.NextAttackIn <= 0.5f ? UIStyles.Warning : UIStyles.Ink);
+                        readout.NextAttackIn <= WarningAt ? UIStyles.Warning : UIStyles.Ink);
                 }
             }
         }

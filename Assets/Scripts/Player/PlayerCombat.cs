@@ -51,6 +51,12 @@ namespace Gunspire
         /// <summary>A melee attack finished, and whether it actually happened rather than aborting.</summary>
         public event Action<Spell, bool> MeleeFinished;
 
+        /// <summary>
+        /// Asked before a swing, with its direction. Returning true means something else happened instead, and the
+        /// swing does not run. Thrown Blade.
+        /// </summary>
+        public Func<Spell, Vector3, bool> MeleeOverride;
+
         private float _bashTimer;
         private float _bashCooldownFull;
         private float _swapCooldown;
@@ -303,6 +309,16 @@ namespace Gunspire
             Spell spell = MeleeSpell;
             int level = MeleeLevel;
             Vector3 forward = Aim != null ? Aim.forward : transform.forward;
+
+            // Something may take the swing's place entirely. It still costs the swing's cooldown.
+            if (MeleeOverride != null && MeleeOverride(spell, forward))
+            {
+                _bashCooldownFull = spell.CooldownAtLevel(level)
+                                    / Mathf.Max(0.25f, Sheet != null ? Sheet.Get(Attr.AttackSpeed) : 1f);
+                _bashTimer = _bashCooldownFull;
+                LastMeleeForward = forward;
+                return CastOutcome.Cast;
+            }
 
             MeleeStarting?.Invoke(spell);
 

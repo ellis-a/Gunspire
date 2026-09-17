@@ -435,7 +435,7 @@ namespace Gunspire.EditorTools
             public IDamageable Target;
             public CharacterSheet Seen;
 
-            public void AdjustCrit(CharacterSheet attacker, IDamageable target, ref float chance, ref bool forced)
+            public void AdjustCrit(CharacterSheet attacker, IDamageable target, Weapon weapon, ref float chance, ref bool forced)
             {
                 Seen = attacker;
                 if (target != null && target == Target) forced = true;
@@ -444,7 +444,7 @@ namespace Gunspire.EditorTools
 
         private sealed class DoubleChance : ICritRule
         {
-            public void AdjustCrit(CharacterSheet attacker, IDamageable target, ref float chance, ref bool forced)
+            public void AdjustCrit(CharacterSheet attacker, IDamageable target, Weapon weapon, ref float chance, ref bool forced)
                 => chance *= 2f;
         }
 

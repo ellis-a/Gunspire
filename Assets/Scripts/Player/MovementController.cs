@@ -155,9 +155,28 @@ namespace Gunspire
             return Current.IsSustained ? BeginSustained() : FireOnce();
         }
 
+        /// <summary>The movement spell went off, with where the player stood before it. Afterimage, Perfect Timing.</summary>
+        public event Action<Spell, Vector3> Used;
+
+        /// <summary>Ends the cooldown at once. Tailwind.</summary>
+        public void ResetCooldown()
+        {
+            if (Cooldown <= 0f) return;
+            Cooldown = 0f;
+            Changed?.Invoke();
+        }
+
+        /// <summary>Gives back what the last use cost: a dash charge for a dash, otherwise the cooldown. Perfect Timing.</summary>
+        public void RefundUse()
+        {
+            if (Current != null && Current.UsesDashCharges && Motor != null) Motor.RestoreDashCharge();
+            ResetCooldown();
+        }
+
         private bool FireOnce()
         {
             int level = Level;
+            Vector3 before = transform.position;
 
             Context.SoulsSpent = SpellCosts.SoulsFor(Current, Context);
             bool cast = Current.Cast(Context, level);
@@ -175,11 +194,13 @@ namespace Gunspire
             Cooldown = _cooldownFull;
 
             Changed?.Invoke();
+            Used?.Invoke(Current, before);
             return true;
         }
 
         private bool BeginSustained()
         {
+            Vector3 before = transform.position;
             if (!_sustain.Begin(Current, Context, Level))
             {
                 LastRefusal = Current.DisplayName + " has no room";
@@ -187,6 +208,7 @@ namespace Gunspire
             }
 
             Changed?.Invoke();
+            Used?.Invoke(Current, before);
             return true;
         }
 
