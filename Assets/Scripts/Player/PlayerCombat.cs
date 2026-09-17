@@ -223,9 +223,6 @@ namespace Gunspire
                 case Weapon.AltOutcome.None:
                     Notify(Weapon.Definition.DisplayName + " has no alt fire");
                     break;
-                case Weapon.AltOutcome.Locked:
-                    Notify(Weapon.Alt.Name + " is locked - find a Gunsmith boon");
-                    break;
                 case Weapon.AltOutcome.NoAmmo:
                     Notify("Not enough ammo for " + Weapon.Alt.Name);
                     break;

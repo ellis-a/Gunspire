@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -6,10 +5,7 @@ namespace Gunspire
 {
     /// <summary>
     /// Everything that persists across the rooms of a single run: the seed, the route, the
-    /// boons taken and the run-wide combat hooks those boons switch on.
-    ///
-    /// Boons mutate this object rather than patching weapons and spells directly, so a new
-    /// upgrade usually means one flag here and one line in <see cref="BoonLibrary"/>.
+    /// boons taken, and the on-hit statuses boons add to your bullets and spells.
     /// </summary>
     public class RunState
     {
@@ -39,15 +35,6 @@ namespace Gunspire
 
         /// <summary>On-hit effects added to damaging spells.</summary>
         public readonly List<StatusApplication> SpellStatuses = new List<StatusApplication>();
-
-        // ---- run-wide hooks driven by boons ----
-        public float LifestealFraction;
-        public float ManaOnKill;
-        public float HealOnKill;
-        public float CooldownReductionOnKill;
-        public bool HasteOnKill;
-        public bool BlinkDetonates;
-        public float BlinkDetonationDamage = 45f;
 
         /// <summary>A familiar the player has been granted, and how many times.</summary>
         public class OwnedFamiliar
@@ -89,13 +76,6 @@ namespace Gunspire
         }
 
         /// <summary>
-        /// Highest alt fire unlock tier available this run. A gun whose alt fire declares a
-        /// higher tier keeps it locked, which is what lets a strong gun arrive before its
-        /// strong right click does. Raised by the Gunsmith boon.
-        /// </summary>
-        public int AltFireTier;
-
-        /// <summary>
         /// The run in progress, or null outside one. Saves every caller reaching through the
         /// director and null-checking it, and keeps edit-mode tooling from exploding.
         /// </summary>
@@ -123,9 +103,7 @@ namespace Gunspire
             if (player.Weapon != null) player.Weapon.ExtraStatuses = BulletStatuses;
             if (player.SpellContext != null) player.SpellContext.ExtraStatuses = SpellStatuses;
 
-            Health.AnyDamaged += OnAnyDamaged;
             Health.AnyDied += OnAnyDied;
-            AbilityEvents.Used += OnAbilityUsed;
         }
 
         public void Unbind()
@@ -133,9 +111,7 @@ namespace Gunspire
             if (!_bound) return;
             _bound = false;
 
-            Health.AnyDamaged -= OnAnyDamaged;
             Health.AnyDied -= OnAnyDied;
-            AbilityEvents.Used -= OnAbilityUsed;
         }
 
         /// <summary>
@@ -166,44 +142,11 @@ namespace Gunspire
             }
         }
 
-        private void OnAnyDamaged(Health victim, DamageInfo info, float amount)
-        {
-            if (victim == null || victim.Team == Team.Player) return;
-            if (Player == null || LifestealFraction <= 0f || !GrantsLifesteal(info, Player.gameObject)) return;
-
-            Player.Health.Heal(amount * LifestealFraction, silent: true);
-        }
-
         private void OnAnyDied(Health victim, DamageInfo info)
         {
             if (Player == null || !CountsAsKill(victim)) return;
 
             Kills++;
-
-            if (ManaOnKill > 0f) Player.Mana.Add(ManaOnKill);
-            if (HealOnKill > 0f) Player.Health.Heal(HealOnKill);
-            if (CooldownReductionOnKill > 0f) Player.Book.ReduceCooldowns(CooldownReductionOnKill);
-            if (HasteOnKill && Player.Status != null)
-                Player.Status.Apply(StatusLibrary.Haste(3f, 1, 0.10f), Player.gameObject, Team.Player);
-        }
-
-        /// <summary>Blink lives on the movement slot now, so this keys off the ability id.</summary>
-        private void OnAbilityUsed(string abilityId, AbilityContext ctx, Vector3 position)
-        {
-            if (!BlinkDetonates || abilityId != "blink") return;
-
-            DamageInfo template = DamageInfo.Create(BlinkDetonationDamage * ctx.Power,
-                DamageType.Energy, Team.Player, ctx.Caster);
-            template.CanCrit = false;
-            template.Origin = DamageOrigin.Spell;
-            template = template.WithStatuses(ctx.EmpowerAll(SpellStatuses));
-
-            Combat.Explode(position + Vector3.up * 0.9f, 5.5f, template, Layers.PlayerHitMask, 0.4f, 6f);
-
-            var color = new Color(Palette.Arcane.r, Palette.Arcane.g, Palette.Arcane.b, 0.45f);
-            GameObject pop = Build.Sphere(null, "BlinkBoom", position + Vector3.up * 0.9f, 2.5f,
-                MaterialLibrary.Transparent(color), collider: false);
-            FadeAndDie.Attach(pop, 0.3f, color, Vector3.one * 8f);
         }
 
         // ---------------------------------------------------------------- convenience

@@ -18,13 +18,6 @@ namespace Gunspire
         public string Name = "Alt Fire";
         public string Description = string.Empty;
 
-        /// <summary>
-        /// 0 is available from the moment you pick the gun up. Higher tiers stay locked until
-        /// the run's alt fire tier reaches them - see the Gunsmith boon. The point is that a
-        /// gun can be worth carrying before its alt fire is online.
-        /// </summary>
-        public int UnlockTier = 0;
-
         [Header("Cost")]
         public float Cooldown = 1.2f;
         public int AmmoCost = 1;

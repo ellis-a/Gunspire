@@ -110,12 +110,8 @@ namespace Gunspire
         /// <summary>
         /// Right click, kept in one place rather than spread through the table above.
         /// Balancing an alt fire means comparing it against the other alt fires, and every gun
-        /// that has none is visible here by its absence.
-        ///
-        /// UnlockTier 0 is live the moment you pick the gun up. Every starting gun is tier 0,
-        /// so all three classes meet the mechanic in the first room; the stronger alt fires sit
-        /// behind the Gunsmith boon, which is what lets a good gun arrive before its best
-        /// button does.
+        /// that has none is visible here by its absence. Every alt fire is live the moment you pick
+        /// the gun up.
         /// </summary>
         private static void AttachAltFires(List<WeaponDefinition> guns)
         {
@@ -190,7 +186,6 @@ namespace Gunspire
                 Kind = AltFireKind.Salvo,
                 Name = "Both Barrels",
                 Description = "Dumps every shell in the tube.",
-                UnlockTier = 1,
                 Cooldown = 4f,
                 SalvoRateMultiplier = 3.2f,
                 SalvoDamageMultiplier = 0.9f,
@@ -202,7 +197,6 @@ namespace Gunspire
                 Kind = AltFireKind.Shot,
                 Name = "Airburst",
                 Description = "Arcs high and opens wide. Less bite, far more reach.",
-                UnlockTier = 1,
                 Cooldown = 2.4f,
                 AmmoCost = 2,
                 Delivery = DeliveryKind.Projectile,
@@ -221,7 +215,6 @@ namespace Gunspire
                 Kind = AltFireKind.Focus,
                 Name = "Overcharge",
                 Description = "Hold to narrow the coil.",
-                UnlockTier = 1,
                 FocusFov = 38f,
                 FocusSpreadMultiplier = 0.05f,
                 FocusDamageMultiplier = 1.5f,
@@ -234,7 +227,6 @@ namespace Gunspire
                 Kind = AltFireKind.Shot,
                 Name = "Underbarrel Grenade",
                 Description = "Lobs a grenade. Arcs, so lead your throws.",
-                UnlockTier = 1,
                 Cooldown = 3.2f,
                 AmmoCost = 3,
                 Delivery = DeliveryKind.Projectile,
@@ -253,7 +245,6 @@ namespace Gunspire
                 Kind = AltFireKind.Shot,
                 Name = "Umbral Lance",
                 Description = "A heavy bolt that runs the length of a corridor.",
-                UnlockTier = 2,
                 Cooldown = 2.8f,
                 AmmoCost = 4,
                 Delivery = DeliveryKind.Projectile,
@@ -270,7 +261,6 @@ namespace Gunspire
                 Kind = AltFireKind.Focus,
                 Name = "Dirge",
                 Description = "Hold to sight down the barrel.",
-                UnlockTier = 2,
                 FocusFov = 32f,
                 FocusSpreadMultiplier = 0.02f,
                 FocusDamageMultiplier = 1.6f,

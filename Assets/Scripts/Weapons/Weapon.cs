@@ -355,16 +355,11 @@ namespace Gunspire
         // ---------------------------------------------------------------- alt fire
 
         /// <summary>Why an alt fire did not happen, so the HUD can say something useful.</summary>
-        public enum AltOutcome { Fired, Held, None, Locked, OnCooldown, NoAmmo, NotEnoughMana, Busy }
+        public enum AltOutcome { Fired, Held, None, OnCooldown, NoAmmo, NotEnoughMana, Busy }
 
         public bool IsFocusing { get; private set; }
 
         public AltFireProfile Alt => Definition != null ? Definition.AltFire : null;
-
-        /// <summary>Available on this gun and unlocked for this run.</summary>
-        public bool AltUnlocked =>
-            Alt != null && Alt.Exists && RunState.Current != null &&
-            RunState.Current.AltFireTier >= Alt.UnlockTier;
 
         public float AltCooldownRemaining => _altCooldown;
 
@@ -375,7 +370,6 @@ namespace Gunspire
         public AltOutcome EvaluateAlt()
         {
             if (Definition == null || Alt == null || !Alt.Exists) return AltOutcome.None;
-            if (!AltUnlocked) return AltOutcome.Locked;
             if (IsReloading || _burstRoutine != null || _salvoRoutine != null) return AltOutcome.Busy;
             if (_altCooldown > 0f) return AltOutcome.OnCooldown;
             if (AmmoInMagazine < Alt.AmmoCost) return AltOutcome.NoAmmo;
@@ -387,7 +381,7 @@ namespace Gunspire
 
         private void HandleAltInput(bool altDown, bool altPressedThisFrame)
         {
-            bool focusable = Alt != null && Alt.Kind == AltFireKind.Focus && AltUnlocked && !IsReloading;
+            bool focusable = Alt != null && Alt.Kind == AltFireKind.Focus && !IsReloading;
             IsFocusing = focusable && altDown;
 
             if (!altPressedThisFrame || Alt == null || Alt.IsHeld) return;

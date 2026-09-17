@@ -365,13 +365,6 @@ namespace Gunspire
                 return;
             }
 
-            if (!weapon.AltUnlocked)
-            {
-                UIStyles.Text(new Rect(x, y, width, 16f), "[RMB] " + alt.Name + "  - LOCKED",
-                    UIStyles.Right, UIStyles.Muted);
-                return;
-            }
-
             float cooldown = weapon.AltCooldownRemaining;
             if (cooldown > 0f)
             {

@@ -129,15 +129,13 @@ namespace Gunspire
         }
 
         /// <summary>
-        /// The alt fire, for pickup prompts. Whether a gun has a second trigger, and whether
-        /// it is available yet, is worth knowing before deciding to swap.
+        /// The alt fire, for pickup prompts. Whether a gun has a second trigger is worth knowing
+        /// before deciding to swap.
         /// </summary>
-        public string AltLine(int unlockedTier)
+        public string AltLine()
         {
             if (!HasAltFire) return "no alt fire";
-
-            string locked = AltFire.UnlockTier > unlockedTier ? " (locked)" : string.Empty;
-            return "RMB " + AltFire.Name + locked + ": " + AltFire.Summary();
+            return "RMB " + AltFire.Name + ": " + AltFire.Summary();
         }
     }
 }

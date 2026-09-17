@@ -15,6 +15,8 @@ reference for what each spell does; this doc only says how a boon changes it.
 - **Design first.** This doc is settled before any code.
 - **"Floor" means a room.** Each room is a floor of the tower. The word keeps it apart from spell and boon levels.
 - **A shop is coming.** The currency is shillings. Boons may earn or spend them.
+- **Boons are kept.** Unequipping a spell or dropping a gun never removes a boon. It keeps working exactly as it
+  says; it just has nothing to act on until you hold something it affects.
 
 ---
 
@@ -48,15 +50,12 @@ movement slot, a melee slot, two guns) and boons should hang off that spine.
 ### Levels
 
 Numbers level; changes mostly do not. A boon that adds a second projectile is one pick. A boon that widens an
-area can take three. Default caps: Common 5, Uncommon 3, Rare 2, Mythic 1, Legendary 1.
-
-A boon can also be **uncapped**, offered for as long as the run lasts. The stat boons are.
+area can take three. Default caps: Common 5, Uncommon 3, Rare 2, Mythic 1, Legendary 1. Stat boons are the
+exception: all of them cap at 5.
 
 ### Proposed defaults, still open
 
 - **Held means equipped**, not merely known, matching how masteries count.
-- **A boon whose school or spell you drop goes dormant.** It stays in your list and works again if you equip
-  the spell again. It is never offered again while dormant, and it does not count against anything.
 - **An offer draws a family first, then a rarity, then a boon.** Weights before normalising over families that
   have anything to offer: Core 30, Arsenal 20, Slots 10, School 15, Spell 25. A shrine's spell and a boon offer
   can never be the same thing, so this does not touch spell offers.
@@ -69,7 +68,8 @@ To be written.
 
 ### Core
 
-**Stat boons.** Uncapped: they can be taken any number of times.
+**Stat boons.** Every stat boon caps at five levels, whatever its rarity. With 26 of them there is always
+another to take.
 
 - **Single-stat boons** (Common) raise one core stat by two.
 - **Paired boons** (Common) raise two stats by one each. Every pair of stats has its own boon.
@@ -79,42 +79,42 @@ To be written.
 
 | Boon | Rarity | Levels | Effect |
 |---|---|---|---|
-| Nimble | Common | Uncapped | +2 Dexterity: tighter bullet spread, less recoil, faster reloads |
-| Arcane | Common | Uncapped | +2 Power: more spell and status power, more maximum mana |
-| Swift | Common | Uncapped | +2 Athletics: faster cooldowns, movement, jumps and air control |
-| Tough | Common | Uncapped | +2 Endurance: more maximum health and mana regeneration |
-| Lucky | Common | Uncapped | +2 Luck: more critical hits, and rarer things on offer |
-| Agile | Common | Uncapped | +1 Dexterity, +1 Athletics |
-| Hardy | Common | Uncapped | +1 Athletics, +1 Endurance |
-| Steadfast | Common | Uncapped | +1 Endurance, +1 Power |
-| Blessed | Common | Uncapped | +1 Power, +1 Luck |
-| Gambler | Common | Uncapped | +1 Luck, +1 Dexterity |
-| Veteran | Common | Uncapped | +1 Dexterity, +1 Endurance |
-| Spellslinger | Common | Uncapped | +1 Dexterity, +1 Power |
-| Dynamo | Common | Uncapped | +1 Athletics, +1 Power |
-| Daring | Common | Uncapped | +1 Athletics, +1 Luck |
-| Survivor | Common | Uncapped | +1 Endurance, +1 Luck |
-| Commando | Uncommon | Uncapped | +1 Dexterity, +1 Athletics, +1 Endurance |
-| Spellblade | Uncommon | Uncapped | +1 Dexterity, +1 Athletics, +1 Power |
-| Rogue | Uncommon | Uncapped | +1 Dexterity, +1 Athletics, +1 Luck |
-| Warden | Uncommon | Uncapped | +1 Dexterity, +1 Endurance, +1 Power |
-| Outlaw | Uncommon | Uncapped | +1 Dexterity, +1 Endurance, +1 Luck |
-| Trickster | Uncommon | Uncapped | +1 Dexterity, +1 Power, +1 Luck |
-| Champion | Uncommon | Uncapped | +1 Athletics, +1 Endurance, +1 Power |
-| Adventurer | Uncommon | Uncapped | +1 Athletics, +1 Endurance, +1 Luck |
-| Wanderer | Uncommon | Uncapped | +1 Athletics, +1 Power, +1 Luck |
-| Chosen | Uncommon | Uncapped | +1 Endurance, +1 Power, +1 Luck |
-| Acrobat | Rare | Uncapped | +3 Dexterity, +3 Athletics |
-| Mercenary | Rare | Uncapped | +3 Dexterity, +3 Endurance |
-| Hexslinger | Rare | Uncapped | +3 Dexterity, +3 Power |
-| Sharpshooter | Rare | Uncapped | +3 Dexterity, +3 Luck |
-| Titan | Rare | Uncapped | +3 Athletics, +3 Endurance |
-| Tempest | Rare | Uncapped | +3 Athletics, +3 Power |
-| Daredevil | Rare | Uncapped | +3 Athletics, +3 Luck |
-| Archon | Rare | Uncapped | +3 Endurance, +3 Power |
-| Diehard | Rare | Uncapped | +3 Endurance, +3 Luck |
-| Prophet | Rare | Uncapped | +3 Power, +3 Luck |
-| Ascendant | Mythic | Uncapped | +5 to every stat |
+| Nimble | Common | 5 | +2 Dexterity: tighter bullet spread, less recoil, faster reloads |
+| Arcane | Common | 5 | +2 Power: more spell and status power, more maximum mana |
+| Swift | Common | 5 | +2 Athletics: faster cooldowns, movement, jumps and air control |
+| Tough | Common | 5 | +2 Endurance: more maximum health and mana regeneration |
+| Lucky | Common | 5 | +2 Luck: more critical hits, and rarer things on offer |
+| Agile | Common | 5 | +1 Dexterity, +1 Athletics |
+| Hardy | Common | 5 | +1 Athletics, +1 Endurance |
+| Steadfast | Common | 5 | +1 Endurance, +1 Power |
+| Blessed | Common | 5 | +1 Power, +1 Luck |
+| Gambler | Common | 5 | +1 Luck, +1 Dexterity |
+| Veteran | Common | 5 | +1 Dexterity, +1 Endurance |
+| Spellslinger | Common | 5 | +1 Dexterity, +1 Power |
+| Dynamo | Common | 5 | +1 Athletics, +1 Power |
+| Daring | Common | 5 | +1 Athletics, +1 Luck |
+| Survivor | Common | 5 | +1 Endurance, +1 Luck |
+| Commando | Uncommon | 5 | +1 Dexterity, +1 Athletics, +1 Endurance |
+| Spellblade | Uncommon | 5 | +1 Dexterity, +1 Athletics, +1 Power |
+| Rogue | Uncommon | 5 | +1 Dexterity, +1 Athletics, +1 Luck |
+| Warden | Uncommon | 5 | +1 Dexterity, +1 Endurance, +1 Power |
+| Outlaw | Uncommon | 5 | +1 Dexterity, +1 Endurance, +1 Luck |
+| Trickster | Uncommon | 5 | +1 Dexterity, +1 Power, +1 Luck |
+| Champion | Uncommon | 5 | +1 Athletics, +1 Endurance, +1 Power |
+| Adventurer | Uncommon | 5 | +1 Athletics, +1 Endurance, +1 Luck |
+| Wanderer | Uncommon | 5 | +1 Athletics, +1 Power, +1 Luck |
+| Chosen | Uncommon | 5 | +1 Endurance, +1 Power, +1 Luck |
+| Acrobat | Rare | 5 | +3 Dexterity, +3 Athletics |
+| Mercenary | Rare | 5 | +3 Dexterity, +3 Endurance |
+| Hexslinger | Rare | 5 | +3 Dexterity, +3 Power |
+| Sharpshooter | Rare | 5 | +3 Dexterity, +3 Luck |
+| Titan | Rare | 5 | +3 Athletics, +3 Endurance |
+| Tempest | Rare | 5 | +3 Athletics, +3 Power |
+| Daredevil | Rare | 5 | +3 Athletics, +3 Luck |
+| Archon | Rare | 5 | +3 Endurance, +3 Power |
+| Diehard | Rare | 5 | +3 Endurance, +3 Luck |
+| Prophet | Rare | 5 | +3 Power, +3 Luck |
+| Ascendant | Mythic | 5 | +5 to every stat |
 
 **Offer boons.**
 
@@ -571,7 +571,6 @@ Numbers are placeholders that play will settle, so this list only tracks design 
 - **Offer weights.** Are Core 30, Arsenal 20, Slots 10, School 15, Spell 25 roughly right, or should a
   build's own spells come up more often?
 - **Held or known.** Should school and spell boons follow what is equipped, or everything you have learned?
-- **Dormant or lost.** When you unequip a spell, does its boon wait for you, or is it gone?
 - **Levels.** Are the default caps per rarity right?
 - **Shock Enchantment's amount.** Now that shock is counted in stacks, does the first round after a reload
   apply round damage × multiplier × level stacks, the same formula as the others?

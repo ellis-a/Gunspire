@@ -283,7 +283,7 @@ namespace Gunspire.EditorTools
                     : new AltFireProfile();
 
                 EditorUtility.SetDirty(asset);
-                text.AppendLine("  wrote  " + source.Id + ": " + asset.Definition.AltLine(99));
+                text.AppendLine("  wrote  " + source.Id + ": " + asset.Definition.AltLine());
                 written++;
             }
 
@@ -330,9 +330,8 @@ namespace Gunspire.EditorTools
             for (int i = 0; i < all.Count; i++)
             {
                 WeaponDefinition w = all[i];
-                text.AppendLine(string.Format("{0,-18} tier {1}  {2,-22} {3}",
+                text.AppendLine(string.Format("{0,-18} {1,-22} {2}",
                     w.Id,
-                    w.HasAltFire ? w.AltFire.UnlockTier.ToString() : "-",
                     w.HasAltFire ? w.AltFire.Name : "(none)",
                     w.HasAltFire ? w.AltFire.Summary() : string.Empty));
             }

@@ -139,7 +139,7 @@ namespace Gunspire
                 string text = verb + Definition.DisplayName
                               + "  [" + Rarities.Name(Definition.Rarity) + "]  -  "
                               + Definition.StatLine() + "  |  "
-                              + Definition.AltLine(RunState.Current != null ? RunState.Current.AltFireTier : 0);
+                              + Definition.AltLine();
 
                 // Naming what you would be putting down is the whole point of a swap.
                 if (!string.IsNullOrEmpty(held)) text += "   (leaves your " + held + " here)";
