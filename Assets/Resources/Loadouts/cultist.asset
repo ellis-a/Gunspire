@@ -21,7 +21,7 @@ MonoBehaviour:
     Athletics: 10
     Endurance: 10
     Luck: 10
-    WeaponId: revolver
+    WeaponId: shotgun
     MovementAbilityId: dash
     MeleeSpellId: bash
     SpellId: gush

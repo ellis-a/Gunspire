@@ -156,6 +156,8 @@ namespace Gunspire
         private void PrepareRun(int seed)
         {
             Run?.Unbind();
+            PendingSpell = null;
+            _roomsAfterBinding = false;
             AbilityEvents.ClearSubscribers();
             CombatRules.Clear();
 
@@ -357,15 +359,36 @@ namespace Gunspire
 
             Spell spell = _spellOffers[index];
             _spellOffers.Clear();
+            SpellBook book = Player.Book;
 
-            // Straight into the first free slot. Every slot is empty at this point, so a slot
-            // picker would be a screen asking a question with no wrong answer.
-            int slot = Player.Book.FirstEmptySlot();
-            Player.Book.Bind(spell, slot);
+            // A loadout can already hold the spell, and the offer can hold spells below their cap. Taking one
+            // levels it where it is; binding it again would only move it to another slot.
+            if (book.Knows(spell))
+            {
+                int level = book.LevelUp(spell);
+                Notify(spell.DisplayName + " is now level " + level, 2f);
+                OfferRooms();
+                return;
+            }
 
+            // Straight into the first free slot, since there is no wrong answer while one is free. With every slot
+            // taken, the player picks what to replace, and the rooms follow once that is settled.
+            int slot = book.FirstEmptySlot();
+            if (book.GetSlot(slot) != null)
+            {
+                PendingSpell = spell;
+                _roomsAfterBinding = true;
+                SetState(GameStateKind.ChoosingBoon);   // the slot picker lives on the choice screen
+                return;
+            }
+
+            book.Bind(spell, slot);
             Notify(spell.DisplayName + " bound to " + SpellBook.SlotLabels[slot], 2f);
             OfferRooms();
         }
+
+        /// <summary>The slot picker was opened by a reward rather than a pedestal, so the room choice comes after it.</summary>
+        private bool _roomsAfterBinding;
 
         private void OfferBoons()
         {
@@ -492,13 +515,20 @@ namespace Gunspire
 
             Player.Book.Bind(PendingSpell, slot);
             Notify(PendingSpell.DisplayName + " bound to " + SpellBook.SlotLabels[slot]);
-            PendingSpell = null;
-            SetState(GameStateKind.Playing);
+            FinishBinding();
         }
 
-        public void CancelSpellBinding()
+        public void CancelSpellBinding() => FinishBinding();
+
+        private void FinishBinding()
         {
             PendingSpell = null;
+            if (_roomsAfterBinding)
+            {
+                _roomsAfterBinding = false;
+                OfferRooms();
+                return;
+            }
             SetState(GameStateKind.Playing);
         }
 

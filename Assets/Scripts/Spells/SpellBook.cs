@@ -147,7 +147,7 @@ namespace Gunspire
             Spell spell = GetSlot(index);
             if (spell == null) return 0f;
 
-            float full = spell.CooldownAtLevel(GetLevel(spell));
+            float full = spell.CooldownAtLevel(Mathf.Max(1, GetSlotLevel(index)));
             return full <= 0f ? 0f : Mathf.Clamp01(_cooldowns[index] / full);
         }
 
@@ -450,7 +450,7 @@ namespace Gunspire
         {
             Spell spell = runner.Spell;
             if (spell != null && _slots[slot] == spell)
-                _cooldowns[slot] = spell.CooldownAtLevel(Mathf.Max(1, GetLevel(spell)));
+                _cooldowns[slot] = spell.CooldownAtLevel(Mathf.Max(1, GetLevel(spell)) + SlotLevelBonus(slot));
 
             Changed?.Invoke();
         }

@@ -49,11 +49,7 @@ MonoBehaviour:
     Icon: {fileID: 0}
     ManaPerShot: 0
     Tint: {r: 1, g: 1, b: 1, a: 1}
-    OnHitStatuses:
-    - Id: 2
-      Duration: 2.5
-      Stacks: 1
-      Magnitude: 3
+    OnHitStatuses: []
     AltFire:
       Kind: 0
       Name: Cinder Sights

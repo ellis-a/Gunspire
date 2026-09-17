@@ -20,7 +20,7 @@ MonoBehaviour:
     Rarity: 2
     Family: 3
     Group: Elemental
-    Icon: {fileID: 0}
+    Icon: {fileID: 2800000, guid: 899815a30e5495c42aaf345455e13ff1, type: 3}
     MaxLevel: 2
     Tags: []
     Effects:

@@ -103,8 +103,125 @@ namespace Gunspire
         {
             Color previous = style.normal.textColor;
             if (color.HasValue) style.normal.textColor = color.Value;
-            GUI.Label(rect, text, style);
+            DrawLabel(rect, text, style);
             style.normal.textColor = previous;
+        }
+
+        // ---------------------------------------------------------------- scaling
+        //
+        // Every layout is written for a 1080-pixel-high screen. Each OnGUI calls BeginScaled first, which
+        // scales the GUI matrix so the same numbers fill a larger screen, and lays out against Width and Height
+        // rather than Screen.width and Screen.height. Mouse positions come back through the matrix, so hit
+        // tests need nothing. Text is the exception: a scaled matrix stretches glyphs rendered at the small
+        // size, so DrawLabel draws it unscaled at the real pixel size with a font scaled to match.
+
+        /// <summary>The screen height every layout is written for.</summary>
+        public const float ReferenceHeight = 1080f;
+
+        public const float MinUserScale = 0.5f;
+        public const float MaxUserScale = 2f;
+        public const float UserScaleStep = 0.1f;
+
+        private const string UserScaleKey = "ui_scale";
+        private static float _userScale = -1f;
+
+        /// <summary>The player's own size adjustment on top of the automatic one, kept between sessions. 1 is none.</summary>
+        public static float UserScale
+        {
+            get
+            {
+                if (_userScale < 0f) _userScale = Mathf.Clamp(PlayerPrefs.GetFloat(UserScaleKey, 1f), MinUserScale, MaxUserScale);
+                return _userScale;
+            }
+            set
+            {
+                // Rounded to the step so repeated presses never drift off the tenths.
+                _userScale = Mathf.Clamp(Mathf.Round(value / UserScaleStep) * UserScaleStep, MinUserScale, MaxUserScale);
+                PlayerPrefs.SetFloat(UserScaleKey, _userScale);
+                PlayerPrefs.Save();
+            }
+        }
+
+        /// <summary>
+        /// Pixels per layout unit: the screen height over 1080, never below 1 so a small window keeps the size it
+        /// always had, times the player's adjustment. A 4K screen gets 2.
+        /// </summary>
+        public static float Scale => Mathf.Max(1f, Screen.height / ReferenceHeight) * UserScale;
+
+        /// <summary>The screen's width and height in layout units. Use these in OnGUI, never Screen.width and height.</summary>
+        public static float Width => Screen.width / Scale;
+        public static float Height => Screen.height / Scale;
+
+        /// <summary>Call first in every OnGUI.</summary>
+        public static void BeginScaled()
+        {
+            float scale = Scale;
+            GUI.matrix = Matrix4x4.Scale(new Vector3(scale, scale, 1f));
+        }
+
+        /// <summary>A point from Camera.WorldToScreenPoint, in layout units with y down.</summary>
+        public static Vector2 FromScreen(Vector3 screen)
+        {
+            float scale = Scale;
+            return new Vector2(screen.x / scale, (Screen.height - screen.y) / scale);
+        }
+
+        private static readonly System.Collections.Generic.Dictionary<GUIStyle, GUIStyle> Scaled =
+            new System.Collections.Generic.Dictionary<GUIStyle, GUIStyle>();
+
+        /// <summary>
+        /// GUI.Label, with the text rendered at full resolution. Use it in place of GUI.Label for anything that
+        /// draws text; the rect is in layout units as usual.
+        /// </summary>
+        public static void DrawLabel(Rect rect, string text, GUIStyle style)
+        {
+            Matrix4x4 matrix = GUI.matrix;
+            float scale = matrix.m00;
+            if (Mathf.Approximately(scale, 1f))
+            {
+                GUI.Label(rect, text, style);
+                return;
+            }
+
+            GUIStyle sized = SizedCopy(style, scale);
+            GUI.matrix = Matrix4x4.identity;
+            GUI.Label(new Rect(rect.x * scale, rect.y * scale, rect.width * scale, rect.height * scale), text, sized);
+            GUI.matrix = matrix;
+        }
+
+        private static GUIStyle SizedCopy(GUIStyle style, float scale)
+        {
+            int fontSize = Mathf.Max(1, Mathf.RoundToInt((style.fontSize > 0 ? style.fontSize : 13) * scale));
+
+            if (!Scaled.TryGetValue(style, out GUIStyle sized) || sized.fontSize != fontSize)
+            {
+                sized = new GUIStyle(style) { fontSize = fontSize };
+                sized.padding = ScaleOffset(style.padding, scale);
+                sized.contentOffset = style.contentOffset * scale;
+                Scaled[style] = sized;
+            }
+
+            // The callers recolour the base style per draw, so the copy follows it every time.
+            sized.normal.textColor = style.normal.textColor;
+            return sized;
+        }
+
+        private static RectOffset ScaleOffset(RectOffset offset, float scale) => new RectOffset(
+            Mathf.RoundToInt(offset.left * scale), Mathf.RoundToInt(offset.right * scale),
+            Mathf.RoundToInt(offset.top * scale), Mathf.RoundToInt(offset.bottom * scale));
+
+        /// <summary>A "UI size  -  100%  +" control, for the pause screens. Returns nothing; it sets <see cref="UserScale"/>.</summary>
+        public static void ScaleControl(Rect rect)
+        {
+            float buttonWidth = rect.height;
+            Text(new Rect(rect.x, rect.y, rect.width - buttonWidth * 2f - 60f, rect.height), "UI size", Right, Muted);
+
+            float x = rect.xMax - buttonWidth * 2f - 56f;
+            if (Button(new Rect(x, rect.y, buttonWidth, rect.height), "-", Muted, UserScale > MinUserScale + 0.001f))
+                UserScale -= UserScaleStep;
+            Text(new Rect(x + buttonWidth, rect.y, 56f, rect.height), Mathf.RoundToInt(UserScale * 100f) + "%", Center, Ink);
+            if (Button(new Rect(x + buttonWidth + 56f, rect.y, buttonWidth, rect.height), "+", Muted, UserScale < MaxUserScale - 0.001f))
+                UserScale += UserScaleStep;
         }
 
         /// <summary>Panel with a coloured left edge, used for every card in the game.</summary>

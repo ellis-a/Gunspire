@@ -46,6 +46,7 @@ namespace Gunspire.EditorTools
                 CheckHiding(problems, rigs);
                 CheckPossession(problems, rigs);
                 CheckWeaponExtensions(problems, rigs);
+                CheckSpellChoice(problems, rigs);
             }
             catch (System.Exception e)
             {
@@ -69,7 +70,7 @@ namespace Gunspire.EditorTools
             if (problems.Count == 0)
             {
                 Debug.Log("Player systems: levels and offers, masteries, costs, activation modes, the motor, "
-                          + "hiding, possession and weapon extensions all behave as specified.\n  no problems.");
+                          + "hiding, possession, weapon extensions and the spell reward all behave as specified.\n  no problems.");
                 return;
             }
 
@@ -79,6 +80,83 @@ namespace Gunspire.EditorTools
         }
 
         // ---------------------------------------------------------------- 4.1 slots and levels
+
+        /// <summary>
+        /// The spell reward after the first floor: a spell already held levels up where it is, a new one takes the
+        /// first free slot, and with no slot free the slot picker opens and the room choice waits for it.
+        /// </summary>
+        private static void CheckSpellChoice(List<string> problems, List<PlayerRig> rigs)
+        {
+            PlayerRig rig = MakeRig(new Vector3(2900f, 0f, 0f), rigs);
+            var go = new GameObject("SpellChoiceDirector");
+            GameDirector director = go.AddComponent<GameDirector>();
+            float timeScale = Time.timeScale;
+
+            Spell held = TestSpell("choice_held", SpellSchool.Elemental);
+            Spell fresh = TestSpell("choice_fresh", SpellSchool.Elemental);
+            held.MaxLevel = 3;
+
+            try
+            {
+                SetDirector(director, "Player", rig);
+                rig.Book.Bind(held, 0);
+
+                // Taken, then level: the loadout's spell offered again.
+                Offer(director, held);
+                director.ChooseStarterSpell(0);
+                if (rig.Book.GetSlot(0) != held || rig.Book.GetLevel(held) != 2)
+                    problems.Add("choosing a held spell left it in " + SlotOf(rig.Book, held) + " at level " + rig.Book.GetLevel(held)
+                                 + ", not Q at level 2");
+                if (director.State != GameStateKind.Victory) problems.Add("choosing a held spell did not move on to the rooms");
+
+                Offer(director, fresh);
+                director.ChooseStarterSpell(0);
+                if (rig.Book.GetSlot(1) != fresh || rig.Book.GetSlot(0) != held)
+                    problems.Add("a new spell did not take the first free slot, E");
+
+                rig.Book.Bind(TestSpell("choice_filler", SpellSchool.Elemental), 2);
+                Spell third = TestSpell("choice_third", SpellSchool.Elemental);
+                Offer(director, third);
+                director.ChooseStarterSpell(0);
+                if (director.PendingSpell != third || director.State != GameStateKind.ChoosingBoon)
+                    problems.Add("with every slot full, a new spell did not open the slot picker");
+                if (rig.Book.Knows(third)) problems.Add("with every slot full, a new spell replaced one without asking");
+
+                director.BindPendingSpell(1);
+                if (rig.Book.GetSlot(1) != third || director.PendingSpell != null)
+                    problems.Add("the slot picker did not bind the spell to the chosen slot");
+                if (director.State != GameStateKind.Victory) problems.Add("the slot picker did not move on to the rooms");
+            }
+            finally
+            {
+                Time.timeScale = timeScale;
+                Object.DestroyImmediate(go);
+            }
+        }
+
+        /// <summary>Puts the director on the spell choice with one card, on the last floor so the rooms end the run.</summary>
+        private static void Offer(GameDirector director, Spell spell)
+        {
+            var run = new RunState(77, director.FloorCount) { Floor = director.FloorCount };
+            SetDirector(director, "Run", run);
+            SetDirector(director, "State", GameStateKind.ChoosingSpell);
+
+            var offers = (List<Spell>)typeof(GameDirector)
+                .GetField("_spellOffers", BindingFlags.Instance | BindingFlags.NonPublic).GetValue(director);
+            offers.Clear();
+            offers.Add(spell);
+        }
+
+        private static void SetDirector(GameDirector director, string property, object value)
+            => typeof(GameDirector).GetProperty(property, BindingFlags.Instance | BindingFlags.Public)
+                .SetValue(director, value);
+
+        private static string SlotOf(SpellBook book, Spell spell)
+        {
+            for (int i = 0; i < SpellBook.SlotCount; i++)
+                if (book.GetSlot(i) == spell) return SpellBook.SlotLabels[i];
+            return "no slot";
+        }
 
         private static void CheckLevelsAndOffers(List<string> problems, List<PlayerRig> rigs)
         {

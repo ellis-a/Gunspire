@@ -19,7 +19,7 @@ MonoBehaviour:
     Rarity: 2
     Family: 3
     Group: Divination
-    Icon: {fileID: 0}
+    Icon: {fileID: 2800000, guid: 22689ad770fbc9d45882e5b2ea08cf06, type: 3}
     MaxLevel: 2
     Tags: []
     Effects:

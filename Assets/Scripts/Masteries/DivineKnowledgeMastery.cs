@@ -168,8 +168,9 @@ namespace Gunspire
                 Vector3 screen = camera.WorldToScreenPoint(head);
                 if (screen.z <= 0f) continue;
 
-                float x = screen.x;
-                float y = Screen.height - screen.y;
+                Vector2 at = UIStyles.FromScreen(screen);
+                float x = at.x;
+                float y = at.y;
 
                 if (ShowsHealthBars)
                 {

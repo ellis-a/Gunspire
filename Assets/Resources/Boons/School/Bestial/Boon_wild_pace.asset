@@ -19,7 +19,7 @@ MonoBehaviour:
     Rarity: 0
     Family: 3
     Group: Bestial
-    Icon: {fileID: 0}
+    Icon: {fileID: 2800000, guid: 40544f905c1a0564fa347c8c99a890e4, type: 3}
     MaxLevel: 5
     Tags: []
     Effects:

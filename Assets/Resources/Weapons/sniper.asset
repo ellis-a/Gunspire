@@ -21,12 +21,12 @@ MonoBehaviour:
     Delivery: 0
     Mode: 0
     DamageType: 0
-    Damage: 40
+    Damage: 30
     PelletsPerShot: 1
     Knockback: 0
-    RoundsPerMinute: 60
+    RoundsPerMinute: 45
     MagazineSize: 4
-    ReloadTime: 1.5
+    ReloadTime: 2.5
     BurstCount: 1
     BurstInterval: 0.06
     DrawTime: 1
@@ -49,11 +49,7 @@ MonoBehaviour:
     Icon: {fileID: 0}
     ManaPerShot: 0
     Tint: {r: 1, g: 1, b: 1, a: 1}
-    OnHitStatuses:
-    - Id: 2
-      Duration: 2.5
-      Stacks: 1
-      Magnitude: 3
+    OnHitStatuses: []
     AltFire:
       Kind: 3
       Name: Zoom
@@ -62,7 +58,7 @@ MonoBehaviour:
       AmmoCost: 1
       ManaCost: 0
       Delivery: 0
-      Damage: 40
+      Damage: 30
       Pellets: 1
       SpreadDegrees: 0
       Knockback: 0

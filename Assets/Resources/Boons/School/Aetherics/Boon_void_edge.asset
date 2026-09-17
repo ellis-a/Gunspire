@@ -19,7 +19,7 @@ MonoBehaviour:
     Rarity: 0
     Family: 3
     Group: Aetherics
-    Icon: {fileID: 0}
+    Icon: {fileID: 2800000, guid: 85359e5b179b3994397f0a2d9191dcad, type: 3}
     MaxLevel: 5
     Tags: []
     Effects:

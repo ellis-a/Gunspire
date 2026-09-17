@@ -16,6 +16,7 @@ namespace Gunspire
         private void OnGUI()
         {
             if (_director == null) return;
+            UIStyles.BeginScaled();
 
             switch (_director.State)
             {
@@ -50,13 +51,17 @@ namespace Gunspire
 
                 case GameStateKind.Playing:
                     if (Input.GetKey(KeyCode.Tab)) DrawCharacterSheet(new Rect(
-                        Screen.width * 0.5f - 330f, Screen.height * 0.5f - 290f, 660f, 580f));
+                        UIStyles.Width * 0.5f - 330f, UIStyles.Height * 0.5f - 290f, 660f, 580f));
                     break;
             }
         }
 
+        /// <summary>The UI size setting, bottom right on both pause screens.</summary>
+        private static void DrawScaleControl()
+            => UIStyles.ScaleControl(new Rect(UIStyles.Width - 256f, UIStyles.Height - 46f, 236f, 28f));
+
         private static void Dim(float alpha = 0.72f)
-            => UIStyles.Fill(new Rect(0f, 0f, Screen.width, Screen.height), new Color(0.02f, 0.02f, 0.04f, alpha));
+            => UIStyles.Fill(new Rect(0f, 0f, UIStyles.Width, UIStyles.Height), new Color(0.02f, 0.02f, 0.04f, alpha));
 
         // ---------------------------------------------------------------- loadout
 
@@ -69,9 +74,9 @@ namespace Gunspire
             Dim(0.94f);
             IReadOnlyList<LoadoutDefinition> offers = _director.LoadoutOffers;
 
-            UIStyles.Text(new Rect(0f, 60f, Screen.width, 48f), "Gunspire",
+            UIStyles.Text(new Rect(0f, 60f, UIStyles.Width, 48f), "Gunspire",
                 UIStyles.Title, UIStyles.Ink);
-            UIStyles.Text(new Rect(0f, 110f, Screen.width, 22f),
+            UIStyles.Text(new Rect(0f, 110f, UIStyles.Width, 22f),
                 _director.TrainingSelected
                     ? "Training room: choose a class to practise with. Any spell or gun can be picked once inside."
                     : "Choose how you climb. Click a card, or press its number.",
@@ -82,8 +87,8 @@ namespace Gunspire
             const float gap = 26f;
 
             float total = offers.Count * cardWidth + (offers.Count - 1) * gap;
-            float startX = Screen.width * 0.5f - total * 0.5f;
-            float y = Screen.height * 0.5f - cardHeight * 0.5f + 20f;
+            float startX = UIStyles.Width * 0.5f - total * 0.5f;
+            float y = UIStyles.Height * 0.5f - cardHeight * 0.5f + 20f;
 
             for (int i = 0; i < offers.Count; i++)
             {
@@ -98,7 +103,7 @@ namespace Gunspire
                 if (NumberPressed(i)) _director.ChooseLoadout(i);
             }
 
-            var training = new Rect(Screen.width * 0.5f - 130f, y + cardHeight + 28f, 260f, 38f);
+            var training = new Rect(UIStyles.Width * 0.5f - 130f, y + cardHeight + 28f, 260f, 38f);
             if (UIStyles.Button(training, _director.TrainingSelected ? "Training room: ON  [T]" : "Training room: OFF  [T]",
                     _director.TrainingSelected ? UIStyles.Accent : UIStyles.Muted))
                 _director.TrainingSelected = !_director.TrainingSelected;
@@ -111,7 +116,7 @@ namespace Gunspire
                 Event.current.Use();
             }
 
-            UIStyles.Text(new Rect(0f, Screen.height - 56f, Screen.width, 20f),
+            UIStyles.Text(new Rect(0f, UIStyles.Height - 56f, UIStyles.Width, 20f),
                 "WASD move   SPACE jump   SHIFT dash   LMB fire   RMB alt fire   V bash   R reload   Q/E spells   F interact",
                 UIStyles.Center, UIStyles.Muted);
         }
@@ -125,7 +130,7 @@ namespace Gunspire
             UIStyles.Text(new Rect(x, y, width, 30f), loadout.DisplayName, UIStyles.Heading, UIStyles.Ink);
             y += 34f;
 
-            GUI.Label(new Rect(x, y, width, 76f), loadout.Description, UIStyles.Wrap);
+            UIStyles.DrawLabel(new Rect(x, y, width, 76f), loadout.Description, UIStyles.Wrap);
             y += 82f;
 
             UIStyles.Fill(new Rect(x, y, width, 1f), new Color(1f, 1f, 1f, 0.12f));
@@ -202,15 +207,15 @@ namespace Gunspire
             IReadOnlyList<Boon> offers = _director.BoonOffers;
 
             int picks = _director.BoonPicksLeft;
-            UIStyles.Text(new Rect(0f, 70f, Screen.width, 44f),
+            UIStyles.Text(new Rect(0f, 70f, UIStyles.Width, 44f),
                 picks > 1 ? "Choose " + picks + " boons" : "Choose a boon", UIStyles.Title, UIStyles.Ink);
-            UIStyles.Text(new Rect(0f, 116f, Screen.width, 22f),
+            UIStyles.Text(new Rect(0f, 116f, UIStyles.Width, 22f),
                 "Click a card, or press its number", UIStyles.Center, UIStyles.Muted);
 
             int rerolls = _director.BoonRerollsLeft;
             if (rerolls > 0)
             {
-                var rerollRect = new Rect(Screen.width * 0.5f - 110f, Screen.height - 110f, 220f, 36f);
+                var rerollRect = new Rect(UIStyles.Width * 0.5f - 110f, UIStyles.Height - 110f, 220f, 36f);
                 if (UIStyles.Button(rerollRect, "[R] Reroll  (" + rerolls + " left)", UIStyles.Accent))
                     _director.RerollBoons();
 
@@ -227,8 +232,8 @@ namespace Gunspire
             const float gap = 24f;
 
             float total = offers.Count * cardWidth + (offers.Count - 1) * gap;
-            float startX = Screen.width * 0.5f - total * 0.5f;
-            float y = Screen.height * 0.5f - cardHeight * 0.5f;
+            float startX = UIStyles.Width * 0.5f - total * 0.5f;
+            float y = UIStyles.Height * 0.5f - cardHeight * 0.5f;
 
             for (int i = 0; i < offers.Count; i++)
             {
@@ -250,7 +255,7 @@ namespace Gunspire
                 UIStyles.Text(new Rect(rect.x + 18f, rect.y + 68f, rect.width - 36f, 18f),
                     boon.LevelLabel(_director.Run), UIStyles.Small, UIStyles.Accent);
 
-                GUI.Label(new Rect(rect.x + 18f, rect.y + 90f, rect.width - 36f, 90f),
+                UIStyles.DrawLabel(new Rect(rect.x + 18f, rect.y + 90f, rect.width - 36f, 90f),
                     boon.Description, UIStyles.Wrap);
                 UIStyles.Text(new Rect(rect.x + 18f, rect.yMax - 34f, rect.width - 36f, 22f),
                     "[" + (i + 1) + "]", UIStyles.Small, UIStyles.Muted);
@@ -270,10 +275,11 @@ namespace Gunspire
             Dim();
             IReadOnlyList<Spell> offers = _director.SpellOffers;
 
-            UIStyles.Text(new Rect(0f, 70f, Screen.width, 44f), "Choose your first spell",
-                UIStyles.Title, UIStyles.Ink);
-            UIStyles.Text(new Rect(0f, 116f, Screen.width, 22f),
-                "It binds to " + SpellBook.SlotLabels[0] + ". Click a card, or press its number",
+            SpellBook book = _director.Player != null ? _director.Player.Book : null;
+
+            UIStyles.Text(new Rect(0f, 70f, UIStyles.Width, 44f), "Choose a spell", UIStyles.Title, UIStyles.Ink);
+            UIStyles.Text(new Rect(0f, 116f, UIStyles.Width, 22f),
+                "A spell you have levels up; a new one takes the first free slot. Click a card, or press its number",
                 UIStyles.Center, UIStyles.Muted);
 
             const float cardWidth = 300f;
@@ -281,8 +287,8 @@ namespace Gunspire
             const float gap = 24f;
 
             float total = offers.Count * cardWidth + (offers.Count - 1) * gap;
-            float startX = Screen.width * 0.5f - total * 0.5f;
-            float y = Screen.height * 0.5f - cardHeight * 0.5f;
+            float startX = UIStyles.Width * 0.5f - total * 0.5f;
+            float y = UIStyles.Height * 0.5f - cardHeight * 0.5f;
 
             Spell hovered = null;
 
@@ -307,10 +313,12 @@ namespace Gunspire
                     spell.CostLine(), UIStyles.Small, UIStyles.Accent);
                 SchoolTag(new Rect(rect.xMax - 98f, rect.y + 77f, 80f, 19f), spell.School);
 
-                GUI.Label(new Rect(rect.x + 18f, rect.y + 100f, rect.width - 36f, 100f),
+                UIStyles.DrawLabel(new Rect(rect.x + 18f, rect.y + 100f, rect.width - 36f, 100f),
                     spell.Description, UIStyles.Wrap);
                 UIStyles.Text(new Rect(rect.x + 18f, rect.yMax - 34f, rect.width - 36f, 22f),
                     "[" + (i + 1) + "]", UIStyles.Small, UIStyles.Muted);
+                UIStyles.Text(new Rect(rect.x + 18f, rect.yMax - 34f, rect.width - 36f, 22f),
+                    StarterOutcome(book, spell), UIStyles.Right, UIStyles.Accent);
 
                 if (GUI.Button(rect, GUIContent.none, GUIStyle.none)) _director.ChooseStarterSpell(i);
                 if (NumberPressed(i)) _director.ChooseStarterSpell(i);
@@ -318,7 +326,17 @@ namespace Gunspire
 
             // What the school behind the spell grants, since the mastery is half of what a first pick decides.
             if (hovered != null)
-                DrawMasteryBox(new Rect(Screen.width * 0.5f - 280f, y + cardHeight + 26f, 560f, 108f), hovered);
+                DrawMasteryBox(new Rect(UIStyles.Width * 0.5f - 280f, y + cardHeight + 26f, 560f, 108f), hovered);
+        }
+
+        /// <summary>What taking a spell from the choice screen will do, for the corner of its card.</summary>
+        private static string StarterOutcome(SpellBook book, Spell spell)
+        {
+            if (book == null) return string.Empty;
+            if (book.Knows(spell)) return "Level " + book.GetLevel(spell) + " -> " + (book.GetLevel(spell) + 1);
+
+            int slot = book.FirstEmptySlot();
+            return book.GetSlot(slot) == null ? "New, binds to " + SpellBook.SlotLabels[slot] : "New, choose a slot";
         }
 
         // ---------------------------------------------------------------- rooms
@@ -329,9 +347,9 @@ namespace Gunspire
             IReadOnlyList<RoomNode> offers = _director.RoomOffers;
             int nextFloor = _director.Run != null ? _director.Run.Floor + 1 : 1;
 
-            UIStyles.Text(new Rect(0f, 70f, Screen.width, 44f),
+            UIStyles.Text(new Rect(0f, 70f, UIStyles.Width, 44f),
                 "Floor " + nextFloor, UIStyles.Title, UIStyles.Ink);
-            UIStyles.Text(new Rect(0f, 116f, Screen.width, 22f),
+            UIStyles.Text(new Rect(0f, 116f, UIStyles.Width, 22f),
                 "Choose your route up", UIStyles.Center, UIStyles.Muted);
 
             const float cardWidth = 320f;
@@ -339,8 +357,8 @@ namespace Gunspire
             const float gap = 24f;
 
             float total = offers.Count * cardWidth + (offers.Count - 1) * gap;
-            float startX = Screen.width * 0.5f - total * 0.5f;
-            float y = Screen.height * 0.5f - cardHeight * 0.5f;
+            float startX = UIStyles.Width * 0.5f - total * 0.5f;
+            float y = UIStyles.Height * 0.5f - cardHeight * 0.5f;
 
             for (int i = 0; i < offers.Count; i++)
             {
@@ -354,7 +372,7 @@ namespace Gunspire
                     node.Kind.ToString().ToUpperInvariant(), UIStyles.Small, node.Accent);
                 UIStyles.Text(new Rect(rect.x + 18f, rect.y + 40f, rect.width - 30f, 28f),
                     node.Title, UIStyles.Heading, UIStyles.Ink);
-                GUI.Label(new Rect(rect.x + 18f, rect.y + 76f, rect.width - 36f, 80f),
+                UIStyles.DrawLabel(new Rect(rect.x + 18f, rect.y + 76f, rect.width - 36f, 80f),
                     node.Description, UIStyles.Wrap);
                 UIStyles.Text(new Rect(rect.x + 18f, rect.yMax - 32f, rect.width - 36f, 22f),
                     "[" + (i + 1) + "]", UIStyles.Small, UIStyles.Muted);
@@ -375,28 +393,28 @@ namespace Gunspire
             // Icon above the title rather than beside it: this screen is centred, and the
             // buttons below are fixed to the middle of the screen, so the header has to stay
             // narrow rather than spreading sideways.
-            UIStyles.Icon(new Rect(Screen.width * 0.5f - 34f, 46f, 68f, 68f),
+            UIStyles.Icon(new Rect(UIStyles.Width * 0.5f - 34f, 46f, 68f, 68f),
                 spell.Icon, spell.Tint, spell.ShortName);
 
-            UIStyles.Text(new Rect(0f, 120f, Screen.width, 44f), spell.DisplayName, UIStyles.Title, spell.Tint);
-            UIStyles.Text(new Rect(0f, 160f, Screen.width, 20f),
+            UIStyles.Text(new Rect(0f, 120f, UIStyles.Width, 44f), spell.DisplayName, UIStyles.Title, spell.Tint);
+            UIStyles.Text(new Rect(0f, 160f, UIStyles.Width, 20f),
                 Rarities.Name(spell.Rarity) + "   -   " + spell.Type + "   -   "
                 + DamageTypes.Name(spell.DamageType), UIStyles.Center, Rarities.Tint(spell.Rarity));
 
-            GUI.Label(new Rect(Screen.width * 0.5f - 280f, 186f, 560f, 60f), spell.Description, UIStyles.Wrap);
+            UIStyles.DrawLabel(new Rect(UIStyles.Width * 0.5f - 280f, 186f, 560f, 60f), spell.Description, UIStyles.Wrap);
 
-            UIStyles.Text(new Rect(0f, 250f, Screen.width, 18f), spell.CostLine(), UIStyles.Center, UIStyles.Accent);
-            SchoolTag(new Rect(Screen.width * 0.5f - 45f, 272f, 90f, 20f), spell.School);
+            UIStyles.Text(new Rect(0f, 250f, UIStyles.Width, 18f), spell.CostLine(), UIStyles.Center, UIStyles.Accent);
+            SchoolTag(new Rect(UIStyles.Width * 0.5f - 45f, 272f, 90f, 20f), spell.School);
 
-            UIStyles.Text(new Rect(0f, 300f, Screen.width, 22f), "Bind it to a slot", UIStyles.Center, UIStyles.Muted);
+            UIStyles.Text(new Rect(0f, 300f, UIStyles.Width, 22f), "Bind it to a slot", UIStyles.Center, UIStyles.Muted);
 
             const float buttonWidth = 240f;
             const float buttonHeight = 90f;
             const float gap = 20f;
 
             float total = SpellBook.SlotCount * buttonWidth + (SpellBook.SlotCount - 1) * gap;
-            float startX = Screen.width * 0.5f - total * 0.5f;
-            float y = Screen.height * 0.5f - 20f;
+            float startX = UIStyles.Width * 0.5f - total * 0.5f;
+            float y = UIStyles.Height * 0.5f - 20f;
 
             for (int i = 0; i < SpellBook.SlotCount; i++)
             {
@@ -412,10 +430,10 @@ namespace Gunspire
                 if (Input.GetKeyDown(SpellBook.SlotKeys[i])) _director.BindPendingSpell(i);
             }
 
-            var cancel = new Rect(Screen.width * 0.5f - 90f, y + buttonHeight + 24f, 180f, 36f);
+            var cancel = new Rect(UIStyles.Width * 0.5f - 90f, y + buttonHeight + 24f, 180f, 36f);
             if (UIStyles.Button(cancel, "Leave it", UIStyles.Muted)) _director.CancelSpellBinding();
 
-            DrawMasteryBox(new Rect(Screen.width * 0.5f - 280f, cancel.yMax + 22f, 560f, 108f), spell);
+            DrawMasteryBox(new Rect(UIStyles.Width * 0.5f - 280f, cancel.yMax + 22f, 560f, 108f), spell);
         }
 
         // ---------------------------------------------------------------- pause and run over
@@ -429,19 +447,20 @@ namespace Gunspire
             }
 
             Dim(0.8f);
-            UIStyles.Text(new Rect(0f, 50f, Screen.width, 44f), "Paused", UIStyles.Title, UIStyles.Ink);
+            UIStyles.Text(new Rect(0f, 50f, UIStyles.Width, 44f), "Paused", UIStyles.Title, UIStyles.Ink);
 
-            DrawCharacterSheet(new Rect(Screen.width * 0.5f - 330f, 100f, 660f, 520f));
+            DrawCharacterSheet(new Rect(UIStyles.Width * 0.5f - 330f, 100f, 660f, 520f));
 
-            var resume = new Rect(Screen.width * 0.5f - 210f, Screen.height - 120f, 200f, 40f);
-            var restart = new Rect(Screen.width * 0.5f + 10f, Screen.height - 120f, 200f, 40f);
+            var resume = new Rect(UIStyles.Width * 0.5f - 210f, UIStyles.Height - 120f, 200f, 40f);
+            var restart = new Rect(UIStyles.Width * 0.5f + 10f, UIStyles.Height - 120f, 200f, 40f);
 
             if (UIStyles.Button(resume, "Resume  [ESC]", UIStyles.Accent)) _director.Resume();
             if (UIStyles.Button(restart, "Abandon run", UIStyles.Warning)) _director.Restart();
 
-            UIStyles.Text(new Rect(0f, Screen.height - 66f, Screen.width, 20f),
+            UIStyles.Text(new Rect(0f, UIStyles.Height - 66f, UIStyles.Width, 20f),
                 "WASD move   SPACE jump   SHIFT dash   LMB fire   RMB alt fire   V bash   R reload   Q/E spells   F interact",
                 UIStyles.Center, UIStyles.Muted);
+            DrawScaleControl();
         }
 
         private void DrawRunOver(string headline, Color color)
@@ -449,11 +468,11 @@ namespace Gunspire
             Dim(0.85f);
             RunState run = _director.Run;
 
-            UIStyles.Text(new Rect(0f, Screen.height * 0.32f, Screen.width, 46f), headline, UIStyles.Title, color);
+            UIStyles.Text(new Rect(0f, UIStyles.Height * 0.32f, UIStyles.Width, 46f), headline, UIStyles.Title, color);
 
             if (run != null)
             {
-                UIStyles.Text(new Rect(0f, Screen.height * 0.32f + 56f, Screen.width, 24f),
+                UIStyles.Text(new Rect(0f, UIStyles.Height * 0.32f + 56f, UIStyles.Width, 24f),
                     run.Summary(), UIStyles.Center, UIStyles.Ink);
 
                 string boons = run.TakenBoons.Count == 0 ? "no boons taken" : "";
@@ -464,11 +483,11 @@ namespace Gunspire
                            + (taken.Level > 1 ? " " + taken.Level : "");
                 }
 
-                GUI.Label(new Rect(Screen.width * 0.5f - 320f, Screen.height * 0.32f + 88f, 640f, 80f),
+                UIStyles.DrawLabel(new Rect(UIStyles.Width * 0.5f - 320f, UIStyles.Height * 0.32f + 88f, 640f, 80f),
                     boons, UIStyles.Wrap);
             }
 
-            var again = new Rect(Screen.width * 0.5f - 110f, Screen.height * 0.62f, 220f, 44f);
+            var again = new Rect(UIStyles.Width * 0.5f - 110f, UIStyles.Height * 0.62f, 220f, 44f);
             if (UIStyles.Button(again, "New run  [ENTER]", color)) _director.Restart();
         }
 
@@ -546,7 +565,8 @@ namespace Gunspire
                     UIStyles.Text(new Rect(rect.x + 20f, y, 110f, 20f),
                         SpellBook.SlotLabels[i] + "  " + spell.DisplayName, UIStyles.Small, spell.Tint);
                     UIStyles.Text(new Rect(rect.x + 130f, y, rect.width - 150f, 20f),
-                        string.Format("level {0} / {1}   {2}   {3}", book.GetLevel(spell), spell.MaxLevel,
+                        string.Format("level {0} / {1}{2}   {3}   {4}", book.GetLevel(spell), spell.MaxLevel,
+                            book.SlotLevelBonus(i) > 0 ? "  (+" + book.SlotLevelBonus(i) + " from " + SpellBook.SlotLabels[i] + ")" : "",
                             spell.Type, DamageTypes.Name(spell.DamageType)),
                         UIStyles.Small, UIStyles.Muted);
                     y += 20f;
@@ -615,10 +635,12 @@ namespace Gunspire
             PlayerRig player = _director.Player;
             if (player == null) return;
 
-            float left = Mathf.Max(16f, Screen.width * 0.5f - 560f);
+            DrawScaleControl();
+
+            float left = Mathf.Max(16f, UIStyles.Width * 0.5f - 560f);
             float top = 36f;
 
-            UIStyles.Text(new Rect(0f, top, Screen.width, 40f), "Training Room", UIStyles.Title, UIStyles.Ink);
+            UIStyles.Text(new Rect(0f, top, UIStyles.Width, 40f), "Training Room", UIStyles.Title, UIStyles.Ink);
             top += 56f;
 
             for (int i = 0; i < TrainingSchools.Length; i++)
@@ -668,7 +690,7 @@ namespace Gunspire
                 float cardWidth = 300f;
                 float cardY = top;
 
-                if (cardX + cardWidth > Screen.width - 16f)
+                if (cardX + cardWidth > UIStyles.Width - 16f)
                 {
                     cardX = listX;
                     cardWidth = 420f;
@@ -740,7 +762,7 @@ namespace Gunspire
             UIStyles.Text(new Rect(x + 12f, y + 58f, width - 108f, 18f), spell.CostLine(), UIStyles.Small, UIStyles.Accent);
             SchoolTag(new Rect(x + width - 92f, y + 57f, 80f, 19f), spell.School);
 
-            GUI.Label(new Rect(x + 12f, y + 80f, width - 24f, 88f), spell.Description, UIStyles.Wrap);
+            UIStyles.DrawLabel(new Rect(x + 12f, y + 80f, width - 24f, 88f), spell.Description, UIStyles.Wrap);
 
             DrawMasteryBox(new Rect(x, panel.yMax + 10f, width, 132f), spell);
         }
@@ -878,7 +900,7 @@ namespace Gunspire
                 textTop = rect.y + 50f;
             }
 
-            GUI.Label(new Rect(rect.x + 14f, textTop, rect.width - 28f, rect.yMax - textTop - 10f),
+            UIStyles.DrawLabel(new Rect(rect.x + 14f, textTop, rect.width - 28f, rect.yMax - textTop - 10f),
                 Schools.MasterySummary(spell.School), UIStyles.Wrap);
         }
 

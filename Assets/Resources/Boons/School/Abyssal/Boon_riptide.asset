@@ -19,7 +19,7 @@ MonoBehaviour:
     Rarity: 0
     Family: 3
     Group: Abyssal
-    Icon: {fileID: 0}
+    Icon: {fileID: 2800000, guid: 2e3bb93743141dd4c9ee25da6d736388, type: 3}
     MaxLevel: 5
     Tags: []
     Effects:

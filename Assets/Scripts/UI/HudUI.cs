@@ -16,6 +16,7 @@ namespace Gunspire
         private void OnGUI()
         {
             if (_director == null) return;
+            UIStyles.BeginScaled();
 
             PlayerRig player = _director.Player;
             if (player == null) return;
@@ -49,8 +50,8 @@ namespace Gunspire
 
         private void DrawCrosshair(PlayerRig player)
         {
-            float cx = Screen.width * 0.5f;
-            float cy = Screen.height * 0.5f;
+            float cx = UIStyles.Width * 0.5f;
+            float cy = UIStyles.Height * 0.5f;
 
             float spread = 5f + Mathf.Clamp(player.Motor.HorizontalSpeed * 0.6f, 0f, 12f);
             var color = new Color(1f, 1f, 1f, 0.75f);
@@ -98,7 +99,8 @@ namespace Gunspire
                 if (screen.z <= 0f) continue;
 
                 float size = Mathf.Clamp(260f / screen.z, 6f, 18f);
-                UIStyles.Fill(new Rect(screen.x - size * 0.5f, Screen.height - screen.y - size * 0.5f, size, size), color);
+                Vector2 at = UIStyles.FromScreen(screen);
+                UIStyles.Fill(new Rect(at.x - size * 0.5f, at.y - size * 0.5f, size, size), color);
             }
         }
 
@@ -109,7 +111,7 @@ namespace Gunspire
             if (possession == null || !possession.IsPossessing) return;
 
             string name = possession.Current is EnemyController enemy ? enemy.DisplayName : "another body";
-            var rect = new Rect(Screen.width * 0.5f - 220f, 108f, 440f, 24f);
+            var rect = new Rect(UIStyles.Width * 0.5f - 220f, 108f, 440f, 24f);
             UIStyles.Fill(rect, UIStyles.PanelSoft);
             UIStyles.Text(rect, "CONTROLLING " + name.ToUpperInvariant() + "   " + possession.TimeLeft.ToString("0.0") + "s",
                 UIStyles.Center, UIStyles.Accent);
@@ -120,7 +122,7 @@ namespace Gunspire
             string prompt = player.CombatInput != null ? player.CombatInput.InteractPrompt : null;
             if (string.IsNullOrEmpty(prompt)) return;
 
-            var rect = new Rect(Screen.width * 0.5f - 280f, Screen.height * 0.5f + 60f, 560f, 28f);
+            var rect = new Rect(UIStyles.Width * 0.5f - 280f, UIStyles.Height * 0.5f + 60f, 560f, 28f);
             UIStyles.Fill(rect, UIStyles.PanelSoft);
             UIStyles.Text(rect, "[" + PlayerCombat.InteractKey + "]  " + prompt, UIStyles.Center, UIStyles.Ink);
         }
@@ -130,7 +132,7 @@ namespace Gunspire
         private void DrawVitals(PlayerRig player)
         {
             const float x = 26f;
-            float y = Screen.height - 116f;
+            float y = UIStyles.Height - 116f;
             const float width = 300f;
 
             DrawMasteryResources(player, x, y - 20f);
@@ -154,8 +156,8 @@ namespace Gunspire
 
             RunState run = _director.Run;
             if (run != null && !_director.InTraining)
-                UIStyles.Text(new Rect(x, y + 25f, width, 14f), run.Wallet.Balance + " shillings",
-                    UIStyles.Right, new Color(1f, 0.82f, 0.3f));
+                UIStyles.Text(new Rect(x, y - 40f, width, 18f), run.Wallet.Balance + " shillings",
+                    UIStyles.Small, new Color(1f, 0.82f, 0.3f));
 
             DrawMovementSlot(player, x, y + 44f);
             DrawMeleeSlot(player, x, y + 74f);
@@ -292,8 +294,8 @@ namespace Gunspire
             if (weapon == null || weapon.Definition == null) return;
 
             const float width = 260f;
-            float x = Screen.width - width - 26f;
-            float y = Screen.height - 110f;
+            float x = UIStyles.Width - width - 26f;
+            float y = UIStyles.Height - 110f;
 
             UIStyles.Text(new Rect(x, y, width, 22f), weapon.Definition.DisplayName, UIStyles.Right, UIStyles.Ink);
 
@@ -431,8 +433,8 @@ namespace Gunspire
 
             const float width = 240f;
             const float rowHeight = 18f;
-            float x = Screen.width - width - 26f;
-            float bottom = Screen.height - 160f;
+            float x = UIStyles.Width - width - 26f;
+            float bottom = UIStyles.Height - 160f;
 
             int shown = Mathf.Min(_allies.Count, MaxAllyRows);
             for (int i = 0; i < shown; i++)
@@ -489,8 +491,8 @@ namespace Gunspire
             const float gap = 10f;
 
             float total = SpellBook.SlotCount * slotWidth + (SpellBook.SlotCount - 1) * gap;
-            float startX = Screen.width * 0.5f - total * 0.5f;
-            float y = Screen.height - 78f;
+            float startX = UIStyles.Width * 0.5f - total * 0.5f;
+            float y = UIStyles.Height - 78f;
 
             for (int i = 0; i < SpellBook.SlotCount; i++)
             {
@@ -533,8 +535,10 @@ namespace Gunspire
                     UIStyles.Label, spell.Tint);
 
                 // Level sits top-right, tinted by rarity so a legendary reads at a glance.
+                // The slot's level, bonus included; a boosted slot shows in the accent colour instead.
                 UIStyles.Text(new Rect(rect.xMax - 32f, rect.y + 5f, 26f, 18f),
-                    "L" + book.GetLevel(spell), UIStyles.Right, Rarities.Tint(spell.Rarity));
+                    "L" + book.GetSlotLevel(i), UIStyles.Right,
+                    book.SlotLevelBonus(i) > 0 ? UIStyles.Accent : Rarities.Tint(spell.Rarity));
 
                 UIStyles.Text(new Rect(textX, rect.y + 22f, textWidth, 16f), spell.DisplayName,
                     UIStyles.Small, UIStyles.Ink);
@@ -576,7 +580,7 @@ namespace Gunspire
 
             const float width = 170f;
             float x = 26f;
-            float y = Screen.height * 0.5f - status.Active.Count * 13f;
+            float y = UIStyles.Height * 0.5f - status.Active.Count * 13f;
 
             for (int i = 0; i < status.Active.Count; i++)
             {
@@ -601,7 +605,7 @@ namespace Gunspire
             RunState run = _director.Run;
             if (run == null) return;
 
-            var rect = new Rect(Screen.width * 0.5f - 220f, 14f, 440f, 22f);
+            var rect = new Rect(UIStyles.Width * 0.5f - 220f, 14f, 440f, 22f);
 
             if (_director.InTraining)
             {
@@ -623,7 +627,7 @@ namespace Gunspire
                     UIStyles.Center, room.IsCleared ? new Color(0.6f, 1f, 0.7f) : UIStyles.Muted);
             }
 
-            UIStyles.Text(new Rect(Screen.width - 210f, 14f, 190f, 18f),
+            UIStyles.Text(new Rect(UIStyles.Width - 210f, 14f, 190f, 18f),
                 "TAB character   ESC pause", UIStyles.Right, UIStyles.Muted);
         }
 
@@ -638,8 +642,8 @@ namespace Gunspire
                 line += "      last " + TrainingRoom.DamageWindow.ToString("0") + "s:  " + Mathf.RoundToInt(training.RecentDamage)
                         + " damage, " + Mathf.RoundToInt(training.RecentDps) + " per second";
 
-            UIStyles.Text(new Rect(Screen.width * 0.5f - 320f, rect.y + 22f, 640f, 18f), line, UIStyles.Center, UIStyles.Muted);
-            UIStyles.Text(new Rect(Screen.width - 210f, 14f, 190f, 18f), "TAB character   ESC pause", UIStyles.Right, UIStyles.Muted);
+            UIStyles.Text(new Rect(UIStyles.Width * 0.5f - 320f, rect.y + 22f, 640f, 18f), line, UIStyles.Center, UIStyles.Muted);
+            UIStyles.Text(new Rect(UIStyles.Width - 210f, 14f, 190f, 18f), "TAB character   ESC pause", UIStyles.Right, UIStyles.Muted);
         }
 
         private void DrawNotification()
@@ -647,7 +651,7 @@ namespace Gunspire
             if (string.IsNullOrEmpty(_director.Notification)) return;
 
             float alpha = Mathf.Clamp01(_director.NotificationTimer);
-            var rect = new Rect(Screen.width * 0.5f - 260f, 64f, 520f, 34f);
+            var rect = new Rect(UIStyles.Width * 0.5f - 260f, 64f, 520f, 34f);
 
             UIStyles.Fill(rect, new Color(UIStyles.Panel.r, UIStyles.Panel.g, UIStyles.Panel.b, 0.8f * alpha));
             UIStyles.Text(rect, _director.Notification, UIStyles.Center,
@@ -660,7 +664,7 @@ namespace Gunspire
             if (fraction > 0.35f) return;
 
             float strength = Mathf.InverseLerp(0.35f, 0f, fraction) * 0.35f;
-            UIStyles.Fill(new Rect(0f, 0f, Screen.width, Screen.height),
+            UIStyles.Fill(new Rect(0f, 0f, UIStyles.Width, UIStyles.Height),
                 new Color(0.6f, 0.05f, 0.1f, strength * (0.6f + 0.4f * Mathf.Sin(Time.unscaledTime * 6f))));
         }
     }

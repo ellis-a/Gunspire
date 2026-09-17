@@ -20,7 +20,7 @@ MonoBehaviour:
     Rarity: 0
     Family: 3
     Group: Death
-    Icon: {fileID: 0}
+    Icon: {fileID: 2800000, guid: 8d3f74141c87ab540980034345a71a59, type: 3}
     MaxLevel: 5
     Tags: []
     Effects:

@@ -19,7 +19,7 @@ MonoBehaviour:
     Rarity: 0
     Family: 3
     Group: Psionic
-    Icon: {fileID: 0}
+    Icon: {fileID: 2800000, guid: d12d8a8487a7e3c4b82ae6b9fb5837dd, type: 3}
     MaxLevel: 5
     Tags: []
     Effects:
