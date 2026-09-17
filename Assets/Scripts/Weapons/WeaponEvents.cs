@@ -53,6 +53,9 @@ namespace Gunspire
             DamageInfo bonus = DamageInfo.Create(amount, type, Damage.SourceTeam, Damage.Source);
             bonus.CanCrit = false;
             bonus.Origin = Damage.Origin;
+            bonus.Weapon = Damage.Weapon;
+            bonus.Spell = Damage.Spell;
+            if (Damage.HasSourcePosition) bonus = bonus.From(Damage.SourcePosition);
             Target.TakeDamage(bonus.At(Point, Normal));
         }
     }

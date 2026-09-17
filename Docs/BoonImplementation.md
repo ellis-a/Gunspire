@@ -1,8 +1,8 @@
 # Boon implementation analysis
 
 How to build the roster in `BoonDesign.md` (229 boons) and the shillings currency on top of the code as it
-stands. The shop itself is out of scope; only what the shop boons need to store is covered. Only the retirement
-of the old roster is built so far.
+stands. The shop itself is out of scope; only what the shop boons need to store is covered. Built so far:
+retiring the old roster, and the framework (step 1 of the build order; each built section says so).
 
 ---
 
@@ -64,21 +64,22 @@ Two facts that change the design slightly:
 
 ### 1. Boon data
 
-Add to `Boon`:
+Built. Added to `Boon`:
 
 | Field | Purpose |
 |---|---|
 | `BoonFamily Family` | Core, Arsenal, Slots, School, Spell, Pact. Drives the offer's first roll. |
 | `string Group` | Display grouping within a family (Stat, Damage, Recovery, Shop, Familiar...). Tooling and UI only. |
-| `bool OncePerRun` | Charge Up, Phylactery: never offered again once taken, even after being consumed. |
 | `List<string> Tags` | `familiar`, `health`, `summon`... Used by exclusions and limits. |
-| `[SerializeReference] List<BoonRequirement> Requirements` | Replaces the single requirement; all must pass. The old field is migrated into the list. |
+| `[SerializeReference] List<BoonRequirement> Requirements` | Replaces the single requirement; all must pass. No assets existed after the retirement, so nothing needed migrating. |
 
-`RunState.TakenBoon` gains `bool Consumed`. Every boon keeps a real `MaxLevel`; stat boons use 5.
+`RunState.TakenBoon` gains `bool Consumed`. Every boon keeps a real `MaxLevel`; stat boons use 5. A taken boon is
+never removed, so a one-off (Charge Up, Phylactery) is simply `MaxLevel` 1: using it up marks it consumed, and
+it still counts as taken. A separate once-per-run flag turned out to be unnecessary.
 
 ### 2. Gates
 
-New `BoonRequirement` types, each a few lines:
+Built, in `Boons/BoonRequirements.cs`, with the tags they read in `BoonTags`:
 
 | Requirement | Boons |
 |---|---|
@@ -88,8 +89,8 @@ New `BoonRequirement` types, each a few lines:
 | `SlotFilled(Movement / Melee)` | Movement boons, Afterimage, Tailwind. |
 | `CanSummon` | Master Summoner, Blood Pact: a summon spell, the Bestial mastery, or Beetle Swarm. |
 | `CarriesProjectileGun` | Magnetised Ammo. |
-| `NotWithBoon(id)` / `NotWithTag(tag)` | Cocky excludes `health` boons, and Cocky and Glass Soul if they are made exclusive. |
-| `TagLimit(tag, base, raisedBy)` | One familiar, raised by Familiarity. |
+| `HasBoon(id)`, `NotWithBoon(id)`, `NotWithTag(tag)` | Cocky excludes `health` boons, and Cocky and Glass Soul if they are made exclusive. |
+| `TagLimit(tag, limit, raisedBy, ownBoon)` | One familiar, raised by Familiarity. A held familiar can still level up. |
 | `HasTag(tag)` | Familiarity only once a familiar is held. |
 
 The gate list also feeds the doc's "Gate" column, so a verifier can check every School boon has a school gate
@@ -103,54 +104,44 @@ level, as they do today, and behaviours stay bound for the whole run. Gates only
 
 ### 4. Runtime boons
 
-A new effect, `BoonBehaviourEffect`, names a behaviour class. On first pick it creates the behaviour and stores
-it on `RunState` by boon id; later picks call `SetLevel`.
+Built as `BoonBehaviour` and `BoonBehaviourEffect` (`Boons/BoonBehaviour.cs`).
 
-```csharp
-public abstract class BoonBehaviour
-{
-    public RunState Run { get; private set; }
-    public int Level { get; private set; }
-    public virtual void Bind() { }          // subscribe to events
-    public virtual void Unbind() { }        // unsubscribe at run end
-    public virtual void OnLevelChanged() { }
-    public virtual void OnFloorEntered(RoomRuntime room) { }
-    public virtual void OnFloorLeaving() { }
-    public virtual void Tick(float dt) { }  // only for the few that poll
-}
-```
-
-- One class per mechanic, parameters as serialized fields so numbers stay editable on the asset.
-- `RunState` owns the list, forwards floor events and ticks, and unbinds all on `Unbind()`.
-- This replaces the per-boon flags now on `RunState` (`BlinkDetonates`, `HasteOnKill`...), which go away with
-  the old roster.
+- The effect holds a `[SerializeReference] BoonBehaviour` template, so the Inspector's type picker lists every
+  behaviour and its parameters stay editable on the asset.
+- On the first pick, `RunState.LevelBehaviour` makes a live copy of the template (keyed by the template) and
+  binds it; later picks raise its level. The template itself is never changed, and each run gets its own copy.
+- Overridable hooks: `OnBind`, `OnUnbind`, `OnLevelChanged(previous)`, `OnFloorEntered`, `OnFloorLeaving`,
+  `OnFloorCleared`, `OnFloorCompleted` and `Tick` (game time, while playing, driven by the director).
+- A behaviour that implements a rule interface is registered for it while bound; nothing else is needed.
+- The live copy is shallow, so a behaviour holding a list or set must create it in `OnBind`.
+- `RunState.Unbind` releases every behaviour, which also unregisters its rules.
 
 ### 5. Hit-time damage passes
 
-**Outgoing.** Add a pass that runs once per player-sourced hit, with the target known:
+Built as `CombatRules` (`Core/CombatRules.cs`), a static registry cleared when a run starts, so edit-mode
+tooling can use it without a run. Each list is walked in place, so no hit allocates.
 
-- Called from `Health.TakeDamage` before resistances when `info.SourceTeam == Team.Player`.
-- Behaviours register `IOutgoingDamageRule { void Modify(ref DamageInfo info, Health target); }` with a
-  `DamageRules` registry on the run. The pass multiplies `info.Amount`.
-- `DamageInfo` needs more context: `Weapon` (the firing weapon, which gives class and magazine state),
-  `Spell` (the casting spell, which gives school and id), and `Origin` position for distance. Most are one
-  assignment where the info is built.
-- **Crits learn the target.** Crits are already rolled at the moment of the hit, in three places:
-  `Weapon.BuildShotDamage` (hitscan), `Projectile.BuildHitDamage` (on impact) and `AbilityContext.BuildDamage`
-  (spells). None of them passes the target to `Combat.RollCrit`, so a rule cannot depend on who is being hit.
-  Pinpoint (every third hit on the same enemy) needs that; Cold Blood (doubled chance while you are at full
-  health) only needs to change the chance. `RollCrit` gains a target parameter and consults a `CritRules`
-  registry that can raise the chance or force a crit. The three callers already have the target in hand. Timing and feel do not change. Splash and status
-  ticks keep `CanCrit = false`.
+**Outgoing.** `IOutgoingDamageRule.OutgoingMultiplier(in hit, target)`, a multiplier.
 
-**Incoming.** A matching pass for hits on the player, `IIncomingDamageRule`, run after resistances and before the
-shield: Cornered, Mana Shield, Every Reaction, Monarch, Panic Barrier, Adaptive Armour-style rules.
+- Applied in `Health.TakeDamage` before resistances, whenever the hit comes from the player's team and the
+  target is not on it. That includes confused (neutral) enemies and minion hits; each rule decides what it
+  counts, using `hit.Origin`. Negative multipliers are held at zero.
+- `DamageInfo` now carries `Weapon` (the firing gun), `Spell` (the casting spell) and `SourcePosition` with
+  `HasSourcePosition` (muzzle, launch point or caster). Gun hits, gun and spell projectiles, splash, spell hits
+  and `WeaponHit.DealBonus` all fill them in.
 
-**Lethal.** A `LethalHitRule` chain run when a hit would take the player to zero, in a fixed order: Soul Shield,
-then Phylactery, then Last Stand-style effects if any. The first rule that saves the player ends the chain. The
-order is data on the rule (a priority), so the doc's "Soul Shield before Phylactery" is enforced in one place.
+**Crits.** `Combat.RollCrit(sheet, target, out multiplier)`. Crits were already rolled at the moment of the hit,
+in `Weapon.BuildShotDamage`, `Projectile.BuildHitDamage` and `AbilityContext.BuildDamage`; each now passes the
+target, and `ICritRule.AdjustCrit(attacker, target, ref chance, ref forced)` can raise the chance or force a crit.
+Timing and feel are unchanged. Splash and status ticks still cannot crit.
 
-Both passes must not allocate: the registry is a plain list, rules are behaviour instances.
+**Incoming.** `IIncomingDamageRule.ModifyIncoming(in hit, player, amount)`, run on the player only (not minions,
+which share the team) after resistances and before the shield. Zero or less cancels the hit. The player is
+`CombatRules.PlayerHealth`, set when the run binds.
+
+**Lethal.** `ILethalHitRule.TrySurvive(in hit, player, amount)` with a `LethalPriority`, lower first. Run when a
+hit, after the shield, would take the player to zero. The first rule that returns true cancels the hit and sets
+whatever health the player keeps. Soul Shield gets a lower priority than Phylactery.
 
 ### 6. Character sheet
 
@@ -186,10 +177,12 @@ Luck rises and falls with your shillings, so it needs `SetStatBonus(source, stat
 
 **Classes.**
 
-- `WeaponClass` enum (Handgun, SMG, Shotgun, Rifle, Sniper, Heavy, Launcher), stored as an integer, so append-only.
-- `WeaponDefinition.Class`. Built-ins set it in `WeaponLibrary`; an object migration sets it on the existing
-  assets by id, using the table in the design doc (Revolver, SMG and Shotgun included).
-- A verifier: every weapon has a class, and each class has at least one gun.
+- `WeaponClass` enum (Unassigned, Handgun, SMG, Shotgun, Rifle, Sniper, Heavy, Launcher), stored as an
+  integer, so append-only. Unassigned is what the new field deserialises to, so a missed gun is caught.
+- `WeaponDefinition.Class`. One table, `WeaponLibrary.Classes`, gives every id its class; the built-ins read it,
+  and the `WeaponClassesFromTable` migration applied it to the 17 existing assets.
+- Verify Boon Framework checks every gun has a class and every class has a gun.
+- Done with the framework, since the class gate needed it. Draw time is still to do.
 
 **Draw time.** Decided: every gun has one.
 
@@ -213,23 +206,24 @@ Unity drops the serialised `UnlockTier` from the assets on their next save, so n
 
 ### 8. Offers
 
-`BoonLibrary.Offer` becomes: family, then rarity, then boon.
+Built. `BoonLibrary.Offer` rolls each card as family, then rarity, then boon.
 
-- Family weights from the design doc, normalised over families with anything to offer.
-- **Rewarded** raises how many picks an offer allows. The offer screen becomes pick-N; `ChooseBoon` stays open
-  until N are taken. Whether the offer also grows is an open question.
-- **Fickle Fate** adds a reroll button with a per-offer count.
-- The screen code (`ScreenUI`) needs the pick count and the reroll button; nothing else changes.
+- `BoonLibrary.FamilyWeight`: Core 30, Arsenal 20, Slots 10, School 15, Spell 25, normalised over the families
+  that still have a candidate. Pacts weigh nothing: they are rewards, never rolled.
+- A second `Offer` overload takes the pool, so tooling can test the roll against a known roster.
+- `RunState.ExtraOfferChoices`, `ExtraBoonPicks` and `OfferRerolls` are what Rewarded and Fickle Fate will set.
+  The director keeps the offer up while picks remain, dropping any card the last pick made invalid (a second
+  familiar), and `RerollBoons` replaces the cards with a fresh roll of the same size.
+- The offer screen says "Choose N boons" while more than one pick remains, and shows a reroll button (and R)
+  while rerolls remain.
+- Not covered by a verifier: the director's pick-N and reroll flow, which needs a live director. It is small
+  and was checked by reading; the first boon that sets these values is the time to play-test it.
 
 ### 9. Per-floor state
 
-`LevelEvents` already fires once per room. Behaviours that count per floor reset in `OnFloorEntered`. Two moments
-are missing:
-
-- **Floor cleared.** `RoomRuntime.Cleared` exists per room; add `LevelEvents.FloorCleared` so behaviours need
-  not find the room.
-- **Exit taken.** `GameDirector.CompleteRoom` is the moment. Add `LevelEvents.FloorCompleted` (Rest a Moment,
-  and collecting shillings).
+Built. `LevelEvents.FloorCleared` is raised by `RoomRuntime` when a room clears, and `LevelEvents.FloorCompleted`
+by `GameDirector.CompleteRoom` when the player takes the exit, before any reward. Behaviours hear both, along
+with `FloorEntered` and `FloorLeaving`, through `RunState`.
 
 ---
 
@@ -429,11 +423,11 @@ Done, along with removing the alt fire lock.
 
 ## Build order
 
-1. **Framework.** Boon fields and migration of `Requirement` into `Requirements`; gates; `BoonBehaviour`;
-   outgoing, incoming and lethal passes with target-aware crits; per-floor events; offers by family with
-   weights, pick-N and rerolls. Retiring the old roster and the alt fire lock is already done.
-2. **Shillings and weapons.** `Wallet`, drops and pickups, HUD; `WeaponClass`, draw time and their migration;
-   new attributes and typed channels.
+1. **Framework.** Done: boon fields, gates, behaviours, the damage passes with target-aware crits, floor
+   events, family-first offers with pick-N and rerolls, and weapon classes. Checked by Verify Boon Framework.
+   Retiring the old roster and the alt fire lock is also done.
+2. **Shillings and weapons.** `Wallet`, drops and pickups, HUD; draw time and its migration; new attributes and
+   typed channels.
 3. **Data boons.** Stat, template, class and multiplier boons: about 110 boons with almost no per-boon code.
 4. **Behaviours.** Damage rules first (one pattern, many boons), then incoming and lethal, then listeners, then
    gun behaviours, then enchantments.

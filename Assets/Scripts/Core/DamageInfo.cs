@@ -67,6 +67,16 @@ namespace Gunspire
         public bool IsHeadshot;
         public DamageOrigin Origin;
 
+        /// <summary>The gun that fired the round, for class and magazine rules. Null for anything else.</summary>
+        public Weapon Weapon;
+
+        /// <summary>The spell that cast the hit, for school and spell rules. Null for anything else.</summary>
+        public Spell Spell;
+
+        /// <summary>Where the hit came from (the muzzle, the launch point, the caster), for distance rules.</summary>
+        public Vector3 SourcePosition;
+        public bool HasSourcePosition;
+
         public List<StatusApplication> Statuses;
 
         public static DamageInfo Create(float amount, DamageType type, Team team, GameObject source)
@@ -108,6 +118,13 @@ namespace Gunspire
             if (statuses == null || statuses.Count == 0) return this;
             if (Statuses == null) Statuses = new List<StatusApplication>(statuses.Count);
             Statuses.AddRange(statuses);
+            return this;
+        }
+
+        public DamageInfo From(Vector3 position)
+        {
+            SourcePosition = position;
+            HasSourcePosition = true;
             return this;
         }
 

@@ -75,7 +75,7 @@ namespace Gunspire.EditorTools
             var text = new System.Text.StringBuilder();
             var perRarity = new Dictionary<Rarity, int>();
 
-            text.AppendLine("id                     rarity     max  effects");
+            text.AppendLine("id                     family   rarity     max  effects");
 
             IReadOnlyList<Boon> all = BoonLibrary.All;
             for (int i = 0; i < all.Count; i++)
@@ -85,9 +85,10 @@ namespace Gunspire.EditorTools
                 perRarity.TryGetValue(b.Rarity, out int count);
                 perRarity[b.Rarity] = count + 1;
 
-                string gate = b.Requirement != null ? "  [" + b.Requirement.Describe() + "]" : string.Empty;
-                text.AppendLine(string.Format("{0,-22} {1,-10} {2,3}  {3}{4}",
-                    b.Id, b.Rarity, b.MaxLevel, b.EffectSummary(), gate));
+                string gates = b.RequirementSummary();
+                string gate = gates.Length > 0 ? "  [" + gates + "]" : string.Empty;
+                text.AppendLine(string.Format("{0,-22} {1,-8} {2,-10} {3,3}  {4}{5}",
+                    b.Id, b.Family, b.Rarity, b.MaxLevel, b.EffectSummary(), gate));
             }
 
             text.AppendLine();

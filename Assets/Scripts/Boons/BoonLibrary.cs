@@ -28,27 +28,78 @@ namespace Gunspire
         public static void Reload() => _all = null;
 
         /// <summary>
-        /// Rolls a set of distinct, currently valid boons. <paramref name="rarityBonus"/> is an
+        /// How likely each family is to supply a card, before normalising over the families that
+        /// have anything to offer. Pacts are Legendary rewards for specific actions, never a roll.
+        /// </summary>
+        public static float FamilyWeight(BoonFamily family)
+        {
+            switch (family)
+            {
+                case BoonFamily.Core:    return 30f;
+                case BoonFamily.Arsenal: return 20f;
+                case BoonFamily.Slots:   return 10f;
+                case BoonFamily.School:  return 15f;
+                case BoonFamily.Spell:   return 25f;
+                default:                 return 0f;
+            }
+        }
+
+        /// <summary>
+        /// Rolls a set of distinct, currently valid boons. Each card draws a family first, weighted
+        /// by <see cref="FamilyWeight"/> over the families that still have a candidate, then a
+        /// rarity, then a boon of that rarity from the family. <paramref name="rarityBonus"/> is an
         /// extra multiplier on the non-Common tiers, used to make elite rooms pay out better.
         /// </summary>
         public static List<Boon> Offer(RunState run, int count, float rarityBonus = 1f)
         {
             if (_all == null) Build();
+            return Offer(run, _all, count, rarityBonus);
+        }
 
+        /// <summary>The same roll from a given pool. Public so tooling can test it against a known roster.</summary>
+        public static List<Boon> Offer(RunState run, IReadOnlyList<Boon> pool, int count, float rarityBonus = 1f)
+        {
             var candidates = new List<Boon>();
-            for (int i = 0; i < _all.Count; i++)
-                if (_all[i].IsOffered(run)) candidates.Add(_all[i]);
+            for (int i = 0; i < pool.Count; i++)
+                if (pool[i] != null && pool[i].IsOffered(run)) candidates.Add(pool[i]);
 
             var chosen = new List<Boon>();
             var used = new HashSet<string>();
             var available = new List<Boon>();
+            var families = (BoonFamily[])System.Enum.GetValues(typeof(BoonFamily));
+            var weights = new float[families.Length];
 
-            int guard = 0;
-            while (chosen.Count < count && guard++ < 200)
+            while (chosen.Count < count)
             {
+                float total = 0f;
+                for (int f = 0; f < families.Length; f++)
+                {
+                    weights[f] = 0f;
+                    for (int i = 0; i < candidates.Count; i++)
+                    {
+                        if (candidates[i].Family != families[f] || used.Contains(candidates[i].Id)) continue;
+                        weights[f] = FamilyWeight(families[f]);
+                        break;
+                    }
+                    total += weights[f];
+                }
+                if (total <= 0f) break;
+
+                float roll = run.Rng.Value * total;
+                // Falls to the last family with weight if rounding carries the roll past the end.
+                int family = -1;
+                for (int f = 0; f < families.Length; f++)
+                {
+                    if (weights[f] <= 0f) continue;
+                    family = f;
+                    if (roll < weights[f]) break;
+                    roll -= weights[f];
+                }
+
                 available.Clear();
                 for (int i = 0; i < candidates.Count; i++)
-                    if (!used.Contains(candidates[i].Id)) available.Add(candidates[i]);
+                    if (candidates[i].Family == families[family] && !used.Contains(candidates[i].Id))
+                        available.Add(candidates[i]);
                 if (available.Count == 0) break;
 
                 Rarity rolled = Rarities.Roll(run.Rng, run.Luck, rarityBonus);
@@ -111,25 +162,26 @@ namespace Gunspire
 
         private static List<Boon> _building;
 
-        private static void Add(string id, string name, string description, Rarity rarity, int maxLevel,
-            params BoonEffect[] effects)
+        /// <summary>
+        /// Adds a boon to the roster being built and returns it, so a caller can add requirements
+        /// and tags without a longer signature.
+        /// </summary>
+        private static Boon Add(BoonFamily family, string group, string id, string name, string description,
+            Rarity rarity, int maxLevel, params BoonEffect[] effects)
         {
-            AddGated(id, name, description, rarity, maxLevel, null, effects);
-        }
-
-        private static void AddGated(string id, string name, string description, Rarity rarity, int maxLevel,
-            BoonRequirement requirement, params BoonEffect[] effects)
-        {
-            _building.Add(new Boon
+            var boon = new Boon
             {
                 Id = id,
                 Name = name,
                 Description = description,
                 Rarity = rarity,
+                Family = family,
+                Group = group,
                 MaxLevel = maxLevel,
-                Requirement = requirement,
                 Effects = new List<BoonEffect>(effects)
-            });
+            };
+            _building.Add(boon);
+            return boon;
         }
 
         // ---------------- shorthands

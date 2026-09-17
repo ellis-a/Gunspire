@@ -682,6 +682,7 @@ namespace Gunspire
             star.Owner = ctx.Caster;
             star.OwnerSheet = ctx.Sheet;
             star.IsSpell = true;
+            star.SourceSpell = ctx.Spell;
             star.CanCrit = false;
             star.Damage = Damage * ctx.Power;
             star.SplashRadius = SplashRadius;

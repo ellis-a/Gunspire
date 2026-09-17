@@ -1208,7 +1208,7 @@ namespace Gunspire.EditorTools
 
         // ---------------------------------------------------------------- helpers
 
-        private static PlayerRig MakeRig(Vector3 position, List<PlayerRig> rigs)
+        internal static PlayerRig MakeRig(Vector3 position, List<PlayerRig> rigs)
         {
             PlayerRig rig = PlayerRig.Spawn(position);
             rigs.Add(rig);

@@ -29,12 +29,22 @@ namespace Gunspire
             return m;
         }
 
-        public static bool RollCrit(CharacterSheet sheet, out float multiplier)
+        public static bool RollCrit(CharacterSheet sheet, out float multiplier) => RollCrit(sheet, null, out multiplier);
+
+        /// <summary>
+        /// Rolls a crit at the moment of the hit. The target is passed so boon rules can raise the
+        /// chance or force a crit against a particular enemy; it may be null.
+        /// </summary>
+        public static bool RollCrit(CharacterSheet sheet, IDamageable target, out float multiplier)
         {
             multiplier = 1f;
             if (sheet == null) return false;
 
-            if (Random.value < sheet.Get(Attr.CritChance))
+            float chance = sheet.Get(Attr.CritChance);
+            bool forced = false;
+            CombatRules.AdjustCrit(sheet, target, ref chance, ref forced);
+
+            if (forced || Random.value < chance)
             {
                 multiplier = sheet.Get(Attr.CritDamage);
                 return true;

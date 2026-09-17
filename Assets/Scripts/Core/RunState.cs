@@ -21,14 +21,37 @@ namespace Gunspire
 
         public PlayerRig Player;
 
-        /// <summary>A boon the player has taken, and how many times.</summary>
+        /// <summary>A boon the player has taken, and how many times. Never removed for the rest of the run.</summary>
         public class TakenBoon
         {
             public Boon Boon;
             public int Level;
+
+            /// <summary>A one-off that has done its job (Charge Up). It stays taken, so it is never offered again.</summary>
+            public bool Consumed;
         }
 
         public readonly List<TakenBoon> TakenBoons = new List<TakenBoon>();
+
+        /// <summary>
+        /// The live copies of taken boons' behaviours, keyed by the template on the boon. Each stays
+        /// bound until the run ends.
+        /// </summary>
+        private readonly Dictionary<BoonBehaviour, BoonBehaviour> _behaviours = new Dictionary<BoonBehaviour, BoonBehaviour>();
+        private readonly List<BoonBehaviour> _liveBehaviours = new List<BoonBehaviour>();
+
+        public IReadOnlyList<BoonBehaviour> Behaviours => _liveBehaviours;
+
+        // ---- offers, changed by boons ----
+
+        /// <summary>Cards added to every boon offer.</summary>
+        public int ExtraOfferChoices;
+
+        /// <summary>Boons taken from each offer beyond the first. Rewarded.</summary>
+        public int ExtraBoonPicks;
+
+        /// <summary>Times each offer can be rerolled. Fickle Fate.</summary>
+        public int OfferRerolls;
 
         /// <summary>On-hit effects added to every bullet. The weapon holds this exact list.</summary>
         public readonly List<StatusApplication> BulletStatuses = new List<StatusApplication>();
@@ -103,15 +126,80 @@ namespace Gunspire
             if (player.Weapon != null) player.Weapon.ExtraStatuses = BulletStatuses;
             if (player.SpellContext != null) player.SpellContext.ExtraStatuses = SpellStatuses;
 
+            CombatRules.PlayerHealth = player.Health;
+
             Health.AnyDied += OnAnyDied;
+            LevelEvents.FloorEntered += OnFloorEntered;
+            LevelEvents.FloorLeaving += OnFloorLeaving;
+            LevelEvents.FloorCleared += OnFloorCleared;
+            LevelEvents.FloorCompleted += OnFloorCompleted;
         }
 
+        /// <summary>Ends the run's hooks, including every boon behaviour.</summary>
         public void Unbind()
         {
             if (!_bound) return;
             _bound = false;
 
             Health.AnyDied -= OnAnyDied;
+            LevelEvents.FloorEntered -= OnFloorEntered;
+            LevelEvents.FloorLeaving -= OnFloorLeaving;
+            LevelEvents.FloorCleared -= OnFloorCleared;
+            LevelEvents.FloorCompleted -= OnFloorCompleted;
+
+            for (int i = 0; i < _liveBehaviours.Count; i++) _liveBehaviours[i].Release();
+            _liveBehaviours.Clear();
+            _behaviours.Clear();
+
+            if (Player != null && CombatRules.PlayerHealth == Player.Health) CombatRules.PlayerHealth = null;
+        }
+
+        /// <summary>Starts a boon's behaviour on its first pick, and passes on the level after that.</summary>
+        public void LevelBehaviour(BoonBehaviour template, int level)
+        {
+            if (template == null) return;
+
+            if (!_behaviours.TryGetValue(template, out BoonBehaviour live))
+            {
+                live = template.Spawn(this);
+                _behaviours[template] = live;
+                _liveBehaviours.Add(live);
+            }
+            live.SetLevel(level);
+        }
+
+        /// <summary>The live behaviour of a type, or null. For tooling and for boons that read each other.</summary>
+        public T FindBehaviour<T>() where T : BoonBehaviour
+        {
+            for (int i = 0; i < _liveBehaviours.Count; i++)
+                if (_liveBehaviours[i] is T found) return found;
+            return null;
+        }
+
+        /// <summary>One frame of boon behaviours, on game time. The director calls it while playing.</summary>
+        public void Tick(float dt)
+        {
+            for (int i = 0; i < _liveBehaviours.Count; i++) _liveBehaviours[i].Tick(dt);
+        }
+
+        private void OnFloorEntered(RoomRuntime room)
+        {
+            for (int i = 0; i < _liveBehaviours.Count; i++) _liveBehaviours[i].OnFloorEntered(room);
+        }
+
+        private void OnFloorLeaving(int floor)
+        {
+            for (int i = 0; i < _liveBehaviours.Count; i++) _liveBehaviours[i].OnFloorLeaving(floor);
+        }
+
+        private void OnFloorCleared(RoomRuntime room)
+        {
+            for (int i = 0; i < _liveBehaviours.Count; i++) _liveBehaviours[i].OnFloorCleared(room);
+        }
+
+        private void OnFloorCompleted(RoomRuntime room)
+        {
+            for (int i = 0; i < _liveBehaviours.Count; i++) _liveBehaviours[i].OnFloorCompleted(room);
         }
 
         /// <summary>
@@ -185,6 +273,26 @@ namespace Gunspire
         }
 
         public bool HasBoon(string id) => BoonLevel(id) > 0;
+
+        /// <summary>How many taken boons carry a tag.</summary>
+        public int CountTaggedBoons(string tag)
+        {
+            if (string.IsNullOrEmpty(tag)) return 0;
+
+            int count = 0;
+            for (int i = 0; i < TakenBoons.Count; i++)
+                if (TakenBoons[i].Level > 0 && TakenBoons[i].Boon.HasTag(tag)) count++;
+            return count;
+        }
+
+        public bool HasTaggedBoon(string tag) => CountTaggedBoons(tag) > 0;
+
+        /// <summary>Marks a one-off as used up. It stays taken, so it is never offered again.</summary>
+        public void ConsumeBoon(string id)
+        {
+            TakenBoon entry = FindBoon(id);
+            if (entry != null) entry.Consumed = true;
+        }
 
         /// <summary>The Luck stat, used for every rarity roll in the run.</summary>
         public float Luck => Sheet != null ? Sheet.GetStat(StatType.Luck) : 0f;

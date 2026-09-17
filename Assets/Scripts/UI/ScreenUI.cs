@@ -201,9 +201,26 @@ namespace Gunspire
             Dim();
             IReadOnlyList<Boon> offers = _director.BoonOffers;
 
-            UIStyles.Text(new Rect(0f, 70f, Screen.width, 44f), "Choose a boon", UIStyles.Title, UIStyles.Ink);
+            int picks = _director.BoonPicksLeft;
+            UIStyles.Text(new Rect(0f, 70f, Screen.width, 44f),
+                picks > 1 ? "Choose " + picks + " boons" : "Choose a boon", UIStyles.Title, UIStyles.Ink);
             UIStyles.Text(new Rect(0f, 116f, Screen.width, 22f),
                 "Click a card, or press its number", UIStyles.Center, UIStyles.Muted);
+
+            int rerolls = _director.BoonRerollsLeft;
+            if (rerolls > 0)
+            {
+                var rerollRect = new Rect(Screen.width * 0.5f - 110f, Screen.height - 110f, 220f, 36f);
+                if (UIStyles.Button(rerollRect, "[R] Reroll  (" + rerolls + " left)", UIStyles.Accent))
+                    _director.RerollBoons();
+
+                // From the event, like the training toggle: a key read from Input would reroll once per OnGUI pass.
+                if (Event.current.type == EventType.KeyDown && Event.current.keyCode == KeyCode.R)
+                {
+                    _director.RerollBoons();
+                    Event.current.Use();
+                }
+            }
 
             const float cardWidth = 300f;
             const float cardHeight = 210f;

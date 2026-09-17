@@ -17,6 +17,7 @@ MonoBehaviour:
     DisplayName: Nightfall
     Flavor: Fires a sliver of the dark between stars. The wounds do not close.
     Rarity: 3
+    Class: 4
     Delivery: 1
     Mode: 1
     DamageType: 3
@@ -28,7 +29,10 @@ MonoBehaviour:
     ReloadTime: 1.7
     BurstCount: 1
     BurstInterval: 0.06
+    SpinUpSeconds: 0
+    SpinDownMultiplier: 1.6
     SpreadDegrees: 0.8
+    NoiseMultiplier: 1
     MovingSpreadDegrees: 1.5
     RecoilPitch: 1.1
     RecoilYaw: 0.3
@@ -41,6 +45,7 @@ MonoBehaviour:
     ProjectileHoming: 0
     SplashRadius: 0
     SplashDamage: 0
+    Icon: {fileID: 0}
     ManaPerShot: 0
     Tint: {r: 0.62, g: 0.35, b: 0.8, a: 1}
     OnHitStatuses:
@@ -56,7 +61,6 @@ MonoBehaviour:
       Kind: 1
       Name: Umbral Lance
       Description: A heavy bolt that runs the length of a corridor.
-      UnlockTier: 2
       Cooldown: 2.8
       AmmoCost: 4
       ManaCost: 0

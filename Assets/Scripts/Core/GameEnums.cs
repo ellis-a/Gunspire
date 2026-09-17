@@ -264,6 +264,15 @@ namespace Gunspire
     public enum DeliveryKind { Hitscan, Projectile }
 
     /// <summary>
+    /// The family a gun belongs to, which class boons are gated on. Stored as an integer in assets,
+    /// so append only. Unassigned is the default a new field deserialises to, and a verifier refuses it.
+    /// </summary>
+    public enum WeaponClass { Unassigned, Handgun, SMG, Shotgun, Rifle, Sniper, Heavy, Launcher }
+
+    /// <summary>Which part of a build a boon hangs off. Drives the first roll of an offer. Stored as an integer; append only.</summary>
+    public enum BoonFamily { Core, Arsenal, Slots, School, Spell, Pact }
+
+    /// <summary>
     /// What right click does on a gun. Only three shapes, because they are the three that
     /// behave differently rather than the three that sound different: Shot fires one modified
     /// round, Salvo empties what is left in the magazine, and Focus is a state held down

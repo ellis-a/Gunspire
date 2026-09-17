@@ -80,7 +80,8 @@ namespace Gunspire.EditorTools
             new DashLevels(),
             new BlinkThroughWalls(),
             new SpiderGravityName(),
-            new ShockStacks()
+            new ShockStacks(),
+            new WeaponClassesFromTable()
         };
 
         [MenuItem("Gunspire/Migrations/1 - Report")]

@@ -17,6 +17,7 @@ MonoBehaviour:
     DisplayName: Sunder Cannon
     Flavor: Lobs a rune that disagrees with architecture.
     Rarity: 2
+    Class: 7
     Delivery: 1
     Mode: 0
     DamageType: 0
@@ -28,7 +29,10 @@ MonoBehaviour:
     ReloadTime: 2
     BurstCount: 1
     BurstInterval: 0.06
+    SpinUpSeconds: 0
+    SpinDownMultiplier: 1.6
     SpreadDegrees: 0.5
+    NoiseMultiplier: 1
     MovingSpreadDegrees: 1.2
     RecoilPitch: 5
     RecoilYaw: 0.5
@@ -41,6 +45,7 @@ MonoBehaviour:
     ProjectileHoming: 0
     SplashRadius: 4.2
     SplashDamage: 34
+    Icon: {fileID: 0}
     ManaPerShot: 0
     Tint: {r: 0.9, g: 0.8, b: 0.55, a: 1}
     OnHitStatuses: []
@@ -48,7 +53,6 @@ MonoBehaviour:
       Kind: 1
       Name: Airburst
       Description: Arcs high and opens wide. Less bite, far more reach.
-      UnlockTier: 1
       Cooldown: 2.4
       AmmoCost: 2
       ManaCost: 0

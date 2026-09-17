@@ -580,7 +580,7 @@ namespace Gunspire
                     if (!redirect.TryPickTarget(OwnerTeam, out IDamageable handed)) continue;
 
                     Vector3 at = AbilityContext.CenterOf(handed);
-                    DamageInfo handedDamage = BuildShotDamage(spec, at, -direction, direction, _roundInfusions);
+                    DamageInfo handedDamage = BuildShotDamage(spec, at, -direction, direction, _roundInfusions, handed);
                     handed.TakeDamage(handedDamage);
                     ReportHit(handed, handedDamage, at, -direction, direction, _roundInfusions, round, _firingEcho);
                     Combat.SpawnImpact(at, -direction, spec.Tint, 0.3f, spec.DamageType);
@@ -606,7 +606,7 @@ namespace Gunspire
                 if (ShotTargets.Contains(target)) continue;
                 ShotTargets.Add(target);
 
-                DamageInfo damage = BuildShotDamage(spec, hit.point, hit.normal, direction, _roundInfusions);
+                DamageInfo damage = BuildShotDamage(spec, hit.point, hit.normal, direction, _roundInfusions, target);
                 if (CrossesHead(count, target))
                 {
                     damage.Amount *= Combat.HeadshotMultiplier;
@@ -664,13 +664,13 @@ namespace Gunspire
         /// tooling can inspect a shot without firing it.
         /// </summary>
         public DamageInfo BuildShotDamage(in ShotSpec spec, Vector3 point, Vector3 normal, Vector3 direction,
-            List<BulletInfusion> infusions = null)
+            List<BulletInfusion> infusions = null, IDamageable target = null)
         {
             if (infusions == null) infusions = ActiveInfusions();
 
             float amount = spec.Damage * Combat.OutgoingMultiplier(OwnerSheet, false, spec.DamageType);
             bool crit = false;
-            if (Combat.RollCrit(OwnerSheet, out float critMultiplier))
+            if (Combat.RollCrit(OwnerSheet, target, out float critMultiplier))
             {
                 amount *= critMultiplier;
                 crit = true;
@@ -679,6 +679,8 @@ namespace Gunspire
             DamageInfo info = DamageInfo.Create(amount, spec.DamageType, OwnerTeam, Owner);
             info.IsCrit = crit;
             info.Origin = DamageOrigin.Gun;
+            info.Weapon = this;
+            info = info.From(AimOrigin != null ? AimOrigin.position : transform.position);
             info.Knockback = direction * spec.Knockback;
             info = info.At(point, normal)
                        .WithStatuses(spec.Statuses)

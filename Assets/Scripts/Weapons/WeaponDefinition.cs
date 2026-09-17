@@ -17,6 +17,9 @@ namespace Gunspire
         /// <summary>Drives how often this gun turns up on a plinth. See <see cref="Rarities"/>.</summary>
         public Rarity Rarity = Rarity.Common;
 
+        /// <summary>The family of gun, which class boons are gated on.</summary>
+        public WeaponClass Class = WeaponClass.Unassigned;
+
         [Header("Delivery")]
         public DeliveryKind Delivery = DeliveryKind.Hitscan;
         public FireMode Mode = FireMode.Semi;

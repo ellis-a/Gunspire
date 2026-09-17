@@ -17,6 +17,7 @@ MonoBehaviour:
     DisplayName: Ember Repeater
     Flavor: Spits burning slag. Hold the trigger and let it cook.
     Rarity: 0
+    Class: 2
     Delivery: 1
     Mode: 1
     DamageType: 1
@@ -28,7 +29,10 @@ MonoBehaviour:
     ReloadTime: 1.6
     BurstCount: 1
     BurstInterval: 0.06
+    SpinUpSeconds: 0
+    SpinDownMultiplier: 1.6
     SpreadDegrees: 1.6
+    NoiseMultiplier: 1
     MovingSpreadDegrees: 2.6
     RecoilPitch: 0.5
     RecoilYaw: 0.35
@@ -41,6 +45,7 @@ MonoBehaviour:
     ProjectileHoming: 0
     SplashRadius: 0
     SplashDamage: 0
+    Icon: {fileID: 0}
     ManaPerShot: 0
     Tint: {r: 1, g: 0.48, b: 0.15, a: 1}
     OnHitStatuses:
@@ -52,7 +57,6 @@ MonoBehaviour:
       Kind: 0
       Name: Alt Fire
       Description: 
-      UnlockTier: 0
       Cooldown: 1.2
       AmmoCost: 1
       ManaCost: 0

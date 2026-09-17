@@ -254,6 +254,10 @@ namespace Gunspire
 
             float amount = Mathf.Max(0f, info.Amount);
 
+            // Boon rules on the player's side's hits, now that the target is known.
+            if (amount > 0f && info.SourceTeam == Team.Player && team != Team.Player)
+                amount *= CombatRules.OutgoingMultiplier(in info, this);
+
             if (info.Type != DamageType.True)
             {
                 // Ethereal comes first and can end the hit outright, before any multiplier has
@@ -280,6 +284,13 @@ namespace Gunspire
 
             if (amount <= 0f) return;
 
+            bool isPlayer = CombatRules.IsPlayer(this);
+            if (isPlayer)
+            {
+                amount = CombatRules.ModifyIncoming(in info, this, amount);
+                if (amount <= 0f) return;
+            }
+
             if (Shield > 0f)
             {
                 float absorbed = Mathf.Min(Shield, amount);
@@ -291,6 +302,13 @@ namespace Gunspire
                     HealthChanged?.Invoke();
                     return;
                 }
+            }
+
+            // A killing blow on the player first asks the boons that can prevent it, in their order.
+            if (isPlayer && Current - amount <= 0f && CombatRules.TrySurvive(in info, this, amount))
+            {
+                HealthChanged?.Invoke();
+                return;
             }
 
             Current = Mathf.Max(0f, Current - amount);

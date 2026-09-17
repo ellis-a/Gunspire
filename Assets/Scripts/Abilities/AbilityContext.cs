@@ -183,19 +183,21 @@ namespace Gunspire
         }
 
         /// <summary>Builds a hit carrying this cast's school, source and status payload.</summary>
-        public DamageInfo BuildDamage(float amount, Vector3 point, Vector3 normal, bool canCrit = false)
+        public DamageInfo BuildDamage(float amount, Vector3 point, Vector3 normal, bool canCrit = false,
+            IDamageable target = null)
         {
             DamageInfo info = DamageInfo.Create(amount, DamageType, Team, Caster);
             info.CanCrit = canCrit;
             info.Origin = DamageOrigin;
+            info.Spell = Spell;
 
-            if (canCrit && Combat.RollCrit(Sheet, out float critMultiplier))
+            if (canCrit && Combat.RollCrit(Sheet, target, out float critMultiplier))
             {
                 info.Amount = amount * critMultiplier;
                 info.IsCrit = true;
             }
 
-            return info.At(point, normal).WithStatuses(Payload);
+            return info.From(Origin).At(point, normal).WithStatuses(Payload);
         }
 
         /// <summary>Centre of mass of a target, which is what effects should aim at.</summary>

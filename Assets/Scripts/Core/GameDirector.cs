@@ -111,7 +111,11 @@ namespace Gunspire
             // Real time, so a stop runs out on the player's clock. Paused, this is zero and nothing moves.
             WorldClock.Tick(Time.deltaTime);
 
-            if (State == GameStateKind.Playing) Run.ElapsedSeconds += Time.deltaTime;
+            if (State == GameStateKind.Playing)
+            {
+                Run.ElapsedSeconds += Time.deltaTime;
+                Run.Tick(WorldClock.DeltaTime);
+            }
 
             HandleGlobalKeys();
         }
@@ -153,6 +157,7 @@ namespace Gunspire
         {
             Run?.Unbind();
             AbilityEvents.ClearSubscribers();
+            CombatRules.Clear();
 
             Run = new RunState(seed, floorCount);
 
@@ -301,6 +306,7 @@ namespace Gunspire
             if (State != GameStateKind.Playing || CurrentRoom == null || !CurrentRoom.IsCleared) return;
 
             Run.RoomsCleared++;
+            LevelEvents.RaiseFloorCompleted(CurrentRoom);
 
             // Bleeding never stops on its own, so surviving the floor is the other way out of it.
             // Without this a single unlucky bleed would follow the player the whole run.
@@ -366,8 +372,12 @@ namespace Gunspire
             bool eliteReward = Run.CurrentNode != null && Run.CurrentNode.Kind == RoomKind.Elite;
             float rarityBonus = eliteReward ? 2.5f : 1f;
 
+            _offerRarityBonus = rarityBonus;
             _boonOffers.Clear();
-            _boonOffers.AddRange(BoonLibrary.Offer(Run, boonChoices, rarityBonus));
+            _boonOffers.AddRange(BoonLibrary.Offer(Run, boonChoices + Mathf.Max(0, Run.ExtraOfferChoices), rarityBonus));
+
+            BoonPicksLeft = 1 + Mathf.Max(0, Run.ExtraBoonPicks);
+            BoonRerollsLeft = Mathf.Max(0, Run.OfferRerolls);
 
             if (_boonOffers.Count == 0)
             {
@@ -378,14 +388,46 @@ namespace Gunspire
             SetState(GameStateKind.ChoosingBoon);
         }
 
+        /// <summary>How many more boons can be taken from the offer on screen.</summary>
+        public int BoonPicksLeft { get; private set; }
+
+        /// <summary>How many more times the offer on screen can be rerolled.</summary>
+        public int BoonRerollsLeft { get; private set; }
+
+        private float _offerRarityBonus = 1f;
+
+        /// <summary>
+        /// Takes a card. With picks left the rest of the offer stays up, minus anything the pick made
+        /// invalid, such as a second familiar.
+        /// </summary>
         public void ChooseBoon(int index)
         {
-            if (State != GameStateKind.ChoosingBoon) return;
+            if (State != GameStateKind.ChoosingBoon || PendingSpell != null) return;
             if (index < 0 || index >= _boonOffers.Count) return;
 
             Run.AddBoon(_boonOffers[index]);
+            _boonOffers.RemoveAt(index);
+            BoonPicksLeft--;
+
+            _boonOffers.RemoveAll(b => !b.IsOffered(Run));
+
+            if (BoonPicksLeft > 0 && _boonOffers.Count > 0) return;
+
             _boonOffers.Clear();
             OfferRooms();
+        }
+
+        /// <summary>Replaces the cards on screen with a fresh roll of the same size. Fickle Fate.</summary>
+        public void RerollBoons()
+        {
+            if (State != GameStateKind.ChoosingBoon || PendingSpell != null || BoonRerollsLeft <= 0) return;
+
+            List<Boon> fresh = BoonLibrary.Offer(Run, _boonOffers.Count, _offerRarityBonus);
+            if (fresh.Count == 0) return;
+
+            BoonRerollsLeft--;
+            _boonOffers.Clear();
+            _boonOffers.AddRange(fresh);
         }
 
         private void OfferRooms()

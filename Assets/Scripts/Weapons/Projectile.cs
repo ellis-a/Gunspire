@@ -46,6 +46,12 @@ namespace Gunspire
         public Weapon SourceWeapon;
         public List<BulletInfusion> Infusions;
 
+        /// <summary>The spell that cast it, for school and spell rules. Null for anything but a spell's projectile.</summary>
+        public Spell SourceSpell;
+
+        /// <summary>Where it was launched from, for distance rules. Set by <see cref="Launch"/>.</summary>
+        public Vector3 LaunchPoint { get; private set; }
+
         /// <summary>Which round of its gun this is, so a round striking several things still counts once. Zero for anything else.</summary>
         public int Round;
 
@@ -172,6 +178,7 @@ namespace Gunspire
 
         public void Launch()
         {
+            LaunchPoint = transform.position;
             _velocity = transform.forward * Speed;
             _hitMask = MaskFor(OwnerTeam);
             Layers.SetRecursively(gameObject,
@@ -202,6 +209,7 @@ namespace Gunspire
             Owner = owner;
             OwnerSheet = ownerSheet;
             SourceWeapon = null;
+            SourceSpell = null;
             Infusions = null;
 
             _alreadyHit.Clear();
@@ -338,7 +346,7 @@ namespace Gunspire
             if (hitTarget)
             {
                 _alreadyHit.Add(target);
-                DamageInfo info = BuildHitDamage(point, normal);
+                DamageInfo info = BuildHitDamage(point, normal, target);
 
                 // Headshots are for guns: a spell's projectile has no weapon behind it.
                 if (SourceWeapon != null && Combat.IsHead(hit.collider))
@@ -371,12 +379,12 @@ namespace Gunspire
         }
 
         /// <summary>The hit this projectile deals on a direct strike. Public so tooling can inspect it.</summary>
-        public DamageInfo BuildHitDamage(Vector3 point, Vector3 normal)
+        public DamageInfo BuildHitDamage(Vector3 point, Vector3 normal, IDamageable target = null)
         {
             float amount = Damage;
             bool crit = false;
 
-            if (CanCrit && Combat.RollCrit(OwnerSheet, out float critMultiplier))
+            if (CanCrit && Combat.RollCrit(OwnerSheet, target, out float critMultiplier))
             {
                 amount *= critMultiplier;
                 crit = true;
@@ -387,7 +395,9 @@ namespace Gunspire
             info.CanCrit = CanCrit;
             info.Origin = Origin;
             info.Knockback = transform.forward * Knockback;
-            info = info.At(point, normal).WithStatuses(Statuses);
+            info.Weapon = SourceWeapon;
+            info.Spell = SourceSpell;
+            info = info.From(LaunchPoint).At(point, normal).WithStatuses(Statuses);
             return info;
         }
 
@@ -397,7 +407,9 @@ namespace Gunspire
                 DamageType, OwnerTeam, Owner);
             template.CanCrit = false;
             template.Origin = Origin;
-            template = template.WithStatuses(Statuses);
+            template.Weapon = SourceWeapon;
+            template.Spell = SourceSpell;
+            template = template.From(LaunchPoint).WithStatuses(Statuses);
 
             // Everything a gun's blast catches is a hit from that gun, so its on-hit hook fires
             // for each of them, not only for whatever the round struck directly.

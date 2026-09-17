@@ -177,32 +177,4 @@ namespace Gunspire
 
         public override string Describe() => "levels up every spell you know";
     }
-
-    // ---------------------------------------------------------------- requirements
-
-    /// <summary>Only offer this if the player is carrying a particular movement ability.</summary>
-    [System.Serializable]
-    public class HasMovementAbilityRequirement : BoonRequirement
-    {
-        public string AbilityId = "blink";
-
-        public override bool IsMet(RunState run)
-        {
-            return run != null && run.Player != null && run.Player.Movement != null &&
-                   run.Player.Movement.Has(AbilityId);
-        }
-
-        public override string Describe() => "requires " + AbilityId;
-    }
-
-    /// <summary>Only offer this once another boon has been taken.</summary>
-    [System.Serializable]
-    public class HasBoonRequirement : BoonRequirement
-    {
-        public string BoonId = string.Empty;
-
-        public override bool IsMet(RunState run) => run != null && run.HasBoon(BoonId);
-
-        public override string Describe() => "requires the " + BoonId + " boon";
-    }
 }

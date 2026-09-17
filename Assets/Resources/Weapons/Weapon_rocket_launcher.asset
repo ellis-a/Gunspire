@@ -17,6 +17,7 @@ MonoBehaviour:
     DisplayName: Rocket Launcher
     Flavor: Points, fires, and asks nothing else of you.
     Rarity: 0
+    Class: 7
     Delivery: 1
     Mode: 0
     DamageType: 0
@@ -52,7 +53,6 @@ MonoBehaviour:
       Kind: 0
       Name: Alt Fire
       Description: 
-      UnlockTier: 0
       Cooldown: 1.2
       AmmoCost: 1
       ManaCost: 0

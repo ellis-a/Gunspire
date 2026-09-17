@@ -17,6 +17,7 @@ MonoBehaviour:
     DisplayName: Trigram
     Flavor: Three marks, drawn in one motion. The third is the one that sticks.
     Rarity: 2
+    Class: 4
     Delivery: 0
     Mode: 2
     DamageType: 3
@@ -28,7 +29,10 @@ MonoBehaviour:
     ReloadTime: 1.6
     BurstCount: 3
     BurstInterval: 0.055
+    SpinUpSeconds: 0
+    SpinDownMultiplier: 1.6
     SpreadDegrees: 0.5
+    NoiseMultiplier: 1
     MovingSpreadDegrees: 1.4
     RecoilPitch: 1.8
     RecoilYaw: 0.35
@@ -41,6 +45,7 @@ MonoBehaviour:
     ProjectileHoming: 0
     SplashRadius: 0
     SplashDamage: 0
+    Icon: {fileID: 0}
     ManaPerShot: 0
     Tint: {r: 0.62, g: 0.35, b: 0.8, a: 1}
     OnHitStatuses:
@@ -52,7 +57,6 @@ MonoBehaviour:
       Kind: 1
       Name: Underbarrel Grenade
       Description: Lobs a grenade. Arcs, so lead your throws.
-      UnlockTier: 1
       Cooldown: 3.2
       AmmoCost: 3
       ManaCost: 0

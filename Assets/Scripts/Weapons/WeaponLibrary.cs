@@ -104,8 +104,37 @@ namespace Gunspire
         {
             List<WeaponDefinition> guns = BuiltInBodies();
             AttachAltFires(guns);
+            for (int i = 0; i < guns.Count; i++) guns[i].Class = ClassOf(guns[i].Id);
             return guns;
         }
+
+        /// <summary>
+        /// Every gun's class by id, the built-ins and the asset-only guns alike. Kept as one table
+        /// so the built-ins and the migration that classes existing assets cannot disagree.
+        /// </summary>
+        public static readonly Dictionary<string, WeaponClass> Classes = new Dictionary<string, WeaponClass>
+        {
+            { "arcanum", WeaponClass.Handgun },
+            { "revolver", WeaponClass.Handgun },
+            { "smg", WeaponClass.SMG },
+            { "emberspit", WeaponClass.SMG },
+            { "ember_repeater", WeaponClass.SMG },
+            { "shotgun", WeaponClass.Shotgun },
+            { "hailmaker", WeaponClass.Shotgun },
+            { "hexshot", WeaponClass.Shotgun },
+            { "trigram", WeaponClass.Rifle },
+            { "nightfall", WeaponClass.Rifle },
+            { "frost_lance", WeaponClass.Sniper },
+            { "voltaic_rail", WeaponClass.Sniper },
+            { "requiem", WeaponClass.Sniper },
+            { "minigun", WeaponClass.Heavy },
+            { "rocket_launcher", WeaponClass.Launcher },
+            { "knell", WeaponClass.Launcher },
+            { "sunder_cannon", WeaponClass.Launcher }
+        };
+
+        public static WeaponClass ClassOf(string id) =>
+            id != null && Classes.TryGetValue(id, out WeaponClass found) ? found : WeaponClass.Unassigned;
 
         /// <summary>
         /// Right click, kept in one place rather than spread through the table above.

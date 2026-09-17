@@ -17,6 +17,7 @@ MonoBehaviour:
     DisplayName: Hexshot
     Flavor: Eight barrels of powdered grave dirt and crushed root.
     Rarity: 1
+    Class: 3
     Delivery: 0
     Mode: 0
     DamageType: 3
@@ -28,7 +29,10 @@ MonoBehaviour:
     ReloadTime: 1.8
     BurstCount: 1
     BurstInterval: 0.06
+    SpinUpSeconds: 0
+    SpinDownMultiplier: 1.6
     SpreadDegrees: 6.5
+    NoiseMultiplier: 1
     MovingSpreadDegrees: 8
     RecoilPitch: 4
     RecoilYaw: 0.6
@@ -41,6 +45,7 @@ MonoBehaviour:
     ProjectileHoming: 0
     SplashRadius: 0
     SplashDamage: 0
+    Icon: {fileID: 0}
     ManaPerShot: 0
     Tint: {r: 0.55, g: 0.9, b: 0.35, a: 1}
     OnHitStatuses:
@@ -52,7 +57,6 @@ MonoBehaviour:
       Kind: 2
       Name: Both Barrels
       Description: Dumps every shell in the tube.
-      UnlockTier: 1
       Cooldown: 4
       AmmoCost: 1
       ManaCost: 0

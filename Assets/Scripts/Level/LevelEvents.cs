@@ -17,8 +17,18 @@ namespace Gunspire
         /// <summary>Raised once the new room is built, the player placed and everything summoned.</summary>
         public static event Action<RoomRuntime> FloorEntered;
 
+        /// <summary>Raised when the last enemy that holds a room shut is gone and the exit opens.</summary>
+        public static event Action<RoomRuntime> FloorCleared;
+
+        /// <summary>Raised when the player steps through a cleared room's exit, before any reward is offered.</summary>
+        public static event Action<RoomRuntime> FloorCompleted;
+
         public static void RaiseFloorLeaving(int floor) => FloorLeaving?.Invoke(floor);
 
         public static void RaiseFloorEntered(RoomRuntime room) => FloorEntered?.Invoke(room);
+
+        public static void RaiseFloorCleared(RoomRuntime room) => FloorCleared?.Invoke(room);
+
+        public static void RaiseFloorCompleted(RoomRuntime room) => FloorCompleted?.Invoke(room);
     }
 }

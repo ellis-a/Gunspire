@@ -85,6 +85,7 @@ namespace Gunspire
             _cleared = true;
             if (Portal != null) Portal.SetOpen(true);
             Cleared?.Invoke();
+            LevelEvents.RaiseFloorCleared(this);
             GameDirector.Instance?.OnRoomCleared(this);
         }
     }

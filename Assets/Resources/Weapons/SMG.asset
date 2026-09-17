@@ -17,6 +17,7 @@ MonoBehaviour:
     DisplayName: SMG
     Flavor: 
     Rarity: 0
+    Class: 2
     Delivery: 0
     Mode: 1
     DamageType: 0
@@ -56,7 +57,6 @@ MonoBehaviour:
       Kind: 0
       Name: Cinder Sights
       Description: Hold to steady the spray.
-      UnlockTier: 0
       Cooldown: 1.2
       AmmoCost: 1
       ManaCost: 0

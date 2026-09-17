@@ -115,7 +115,7 @@ namespace Gunspire
                     if (distance > 0.01f) away = delta / distance;
                 }
 
-                DamageInfo info = ctx.BuildDamage(amount * ctx.Power * falloff, center, -away, CanCrit);
+                DamageInfo info = ctx.BuildDamage(amount * ctx.Power * falloff, center, -away, CanCrit, target);
                 if (Knockback > 0f || KnockbackUp > 0f)
                     info.Knockback = away * (Knockback * falloff) + Vector3.up * (KnockbackUp * falloff);
 
@@ -322,6 +322,7 @@ namespace Gunspire
                 p.Owner = ctx.Caster;
                 p.OwnerSheet = ctx.Sheet;
                 p.IsSpell = true;
+                p.SourceSpell = ctx.Spell;
                 p.CanCrit = false;
                 p.Damage = Damage * ctx.Power;
                 p.DamageType = ctx.DamageType;
