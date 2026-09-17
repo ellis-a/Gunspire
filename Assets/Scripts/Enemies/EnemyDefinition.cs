@@ -142,6 +142,11 @@ namespace Gunspire
         public float EliteDamageMultiplier = 1.25f;
         public float EliteCooldownMultiplier = 0.8f;
 
+        [Header("Reward")]
+        [Tooltip("Shillings dropped on death, rolled between these. Negative takes the default for the enemy's rank.")]
+        public int ShillingsMin = -1;
+        public int ShillingsMax = -1;
+
         [Header("Attacks")]
         public List<AttackDefinition> Attacks = new List<AttackDefinition>();
 

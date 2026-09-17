@@ -14,6 +14,8 @@ namespace Gunspire
     {
         private readonly List<ActiveStatus> _active = new List<ActiveStatus>();
         private readonly List<ActiveStatus> _scratch = new List<ActiveStatus>();
+        private readonly List<ActiveStatus> _notifyScratch = new List<ActiveStatus>();
+        private bool _notifying;
 
         private CharacterSheet _sheet;
         private Health _health;
@@ -178,12 +180,15 @@ namespace Gunspire
         /// shorter elite duration unless <paramref name="scaleForElite"/> is off, which copying a
         /// status that was already scaled needs.
         /// </summary>
-        public void Apply(in StatusApplication app, GameObject source, Team sourceTeam, bool scaleForElite = true)
+        public void Apply(in StatusApplication incoming, GameObject source, Team sourceTeam, bool scaleForElite = true)
         {
             if (Health != null && !Health.IsAlive) return;
 
-            StatusDefinition def = StatusLibrary.Get(app.Id);
-            if (def == null) return;
+            StatusDefinition def = StatusLibrary.Get(incoming.Id);
+            if (def == null || !def.CanApplyTo(this)) return;
+
+            StatusApplication app = incoming;
+            if (def.IsDebuff && !Resist(def, ref app)) return;
 
             CharacterSheet sourceSheet = source != null ? source.GetComponent<CharacterSheet>() : null;
 
@@ -211,6 +216,7 @@ namespace Gunspire
                     existing.Remaining = Mathf.Max(existing.Remaining, duration);
                 }
 
+                float previousMagnitude = existing.Magnitude;
                 existing.Duration = Mathf.Max(existing.Duration, duration);
                 existing.Magnitude = Mathf.Max(existing.Magnitude, app.Magnitude);
                 existing.Source = source;
@@ -225,6 +231,7 @@ namespace Gunspire
                 }
 
                 RebuildModifiers(existing);
+                def.OnTopUp(this, existing, app, previousMagnitude);
                 Changed?.Invoke();
                 AnyApplied?.Invoke(this, app.Id, source, sourceTeam);
                 return;
@@ -251,6 +258,58 @@ namespace Gunspire
             def.OnApplied(this, status);
             Changed?.Invoke();
             AnyApplied?.Invoke(this, app.Id, source, sourceTeam);
+        }
+
+        /// <summary>
+        /// Weakens a debuff by the carrier's debuff potency, in the way the status says. False when nothing is
+        /// left to apply: a frost or shock application whose stacks all round away.
+        /// </summary>
+        private bool Resist(StatusDefinition def, ref StatusApplication app)
+        {
+            float potency = Sheet != null ? Sheet.Get(Attr.DebuffPotency) : 1f;
+            if (Mathf.Approximately(potency, 1f)) return true;
+
+            switch (def.Resisted)
+            {
+                case DebuffResistance.Duration:
+                    app.Duration *= potency;
+                    return app.Duration > 0f;
+                case DebuffResistance.Magnitude:
+                    app.Magnitude *= potency;
+                    return true;
+                case DebuffResistance.Stacks:
+                    app.Stacks = Mathf.RoundToInt(app.Stacks * potency);
+                    return app.Stacks > 0;
+                default:
+                    return true;
+            }
+        }
+
+        /// <summary>Tells running statuses the carrier took damage. <see cref="Health"/> calls this after a hit lands.</summary>
+        public void NotifyDamaged(in DamageInfo hit, float amount)
+        {
+            if (_active.Count == 0) return;
+
+            // Its own list: a tick's damage lands here while Tick is still walking _scratch, and a status reacting
+            // to damage can deal damage itself.
+            List<ActiveStatus> copy = _notifying ? new List<ActiveStatus>(_active) : _notifyScratch;
+            if (!_notifying)
+            {
+                copy.Clear();
+                copy.AddRange(_active);
+            }
+
+            bool outer = !_notifying;
+            _notifying = true;
+            try
+            {
+                for (int i = 0; i < copy.Count; i++)
+                    if (_active.Contains(copy[i])) copy[i].Def.OnOwnerDamaged(this, copy[i], in hit, amount);
+            }
+            finally
+            {
+                if (outer) _notifying = false;
+            }
         }
 
         public void ApplyAll(List<StatusApplication> apps, GameObject source, Team sourceTeam)
@@ -420,11 +479,11 @@ namespace Gunspire
         /// Damage dealt by a periodic effect, credited back to whoever applied it. Scales on
         /// the applier's bonuses for that school, so Fire Mastery makes your burns burn.
         /// </summary>
-        public void DealTickDamage(ActiveStatus s, float amount, DamageType type)
+        public void DealTickDamage(ActiveStatus s, float amount, DamageType type, bool scaleWithSource = true)
         {
             if (Health == null || !Health.IsAlive || amount <= 0f) return;
 
-            if (s.SourceSheet != null)
+            if (scaleWithSource && s.SourceSheet != null)
                 amount *= s.SourceSheet.Get(Attr.DamageDealt) * s.SourceSheet.DamageTypeMultiplier(type);
 
             DamageInfo info = DamageInfo.Create(amount, type, s.SourceTeam, s.Source);

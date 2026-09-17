@@ -31,6 +31,20 @@ namespace Gunspire
         /// <summary>A melee attack in progress spent a charge, and what it strikes takes the bonus.</summary>
         public bool MeleeEmpowered { get; private set; }
 
+        // ---- set by boons, cleared each run ----
+
+        /// <summary>Multiplies the charge a gun hit builds. Keen Mind.</summary>
+        public float ChargeMultiplier = 1f;
+
+        /// <summary>Extra psychic damage an empowered melee attack deals. Sharpened Will.</summary>
+        public float MeleeBonusExtra;
+
+        /// <summary>Charge spent, by any means. Overflow.</summary>
+        public event System.Action<float> Spent;
+
+        /// <summary>An empowered melee attack finished, with what it struck. The list is only valid during the call. Psychic Wave, Mind Break.</summary>
+        public event System.Action<IReadOnlyList<Health>> EmpoweredMeleeLanded;
+
         private float _lastGainAt = float.NegativeInfinity;
         private readonly List<Health> _struck = new List<Health>();
         private Weapon _weapon;
@@ -93,7 +107,7 @@ namespace Gunspire
             if (now - _lastGainAt < HitWindow) return false;
 
             _lastGainAt = now;
-            Add(ChargePerHit);
+            Add(ChargePerHit * Mathf.Max(0f, ChargeMultiplier));
             return true;
         }
 
@@ -117,6 +131,7 @@ namespace Gunspire
 
             Charge = Mathf.Max(0f, Charge - amount);
             RaiseChanged();
+            Spent?.Invoke(amount);
             return true;
         }
 
@@ -131,6 +146,8 @@ namespace Gunspire
             _lastGainAt = float.NegativeInfinity;
             MeleeEmpowered = false;
             _struck.Clear();
+            ChargeMultiplier = 1f;
+            MeleeBonusExtra = 0f;
             RaiseChanged();
         }
 
@@ -175,12 +192,14 @@ namespace Gunspire
                 Health victim = _struck[i];
                 if (victim == null || !victim.IsAlive) continue;
 
-                DamageInfo bonus = DamageInfo.Create(MeleeBonusDamage, DamageType.Psychic, Team.Player, Rig.gameObject);
+                DamageInfo bonus = DamageInfo.Create(MeleeBonusDamage + Mathf.Max(0f, MeleeBonusExtra), DamageType.Psychic,
+                    Team.Player, Rig.gameObject);
                 bonus.CanCrit = false;
                 bonus.Origin = DamageOrigin.Mastery;
                 victim.TakeDamage(bonus.At(victim.transform.position + Vector3.up, Vector3.up));
             }
 
+            EmpoweredMeleeLanded?.Invoke(_struck);
             _struck.Clear();
         }
     }

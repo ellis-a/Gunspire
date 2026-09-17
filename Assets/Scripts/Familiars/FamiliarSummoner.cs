@@ -35,6 +35,7 @@ namespace Gunspire
             if (owner == null) return null;
 
             ApplyLevel(def, level);
+            if (AllyBoosts.Active != null) AllyBoosts.Active.ApplyTo(def);
             return Construct(def, owner);
         }
 

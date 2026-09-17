@@ -163,7 +163,51 @@ namespace Gunspire
         Recoil,
 
         /// <summary>Multiplies the gravity the player falls and jumps under. 1 is normal.</summary>
-        GravityScale
+        GravityScale,
+
+        // Added for the boon redesign. Each multiplier is 1 at rest; each flat value is 0.
+
+        /// <summary>Multiplies magazine size, rounded down.</summary>
+        MagazineSize,
+
+        /// <summary>Extra targets a gun round passes through.</summary>
+        Pierce,
+
+        /// <summary>Multiplies the knockback your own hits deal.</summary>
+        Knockback,
+
+        /// <summary>Multiplies how fast a gun's projectiles fly.</summary>
+        ProjectileSpeed,
+
+        /// <summary>Multiplies a gun's splash radius.</summary>
+        SplashRadius,
+
+        /// <summary>Multiplies how fast a gun spins up.</summary>
+        SpinUpRate,
+
+        /// <summary>How far focusing zooms and how fast it settles. Two zooms twice as far past the gun's own focus.</summary>
+        ScopeZoom,
+
+        /// <summary>Multiplies how fast a gun is drawn.</summary>
+        DrawSpeed,
+
+        /// <summary>Extra jumps in mid-air.</summary>
+        JumpCount,
+
+        /// <summary>Multiplies what health and mana orbs restore.</summary>
+        OrbPotency,
+
+        /// <summary>Chance a killed enemy drops an orb.</summary>
+        OrbDropChance,
+
+        /// <summary>Multiplies how far away an orb is picked up from.</summary>
+        PickupRadius,
+
+        /// <summary>Multiplies the debuffs that land on you. Lower is better.</summary>
+        DebuffPotency,
+
+        /// <summary>Multiplies shillings earned from kills.</summary>
+        ShillingGain
     }
 
     /// <summary>Status effect identifiers. See <c>StatusLibrary</c> for behaviour.</summary>
@@ -256,7 +300,22 @@ namespace Gunspire
         Phased,
 
         /// <summary>Id incarnate: the gun fires itself and never misses. Superid.</summary>
-        Unleashed
+        Unleashed,
+
+        /// <summary>Fights for the player until the floor ends. Otherworldly Beauty.</summary>
+        Charmed,
+
+        /// <summary>Stores a share of the damage it takes and takes it again as psychic when it ends.</summary>
+        Hex,
+
+        /// <summary>Builds up, then explodes against the enemies around it.</summary>
+        Volatile,
+
+        /// <summary>Drops shillings on death. Never wears off.</summary>
+        Gilded,
+
+        /// <summary>Builds up to fear, draining over time.</summary>
+        Dread
     }
 
     public enum FireMode { Semi, Auto, Burst }

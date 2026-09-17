@@ -19,6 +19,16 @@ namespace Gunspire
         /// <summary>The companion died on this floor, so nothing is summoned until the next.</summary>
         public bool LostThisFloor { get; private set; }
 
+        /// <summary>The companion died. Vengeful Rage.</summary>
+        public event System.Action CompanionDied;
+
+        /// <summary>Whether a hit or kill came from the companion. Blooded.</summary>
+        public bool IsCompanionSource(GameObject source) => source != null && Companion != null && source == Companion.gameObject;
+
+        /// <summary>Whether a minion id is one of the companion's forms.</summary>
+        public static bool IsCompanion(string minionId)
+            => minionId == "jackalope" || minionId == "fox" || minionId == "wolf" || minionId == "bear";
+
         public static string TierFor(int rank)
         {
             switch (rank)
@@ -72,6 +82,7 @@ namespace Gunspire
             LostThisFloor = true;
             if (Companion != null && Companion.Health != null) Companion.Health.Died -= OnCompanionDied;
             Companion = null;
+            CompanionDied?.Invoke();
         }
 
         private void Dismiss()

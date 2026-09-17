@@ -81,6 +81,74 @@ namespace Gunspire
 
         public bool IsEmpty => AmmoInMagazine <= 0;
 
+        // ---------------------------------------------------------------- stats
+
+        /// <summary>
+        /// An attribute as this gun sees it: the owner's value with its class's own modifiers added. With no
+        /// sheet, the neutral value.
+        /// </summary>
+        public float Stat(Attr attr)
+        {
+            if (OwnerSheet != null) return OwnerSheet.GetFor(Definition != null ? Definition.Class : WeaponClass.Unassigned, attr);
+            return attr == Attr.Pierce || attr == Attr.JumpCount || attr == Attr.OrbDropChance ? 0f : 1f;
+        }
+
+        /// <summary>The magazine a gun holds in this owner's hands: its own size scaled by the owner, rounded down.</summary>
+        public int MagazineFor(WeaponDefinition def)
+        {
+            if (def == null) return 0;
+            float scale = OwnerSheet != null ? OwnerSheet.GetFor(def.Class, Attr.MagazineSize) : 1f;
+            return Mathf.Max(1, Mathf.FloorToInt(def.MagazineSize * scale + 0.0001f));
+        }
+
+        public int MagazineSize => MagazineFor(Definition);
+
+        /// <summary>Extra targets each round passes through, from the owner.</summary>
+        private int ExtraPierce => Mathf.Max(0, Mathf.RoundToInt(Stat(Attr.Pierce)));
+
+        /// <summary>Rounds fired since the last reload finished or the gun was equipped.</summary>
+        public int RoundsSinceReload { get; private set; }
+
+        /// <summary>Rounds fired since the gun was last drawn or equipped.</summary>
+        public int RoundsSinceDraw { get; private set; }
+
+        // ---------------------------------------------------------------- drawing
+
+        private float _drawRemaining;
+        private float _drawFull;
+
+        /// <summary>Seconds this gun takes to draw in its owner's hands.</summary>
+        public float DrawTime => Definition == null ? 0f : Definition.DrawSeconds / Mathf.Max(0.1f, Stat(Attr.DrawSpeed));
+
+        /// <summary>Being drawn: no firing, alt fire, focusing or reloading until it is out.</summary>
+        public bool IsDrawing => _drawRemaining > 0f;
+
+        /// <summary>0 to 1 while drawing; 1 otherwise.</summary>
+        public float DrawProgress => _drawFull <= 0f || _drawRemaining <= 0f ? 1f : Mathf.Clamp01(1f - _drawRemaining / _drawFull);
+
+        /// <summary>
+        /// Starts drawing the gun in hand. The holster calls this on a swap and a pickup, never on a
+        /// plain equip, so entering a room or restoring a rewind does not make you wait.
+        /// </summary>
+        public void BeginDraw()
+        {
+            if (Definition == null || IsPhantom) return;
+
+            _drawFull = DrawTime;
+            _drawRemaining = _drawFull;
+            RoundsSinceDraw = 0;
+            IsFocusing = false;
+        }
+
+        /// <summary>Ends a draw at once. Tooling, and anything that should skip it.</summary>
+        public void FinishDraw() => _drawRemaining = 0f;
+
+        /// <summary>Runs the draw down without waiting for frames. Public so tooling can step it.</summary>
+        public void TickDraw(float seconds)
+        {
+            if (_drawRemaining > 0f) _drawRemaining = Mathf.Max(0f, _drawRemaining - seconds);
+        }
+
         /// <summary>
         /// Takes up a gun. <paramref name="ammoInMagazine"/> below zero loads a full magazine;
         /// a swap passes the count the gun was put down with, so trading back and forth at a
@@ -92,8 +160,11 @@ namespace Gunspire
 
             Definition = definition;
             AmmoInMagazine = ammoInMagazine < 0
-                ? definition.MagazineSize
-                : Mathf.Clamp(ammoInMagazine, 0, definition.MagazineSize);
+                ? MagazineFor(definition)
+                : Mathf.Clamp(ammoInMagazine, 0, MagazineFor(definition));
+            _drawRemaining = 0f;
+            RoundsSinceDraw = 0;
+            RoundsSinceReload = 0;
             IsReloading = false;
             _cooldown = 0f;
             _altCooldown = 0f;
@@ -140,6 +211,7 @@ namespace Gunspire
         private void Update()
         {
             if (_cooldown > 0f) _cooldown -= Time.deltaTime;
+            if (_drawRemaining > 0f) _drawRemaining -= Time.deltaTime;
             if (_altCooldown > 0f) _altCooldown -= Time.deltaTime;
             if (_infusions.Count > 0) TickInfusions(Time.deltaTime);
         }
@@ -168,7 +240,7 @@ namespace Gunspire
             StopAllRunningRoutines();
             IsReloading = false;
             ReloadProgress = 0f;
-            AmmoInMagazine = Mathf.Clamp(rounds, 0, Definition.MagazineSize);
+            AmmoInMagazine = Mathf.Clamp(rounds, 0, MagazineSize);
         }
 
         /// <summary>
@@ -262,6 +334,14 @@ namespace Gunspire
             bool altPressedThisFrame = altDown && !_altWasDown;
             _altWasDown = altDown;
 
+            // A gun still coming out does nothing yet: no focus, no alt fire, no reload, no winding up.
+            if (IsDrawing)
+            {
+                IsFocusing = false;
+                UpdateSpin(false);
+                return;
+            }
+
             HandleAltInput(altDown, altPressedThisFrame);
 
             // Pulling the trigger mid-reload should click rather than do nothing at all.
@@ -277,7 +357,7 @@ namespace Gunspire
 
         public void TryFire()
         {
-            if (Definition == null || IsReloading) return;
+            if (Definition == null || IsReloading || IsDrawing) return;
 
             if (!FreeRounds && AmmoInMagazine <= 0)
             {
@@ -290,7 +370,7 @@ namespace Gunspire
             if (!IsPhantom && Definition.ManaPerShot > 0f && (OwnerMana == null || !OwnerMana.TrySpend(Definition.ManaPerShot)))
                 return;
 
-            float attackSpeed = OwnerSheet != null ? OwnerSheet.Get(Attr.AttackSpeed) : 1f;
+            float attackSpeed = Stat(Attr.AttackSpeed);
 
             // Focus trades rate of fire for accuracy and damage, so it is a choice rather than
             // a strictly better way to hold the gun.
@@ -317,7 +397,10 @@ namespace Gunspire
         public float SpinProgress =>
             Definition == null || Definition.SpinUpSeconds <= 0f
                 ? 1f
-                : Mathf.Clamp01(_spin / Definition.SpinUpSeconds);
+                : Mathf.Clamp01(_spin / SpinUpTime);
+
+        /// <summary>Seconds of held trigger this gun needs in its owner's hands.</summary>
+        public float SpinUpTime => Definition == null ? 0f : Definition.SpinUpSeconds / Mathf.Max(0.1f, Stat(Attr.SpinUpRate));
 
         public bool HasSpinUp => Definition != null && Definition.SpinUpSeconds > 0f;
         public bool IsSpunUp => SpinProgress >= 1f;
@@ -344,7 +427,7 @@ namespace Gunspire
                     _spinSoundPlayed = true;
                 }
 
-                _spin = Mathf.Min(_spin + Time.deltaTime, Definition.SpinUpSeconds);
+                _spin = Mathf.Min(_spin + Time.deltaTime, SpinUpTime);
                 return;
             }
 
@@ -449,6 +532,11 @@ namespace Gunspire
         private void FireRound(ShotSpec spec, int ammoCost, Vector3? directionOverride = null)
         {
             if (!FreeRounds) AmmoInMagazine -= Mathf.Max(0, ammoCost);
+            if (!_firingEcho && !IsPhantom)
+            {
+                RoundsSinceReload++;
+                RoundsSinceDraw++;
+            }
 
             Vector3 origin = AimOrigin != null ? AimOrigin.position : transform.position;
             Vector3 forward = directionOverride ?? (AimOrigin != null ? AimOrigin.forward : transform.forward);
@@ -463,8 +551,8 @@ namespace Gunspire
 
             // Dexterity steadies the hands: one multiplier on the cone, one on the kick. Applied
             // here rather than to the definition, so both triggers pick them up.
-            float spreadScale = OwnerSheet != null ? OwnerSheet.Get(Attr.Spread) : 1f;
-            float recoilScale = OwnerSheet != null ? OwnerSheet.Get(Attr.Recoil) : 1f;
+            float spreadScale = Stat(Attr.Spread);
+            float recoilScale = Stat(Attr.Recoil);
 
             // Taken once per round, so every pellet carries the same charge and a one-round
             // infusion is spent by the whole round rather than by its first pellet.
@@ -564,7 +652,7 @@ namespace Gunspire
                 QueryTriggerInteraction.Ignore);
             if (count > 1) SortHitsByDistance(count);
 
-            int pierceBudget = spec.MaxPierce;
+            int pierceBudget = spec.MaxPierce + ExtraPierce;
             bool anythingHit = false;
 
             for (int i = 0; i < count; i++)
@@ -712,13 +800,13 @@ namespace Gunspire
             p.Damage = spec.Damage * outgoing;
             p.DamageType = spec.DamageType;
             p.Origin = DamageOrigin.Gun;
-            p.Speed = spec.ProjectileSpeed;
+            p.Speed = spec.ProjectileSpeed * Stat(Attr.ProjectileSpeed);
             p.Gravity = spec.ProjectileGravity;
             p.Lifetime = spec.ProjectileLifetime;
             p.Knockback = spec.Knockback;
-            p.SplashRadius = spec.SplashRadius;
+            p.SplashRadius = spec.SplashRadius * Stat(Attr.SplashRadius);
             p.SplashDamage = spec.SplashDamage * outgoing;
-            p.Pierce = spec.MaxPierce;
+            p.Pierce = spec.MaxPierce + ExtraPierce;
             p.HomingEnabled = spec.ProjectileHoming;
 
             List<BulletInfusion> infusions = _roundInfusions ?? ActiveInfusions();
@@ -777,8 +865,8 @@ namespace Gunspire
         public void StartReload()
         {
             // A gun with no magazine to empty has nothing to reload, and must not pause to do it.
-            if (IsReloading || Definition == null || IsPhantom || InfiniteAmmo) return;
-            if (AmmoInMagazine >= Definition.MagazineSize) return;
+            if (IsReloading || Definition == null || IsPhantom || InfiniteAmmo || IsDrawing) return;
+            if (AmmoInMagazine >= MagazineSize) return;
             _reloadRoutine = StartCoroutine(ReloadRoutine());
         }
 
@@ -787,7 +875,7 @@ namespace Gunspire
             IsReloading = true;
             ReloadProgress = 0f;
 
-            float speed = OwnerSheet != null ? OwnerSheet.Get(Attr.ReloadSpeed) : 1f;
+            float speed = Stat(Attr.ReloadSpeed);
             float duration = Definition.ReloadTime / Mathf.Max(0.1f, speed);
             float elapsed = 0f;
 
@@ -798,7 +886,8 @@ namespace Gunspire
                 yield return null;
             }
 
-            AmmoInMagazine = Definition.MagazineSize;
+            AmmoInMagazine = MagazineSize;
+            RoundsSinceReload = 0;
             IsReloading = false;
             ReloadProgress = 0f;
             _reloadRoutine = null;
@@ -808,7 +897,8 @@ namespace Gunspire
         {
             StopAllRunningRoutines();
             IsReloading = false;
-            if (Definition != null) AmmoInMagazine = Definition.MagazineSize;
+            if (Definition != null) AmmoInMagazine = MagazineSize;
+            RoundsSinceReload = 0;
         }
     }
 }

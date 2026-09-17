@@ -22,7 +22,8 @@ namespace Gunspire
             if (spell == null) return CastOutcome.NoSpell;
             if (ctx == null) return CastOutcome.Ready;
 
-            if (spell.ManaCost > 0f && (ctx.Mana == null || !ctx.Mana.Has(spell.ManaCost)))
+            float mana = ManaCostOf(spell, ctx);
+            if (mana > 0f && (ctx.Mana == null || !ctx.Mana.Has(mana)))
                 return CastOutcome.NotEnoughMana;
 
             if (!spell.SpendsAllSouls && spell.SoulCost > 0)
@@ -37,7 +38,8 @@ namespace Gunspire
                 if (psi == null || psi.Charge + 0.0001f < spell.PsiCost) return CastOutcome.NotEnoughPsi;
             }
 
-            if (spell.HealthCost > 0f && !CanPayHealth(ctx.Health, spell.HealthCost))
+            float health = HealthCostOf(spell, ctx);
+            if (health > 0f && !CanPayHealth(ctx.Health, health))
                 return CastOutcome.NotEnoughHealth;
 
             return CastOutcome.Ready;
@@ -58,7 +60,8 @@ namespace Gunspire
         {
             if (spell == null || ctx == null) return;
 
-            if (spell.ManaCost > 0f && ctx.Mana != null) ctx.Mana.TrySpend(spell.ManaCost);
+            float mana = ManaCostOf(spell, ctx);
+            if (mana > 0f && ctx.Mana != null) ctx.Mana.TrySpend(mana);
 
             SoulsMastery souls = Souls(ctx);
             if (souls != null)
@@ -75,8 +78,20 @@ namespace Gunspire
                 if (psi != null) psi.TrySpend(spell.PsiCost);
             }
 
-            if (spell.HealthCost > 0f) PayHealth(ctx.Health, spell.HealthCost);
+            float health = HealthCostOf(spell, ctx);
+            if (health > 0f) PayHealth(ctx.Health, health);
         }
+
+        /// <summary>The mana a cast costs this caster, after their school cost modifiers.</summary>
+        public static float ManaCostOf(Spell spell, AbilityContext ctx)
+            => spell == null ? 0f : spell.ManaCost * SchoolCost(spell, ctx);
+
+        /// <summary>The health a cast costs this caster, after their school cost modifiers.</summary>
+        public static float HealthCostOf(Spell spell, AbilityContext ctx)
+            => spell == null ? 0f : spell.HealthCost * SchoolCost(spell, ctx);
+
+        private static float SchoolCost(Spell spell, AbilityContext ctx)
+            => ctx != null && ctx.Sheet != null ? ctx.Sheet.SchoolCostMultiplier(spell.School) : 1f;
 
         public static bool CanPayHealth(Health health, float amount)
             => amount <= 0f || (health != null && health.IsAlive && health.Current - amount >= HealthFloor);

@@ -31,6 +31,14 @@ namespace Gunspire
         public int Reactions { get; private set; }
         public int Detonations { get; private set; }
 
+        // ---- set by boons, cleared each run ----
+
+        /// <summary>A detonation leaves the elements that caused it in place. Fusion.</summary>
+        public bool KeepsElements;
+
+        /// <summary>A reaction went off: on whom, the incoming element, and whether it was a detonation.</summary>
+        public event System.Action<StatusController, StatusId, bool> Reacted;
+
         private readonly Dictionary<StatusController, float> _nextReaction = new Dictionary<StatusController, float>();
         private readonly List<IDamageable> _caught = new List<IDamageable>();
         private bool _bound;
@@ -86,6 +94,7 @@ namespace Gunspire
             _nextReaction.Clear();
             Reactions = 0;
             Detonations = 0;
+            KeepsElements = false;
         }
 
         private void OnApplied(StatusController target, StatusId id, GameObject source, Team team)
@@ -114,6 +123,7 @@ namespace Gunspire
 
             Vector3 at = target.transform.position + Vector3.up * 0.9f;
             target.Health.TakeDamage(Hit(Rank >= 2 ? StrongBurstDamage : BurstDamage, element, at));
+            Reacted?.Invoke(target, element, false);
         }
 
         private void Detonate(StatusController target, StatusId element)
@@ -123,14 +133,18 @@ namespace Gunspire
 
             Vector3 centre = target.transform.position + Vector3.up * 0.9f;
 
-            target.Remove(StatusId.Burn);
-            target.Remove(StatusId.Frost);
-            target.Remove(StatusId.Shock);
+            if (!KeepsElements)
+            {
+                target.Remove(StatusId.Burn);
+                target.Remove(StatusId.Frost);
+                target.Remove(StatusId.Shock);
+            }
 
             _caught.Clear();
             Combat.Explode(centre, DetonationRadius, Hit(DetonationDamage, element, centre), Layers.PlayerHitMask,
                 0.5f, 0f, (victim, info) => _caught.Add(victim));
 
+            Reacted?.Invoke(target, element, true);
             if (Rank < 4) return;
 
             // Applied once the blast has finished, since a reaction it sets off may explode too, and the

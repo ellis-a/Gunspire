@@ -254,6 +254,12 @@ namespace Gunspire
 
             float amount = Mathf.Max(0f, info.Amount);
 
+            // The player's own knockback, scaled by their sheet (a gun's by its class too). Listeners read it from the hit.
+            DamageInfo hit = info;
+            if (hit.Knockback.sqrMagnitude > 0f && CombatRules.PlayerHealth != null
+                && hit.Source != null && hit.Source == CombatRules.PlayerHealth.gameObject)
+                hit.Knockback *= KnockbackScale(in hit);
+
             // Boon rules on the player's side's hits, now that the target is known.
             if (amount > 0f && info.SourceTeam == Team.Player && team != Team.Player)
                 amount *= CombatRules.OutgoingMultiplier(in info, this);
@@ -316,12 +322,22 @@ namespace Gunspire
             // After the damage lands, so the hit that applied sleep does not also end it, and
             // never from a status's own tick, so a sleeping enemy on fire stays asleep.
             if (Status != null && info.Origin != DamageOrigin.StatusTick) Status.EndOnDamage(info.Statuses);
+            if (Status != null) Status.NotifyDamaged(in hit, amount);
 
-            Damaged?.Invoke(info, amount);
-            AnyDamaged?.Invoke(this, info, amount);
+            Damaged?.Invoke(hit, amount);
+            AnyDamaged?.Invoke(this, hit, amount);
             HealthChanged?.Invoke();
 
-            if (Current <= 0f) Die(info);
+            if (Current <= 0f) Die(hit);
+        }
+
+        private static float KnockbackScale(in DamageInfo hit)
+        {
+            if (hit.Weapon != null) return hit.Weapon.Stat(Attr.Knockback);
+
+            Health player = CombatRules.PlayerHealth;
+            CharacterSheet sheet = player._sheet != null ? player._sheet : player.GetComponent<CharacterSheet>();
+            return sheet != null ? sheet.Get(Attr.Knockback) : 1f;
         }
 
         /// <summary>

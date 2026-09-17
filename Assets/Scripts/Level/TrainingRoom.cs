@@ -240,6 +240,7 @@ namespace Gunspire
             if (dummy == null) return;
 
             dummy.transform.SetParent(transform, true);
+            dummy.PaysNoReward = true;
             dummy.transform.rotation = Facing(post.Home);
 
             post.Dummy = dummy;

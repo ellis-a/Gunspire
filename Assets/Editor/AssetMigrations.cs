@@ -81,7 +81,8 @@ namespace Gunspire.EditorTools
             new BlinkThroughWalls(),
             new SpiderGravityName(),
             new ShockStacks(),
-            new WeaponClassesFromTable()
+            new WeaponClassesFromTable(),
+            new WeaponDrawTimes()
         };
 
         [MenuItem("Gunspire/Migrations/1 - Report")]
@@ -151,6 +152,7 @@ namespace Gunspire.EditorTools
                 AssetDatabase.Refresh();
                 SpellLibrary.Reload();
                 BoonLibrary.Reload();
+                WeaponLibrary.Reload();
                 LoadoutLibrary.Reload();
                 EnemyLibrary.Reload();
             }

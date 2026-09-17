@@ -31,6 +31,9 @@ namespace Gunspire
         /// <summary>Stat modifiers this instance owns. Rebuilt whenever the stack count changes.</summary>
         public readonly List<StatModifier> Mods = new List<StatModifier>();
 
+        /// <summary>A running total a status keeps for itself: Hex's stored damage, Volatile's and Dread's buildup, Gilded's shillings.</summary>
+        public float Stored;
+
         public float Normalized => Duration <= 0f ? 0f : Mathf.Clamp01(Remaining / Duration);
 
         /// <summary>
@@ -38,6 +41,22 @@ namespace Gunspire
         /// other status, whose stacks share <see cref="Remaining"/>.
         /// </summary>
         public readonly List<StackBatch> Batches = new List<StackBatch>();
+    }
+
+    /// <summary>How <see cref="Attr.DebuffPotency"/> weakens a debuff landing on something. Resilience.</summary>
+    public enum DebuffResistance
+    {
+        /// <summary>It lasts less long.</summary>
+        Duration,
+
+        /// <summary>It deals less: its amount shrinks, its duration does not.</summary>
+        Magnitude,
+
+        /// <summary>Fewer stacks land.</summary>
+        Stacks,
+
+        /// <summary>Untouched.</summary>
+        None
     }
 
     /// <summary>Stacks that landed together, and fall off together when their own time runs out.</summary>
@@ -90,6 +109,12 @@ namespace Gunspire
         /// <summary>Duration multiplier on an elite. Control effects bend elites rather than exempting them.</summary>
         public virtual float EliteDurationScale => 1f;
 
+        /// <summary>How a lowered debuff potency on the target weakens this. Only read for debuffs.</summary>
+        public virtual DebuffResistance Resisted => DebuffResistance.Duration;
+
+        /// <summary>Whether this can land on the target at all. Charm refuses elites.</summary>
+        public virtual bool CanApplyTo(StatusController c) => true;
+
         /// <summary>
         /// This status as a caster with the given spell power applies it. Power strengthens a
         /// spell's statuses by the same multiplier it strengthens the spell's damage, applied to
@@ -121,5 +146,14 @@ namespace Gunspire
         public virtual void OnApplied(StatusController c, ActiveStatus s) { }
         public virtual void OnTick(StatusController c, ActiveStatus s) { }
         public virtual void OnRemoved(StatusController c, ActiveStatus s) { }
+
+        /// <summary>
+        /// A further application landed on a status already running, after the controller's own top-up.
+        /// <paramref name="previousMagnitude"/> is the magnitude before the top-up kept the larger of the two.
+        /// </summary>
+        public virtual void OnTopUp(StatusController c, ActiveStatus s, in StatusApplication app, float previousMagnitude) { }
+
+        /// <summary>The carrier took damage while this ran. Never called for the carrier's death blow's aftermath.</summary>
+        public virtual void OnOwnerDamaged(StatusController c, ActiveStatus s, in DamageInfo hit, float amount) { }
     }
 }

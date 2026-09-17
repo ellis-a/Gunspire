@@ -22,7 +22,18 @@ namespace Gunspire
         public override SpellSchool School => SpellSchool.Death;
 
         public int Souls { get; private set; }
-        public int Cap => CapFor(Rank);
+        public int Cap => Rank <= 0 ? 0 : CapFor(Rank) + Mathf.Max(0, CapBonus);
+
+        // ---- set by boons, cleared each run ----
+
+        /// <summary>Extra souls held while the mastery is active. Soul Jar.</summary>
+        public int CapBonus;
+
+        /// <summary>Souls spent, by any means.</summary>
+        public event System.Action<int> Spent;
+
+        /// <summary>A kill that bound nothing because the cap was full, with the enemy it came from. Overflowing Souls.</summary>
+        public event System.Action<Health> WastedAtCap;
 
         public static int CapFor(int rank) => rank <= 0 ? 0 : BaseCap + (rank - 1);
 
@@ -49,7 +60,8 @@ namespace Gunspire
         private void OnAnyDied(Health victim, DamageInfo info)
         {
             if (this == null) return;
-            if (RunState.CountsAsKill(victim)) AddSouls(1);
+            if (!RunState.CountsAsKill(victim)) return;
+            if (AddSouls(1) == 0 && Rank > 0) WastedAtCap?.Invoke(victim);
         }
 
         /// <summary>Binds up to the cap. Returns how many were bound; the rest are wasted.</summary>
@@ -72,6 +84,7 @@ namespace Gunspire
 
             Souls -= count;
             RaiseChanged();
+            Spent?.Invoke(count);
             return true;
         }
 
@@ -83,6 +96,7 @@ namespace Gunspire
 
             Souls = 0;
             RaiseChanged();
+            Spent?.Invoke(spent);
             return spent;
         }
 
@@ -99,6 +113,7 @@ namespace Gunspire
         public override void ResetForRun()
         {
             Souls = 0;
+            CapBonus = 0;
             RaiseChanged();
         }
 

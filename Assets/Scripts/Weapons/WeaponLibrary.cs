@@ -104,7 +104,11 @@ namespace Gunspire
         {
             List<WeaponDefinition> guns = BuiltInBodies();
             AttachAltFires(guns);
-            for (int i = 0; i < guns.Count; i++) guns[i].Class = ClassOf(guns[i].Id);
+            for (int i = 0; i < guns.Count; i++)
+            {
+                guns[i].Class = ClassOf(guns[i].Id);
+                guns[i].DrawTime = DrawTimeFor(guns[i].Class);
+            }
             return guns;
         }
 
@@ -132,6 +136,22 @@ namespace Gunspire
             { "knell", WeaponClass.Launcher },
             { "sunder_cannon", WeaponClass.Launcher }
         };
+
+        /// <summary>A class's draw time: light guns come out fast, heavy ones slow. Placeholders until play settles them.</summary>
+        public static float DrawTimeFor(WeaponClass weaponClass)
+        {
+            switch (weaponClass)
+            {
+                case WeaponClass.Handgun:  return 0.3f;
+                case WeaponClass.SMG:      return 0.4f;
+                case WeaponClass.Shotgun:  return 0.55f;
+                case WeaponClass.Rifle:    return 0.5f;
+                case WeaponClass.Sniper:   return 0.7f;
+                case WeaponClass.Heavy:    return 1f;
+                case WeaponClass.Launcher: return 0.8f;
+                default:                   return 0.4f;
+            }
+        }
 
         public static WeaponClass ClassOf(string id) =>
             id != null && Classes.TryGetValue(id, out WeaponClass found) ? found : WeaponClass.Unassigned;

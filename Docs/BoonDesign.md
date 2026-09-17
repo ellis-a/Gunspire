@@ -586,6 +586,8 @@ Numbers are placeholders that play will settle, so this list only tracks design 
 - **Bigger Bullets.** Guns only, or spell critical hits as well, despite the name?
 - **Mag Dimension's second level.** +100% of the base magazine, or 50% more again (2.25 times)?
 - **Familiarity's gate.** Only offered once you already have a familiar, since it does nothing otherwise?
+- **Low Interest.** The Blood Debt's interest is extra healing on repayment, so charging less of it would be a
+  downside. Should Low Interest raise the interest instead, or mean something else?
 - **Riding the Current's ceiling.** Does the speed keep climbing with debt, or stop at a cap?
 - **Overflow's timer.** Does spending psi again while it runs refresh the timer, or add to the bonus?
 - **Enfeeble, Hemorrhage, Blinding Light and Displacement.** What does each level raise? And blind on every

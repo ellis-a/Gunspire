@@ -87,7 +87,8 @@ namespace Gunspire
         public void Step(float dt, bool pressed)
         {
             Hook();
-            if (Cooldown > 0f) Cooldown = Mathf.Max(0f, Cooldown - dt);
+            if (Cooldown > 0f)
+                Cooldown = Mathf.Max(0f, Cooldown - dt * (Current != null && Sheet != null ? Sheet.SchoolCooldownMultiplier(Current.School) : 1f));
 
             SyncDashCharges();
             if (Current == null) return;

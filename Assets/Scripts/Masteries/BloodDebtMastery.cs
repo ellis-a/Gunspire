@@ -30,6 +30,17 @@ namespace Gunspire
 
         public float Debt { get; private set; }
 
+        // ---- set by boons, cleared each run ----
+
+        /// <summary>Multiplies the interest repayment earns. Low Interest.</summary>
+        public float InterestMultiplier = 1f;
+
+        /// <summary>Extra debt each kill repays. Deep Pockets.</summary>
+        public float RepayBonus;
+
+        /// <summary>A kill repaid debt: how much, and whether that cleared it. Foreclosure, Tidal Surge.</summary>
+        public event System.Action<float, bool> Repaid;
+
         private StatModifier _power;
         private bool _bound;
 
@@ -70,10 +81,10 @@ namespace Gunspire
         {
             if (Debt <= 0f || Rig == null || Rig.Health == null || !Rig.Health.IsAlive) return 0f;
 
-            float repaid = Mathf.Min(Debt, RepayPerKill);
+            float repaid = Mathf.Min(Debt, RepayPerKill + Mathf.Max(0f, RepayBonus));
             Debt -= repaid;
 
-            float owed = repaid * (Rank >= 2 ? 1f + Interest : 1f);
+            float owed = repaid * (Rank >= 2 ? 1f + Interest * Mathf.Max(0f, InterestMultiplier) : 1f);
             float missing = Rig.Health.Max - Rig.Health.Current;
             Rig.Health.Heal(owed);
 
@@ -82,6 +93,7 @@ namespace Gunspire
 
             RefreshPower();
             RaiseChanged();
+            Repaid?.Invoke(repaid, Debt <= 0f);
             return owed;
         }
 
@@ -90,6 +102,8 @@ namespace Gunspire
         public override void ResetForRun()
         {
             Debt = 0f;
+            InterestMultiplier = 1f;
+            RepayBonus = 0f;
             RefreshPower();
             RaiseChanged();
         }

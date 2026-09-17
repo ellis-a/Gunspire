@@ -75,6 +75,18 @@ namespace Gunspire
         /// </summary>
         public bool IsAlerted { get; private set; }
 
+        /// <summary>
+        /// Drops nothing when it dies: no shillings, no orbs, nothing Gilded carried. Split copies, summoned enemies and
+        /// training dummies, so none of them can be farmed.
+        /// </summary>
+        public bool PaysNoReward { get; set; }
+
+        /// <summary>Fighting for the player under a charm.</summary>
+        public bool IsCharmed => Status != null && Status.Has(StatusId.Charmed);
+
+        private bool _wasCharmed;
+        private TargetRegistry.Entry _charmEntry;
+
         // Resolved lazily as well as in Awake, so tooling can drive an enemy that never woke.
         public Health Health => _health != null ? _health : (_health = GetComponent<Health>());
         public CharacterSheet Sheet => _sheet != null ? _sheet : (_sheet = GetComponent<CharacterSheet>());
@@ -207,6 +219,7 @@ namespace Gunspire
             if (Health != null) Health.Damaged -= OnDamaged;
             Noise.Heard -= OnNoise;
             if (_lastSeen != null) Destroy(_lastSeen.gameObject);
+            if (_charmEntry != null) TargetRegistry.Unregister(_charmEntry);
         }
 
         private void OnDamaged(DamageInfo info, float amount)
@@ -305,6 +318,10 @@ namespace Gunspire
 
             if (status.IsSilenced || status.IsDisarmed) CancelAttacks(status);
 
+            bool charmed = status.Has(StatusId.Charmed);
+            if (charmed && !_wasCharmed) BeginCharm();
+            _wasCharmed = charmed;
+
             bool confused = status.IsConfused;
             if (confused != _wasConfused)
             {
@@ -323,6 +340,24 @@ namespace Gunspire
                 // Friend and foe just changed, so look again now rather than at the next retarget.
                 _retargetTimer = 0f;
             }
+        }
+
+        /// <summary>
+        /// Goes over to the player: onto their side, onto the list of things enemies fight, and out of the room's
+        /// count, so a room whose last enemy is charmed opens. It stays this way until the floor ends.
+        /// </summary>
+        private void BeginCharm()
+        {
+            CancelAttacks(null);
+            SetSide(Team.Player);
+            Alert();
+
+            if (_charmEntry == null) _charmEntry = TargetRegistry.RegisterMinion(transform, Health);
+
+            RoomRuntime room = RoomRuntime.Holding(this);
+            if (room != null) room.Release(this);
+
+            _retargetTimer = 0f;
         }
 
         /// <summary>Stops executing attacks: every one, or only those the given statuses forbid.</summary>
@@ -458,8 +493,21 @@ namespace Gunspire
         private void CollectCandidates(List<TargetRegistry.Entry> into)
         {
             TargetRegistry.Collect(into);
-            if (Status == null || !Status.IsConfused) return;
 
+            // A charmed enemy fights its own kind, and nothing on the player's side.
+            if (IsCharmed)
+            {
+                into.Clear();
+                AddEnemiesInSight(into);
+                return;
+            }
+
+            if (Status == null || !Status.IsConfused) return;
+            AddEnemiesInSight(into);
+        }
+
+        private void AddEnemiesInSight(List<TargetRegistry.Entry> into)
+        {
             Collider[] found = Physics.OverlapSphere(transform.position, SightRange, Layers.EnemyMask,
                 QueryTriggerInteraction.Ignore);
 

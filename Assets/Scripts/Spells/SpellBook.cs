@@ -450,12 +450,16 @@ namespace Gunspire
             for (int i = 0; i < SlotCount; i++)
             {
                 if (_sustains[i] != null && _sustains[i].IsActive) _sustains[i].Tick(dt);
-                else if (_cooldowns[i] > 0f) _cooldowns[i] = Mathf.Max(0f, _cooldowns[i] - step);
+                else if (_cooldowns[i] > 0f) _cooldowns[i] = Mathf.Max(0f, _cooldowns[i] - step * SchoolCooldown(_slots[i]));
 
                 if (_charging[i]) _chargeHeld[i] += dt;
                 TickStanceAura(i, dt);
             }
         }
+
+        /// <summary>The extra cooldown rate the caster's boons give this spell's school. One with no sheet.</summary>
+        private float SchoolCooldown(Spell spell)
+            => spell != null && Context != null && Context.Sheet != null ? Context.Sheet.SchoolCooldownMultiplier(spell.School) : 1f;
 
         public bool CanCast(int slot) => Evaluate(slot) == CastOutcome.Ready;
 

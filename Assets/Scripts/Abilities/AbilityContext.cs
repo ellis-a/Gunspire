@@ -117,6 +117,7 @@ namespace Gunspire
         {
             Spell = spell;
             Begin(spell.DamageType, spell.Type, spell.Tint, level, spell.LevelMultiplier(level), isSpell: true);
+            if (Sheet != null) Power *= Sheet.SchoolDamageMultiplier(spell.School);
 
             // Melee is a spell in every other respect, but its hits are reported as melee.
             if (spell.Slot == SpellSlot.Melee) DamageOrigin = DamageOrigin.Melee;

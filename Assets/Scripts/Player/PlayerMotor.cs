@@ -216,6 +216,9 @@ namespace Gunspire
             if (InputEnabled && !frozen && !Buoyant && Input.GetKey(KeyCode.Space))
                 _jumpBufferTimer = jumpBuffer;
 
+            // An air jump is a fresh press, not a held key, or holding Space through a jump would spend it at once.
+            bool airJumpPressed = InputEnabled && !frozen && !Buoyant && Input.GetKeyDown(KeyCode.Space);
+
             RollTowardsUpAxis(dt);
 
             // isGrounded reports the result of the last Move, so it is already this frame's
@@ -233,6 +236,7 @@ namespace Gunspire
             if (IsGrounded)
             {
                 _coyoteTimer = coyoteTime;
+                AirJumpsUsed = 0;
                 float vertical = Vector3.Dot(_velocity, _upAxis);
                 if (vertical < 0f && !Buoyant) _velocity += _upAxis * (-2f - vertical);   // pinned to the surface
             }
@@ -269,6 +273,7 @@ namespace Gunspire
             else UpdateNormalMovement(_wishDirection, dt, skipFriction: hopping);
 
             if (hopping) DoJump();
+            else if (airJumpPressed) TryAirJump();
 
             // OnControllerColliderHit fires synchronously inside Move, but reorienting the
             // transform from inside that callback is asking for trouble - the controller has
@@ -742,6 +747,26 @@ namespace Gunspire
         /// running impulse sequence scales it further while its step lasts.
         /// </summary>
         private float Gravity => gravity * (_sheet != null ? _sheet.Get(Attr.GravityScale) : 1f) * _sequenceGravityScale;
+
+        /// <summary>Mid-air jumps spent since the player last stood on something.</summary>
+        public int AirJumpsUsed { get; private set; }
+
+        /// <summary>Mid-air jumps the sheet allows. Acrophobia.</summary>
+        public int AirJumps => _sheet != null ? _sheet.GetInt(Attr.JumpCount) : 0;
+
+        /// <summary>
+        /// A jump in mid-air, if one is left: not on the ground or within coyote time (that is an ordinary jump),
+        /// not dashing, zipping or swimming. Public so tooling can drive it.
+        /// </summary>
+        public bool TryAirJump()
+        {
+            if (IsGrounded || _coyoteTimer > 0f || Buoyant || _dashTimer > 0f) return false;
+            if (ZipState == WallZipState.Zipping || AirJumpsUsed >= AirJumps) return false;
+
+            AirJumpsUsed++;
+            DoJump();
+            return true;
+        }
 
         private void DoJump()
         {

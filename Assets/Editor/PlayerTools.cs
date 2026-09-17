@@ -1244,14 +1244,14 @@ namespace Gunspire.EditorTools
             if (awake != null) awake.Invoke(component, null);
         }
 
-        private static void SetMana(PlayerRig rig, float value)
+        internal static void SetMana(PlayerRig rig, float value)
         {
             float delta = rig.Mana.Current - value;
             if (delta > 0f) rig.Mana.TrySpend(delta);
             else if (delta < 0f) rig.Mana.Add(-delta);
         }
 
-        private static Spell TestSpell(string id, SpellSchool school) => new Spell
+        internal static Spell TestSpell(string id, SpellSchool school) => new Spell
         {
             Id = id,
             DisplayName = id,
@@ -1280,7 +1280,7 @@ namespace Gunspire.EditorTools
             return victim;
         }
 
-        private static Health Subject(string name, Team team, Vector3 position, int layer = -1, bool collider = false)
+        internal static Health Subject(string name, Team team, Vector3 position, int layer = -1, bool collider = false)
         {
             var go = new GameObject(name);
             go.transform.position = position;

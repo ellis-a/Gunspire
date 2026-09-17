@@ -31,5 +31,33 @@ namespace Gunspire.EditorTools
             }
         }
     }
+
+    /// <summary>
+    /// Guns gained a draw time. Existing assets deserialise it as unset (negative), so each takes its
+    /// class default from <see cref="WeaponLibrary.DrawTimeFor"/>. Keyed to unset, so a time tuned by hand
+    /// is left alone. Runs after the class migration, since the default depends on the class.
+    /// </summary>
+    public class WeaponDrawTimes : ObjectMigration
+    {
+        public override string Name => "Guns take a draw time";
+
+        public override void Migrate(bool apply, List<string> changes)
+        {
+            foreach (WeaponAsset asset in AssetsOf<WeaponAsset>.All())
+            {
+                WeaponDefinition def = asset.Definition;
+                if (def == null || def.DrawTime >= 0f) continue;
+
+                WeaponClass cls = def.Class != WeaponClass.Unassigned ? def.Class : WeaponLibrary.ClassOf(def.Id);
+                float seconds = WeaponLibrary.DrawTimeFor(cls);
+
+                changes.Add(def.Id + ": draw time " + seconds + "s");
+                if (!apply) continue;
+
+                def.DrawTime = seconds;
+                EditorUtility.SetDirty(asset);
+            }
+        }
+    }
 }
 #endif

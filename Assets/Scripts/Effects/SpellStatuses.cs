@@ -49,6 +49,7 @@ namespace Gunspire
     {
         public override StatusId Id => StatusId.Torment;
         public override string DisplayName => "Tormented";
+        public override DebuffResistance Resisted => DebuffResistance.Magnitude;
         public override string Description => "Takes psychic damage over time.";
         public override Color Tint => new Color(0.8f, 0.35f, 0.6f);
         public override int MaxStacks => 3;

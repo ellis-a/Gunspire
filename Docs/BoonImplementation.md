@@ -2,7 +2,8 @@
 
 How to build the roster in `BoonDesign.md` (229 boons) and the shillings currency on top of the code as it
 stands. The shop itself is out of scope; only what the shop boons need to store is covered. Built so far:
-retiring the old roster, and the framework (step 1 of the build order; each built section says so).
+retiring the old roster, the framework and the supporting systems (steps 1 and 2 of the build order; each
+built section says so).
 
 ---
 
@@ -284,7 +285,7 @@ public enum ShillingSource { Kill, Elite, Boss, Prop, Pickpocket, Gilded, Intere
 
 ### Verifying
 
-A `Verify Shillings` check in Verify All: a kill spawns coins, picking one up credits the wallet, Pocket Change
+Part of Verify Boon Systems: a kill spawns coins, picking one up credits the wallet, Pocket Change
 multiplies kill income and nothing else, Gilded caps, coins left on the floor are banked on exit, and a new run
 starts at zero.
 
@@ -397,8 +398,79 @@ Displacement, Enfeeble, Hemorrhage, Blinding Light.
 | Hex | Stores a share of damage taken in `Health.AnyDamaged`; pays out as psychic on expiry; lost on death. |
 | Volatile | Buildup; at full, `Combat.Explode` on the enemy's team with no volatile in the blast; resets. |
 | Gilded | Accumulates shillings on the enemy up to a cap; paid on death. Never wears off. |
-| Dread | Buildup that drains; at full applies Fear (a planned status that needs its behaviour too), slower on elites. |
-| Fear, Blind | Already named as planned; the Abyssal spells need them as well, so this is shared work. |
+| Dread | Buildup that drains; at full applies Fear, slower on elites. |
+
+All five are built. Charm lasts the floor, registers the enemy as something enemies fight, points it at its own
+kind and releases it from the room. Hex, Volatile and Dread add up their applications; Gilded caps at 10
+shillings and drops nothing from an enemy that pays no reward.
+
+---
+
+## Supporting systems (phase 3)
+
+Built, and checked by Verify Boon Systems (which replaces the planned Verify Shillings).
+
+**Character sheet.** The fourteen new attributes are appended to `Attr` and read where they apply:
+
+- Guns read theirs through `Weapon.Stat`, which adds the class channel. That covers magazine size (rounded
+  down, holstered guns too), pierce, projectile speed, splash radius, spin-up and draw speed. Reload,
+  spread, recoil and attack speed now go through the class channel as well.
+- Scope zoom pushes the focus field of view past the gun's own and makes it settle faster.
+- Knockback scales every hit the player's own body deals, in `Health`, using the gun's class value when a gun
+  dealt it. Minions keep their own knockback.
+- Jump count gives air jumps on a fresh press of Space, reset on landing.
+- Orb potency, pickup radius and orb drop chance all work. Enemies had no orb drops at all before this;
+  the drop chance starts at zero, so only boons give them.
+- Debuff potency weakens debuffs landing on anything, in the way each status declares
+  (`StatusDefinition.Resisted`): burn, bleed, torment, hex, volatile and dread lose amount; frost and shock
+  lose stacks; poison, charm and gilded are untouched; everything else loses duration. Poison is untouched
+  because it deals no damage, and the design keeps its sway.
+- Shilling gain scales kill income only.
+
+**Channels.** The class channel (`AddClassModifier`, `GetFor`) adds its flat and percent values into the same
+sums as the global ones, so a class bonus stacks additively with a global bonus. The school channels scale
+spell power, mana and health costs, and cooldowns. The cooldowns include the movement and melee slots, not
+just the cast slots. `SetStatBonus` gives stat points that can be replaced or taken back.
+
+**Draw time.** Built as planned in Weapons above. Unset draw times read as the class default, and the
+`WeaponDrawTimes` migration wrote the default into all 17 assets. Guns also count `RoundsSinceReload` and
+`RoundsSinceDraw` for the boons that need them.
+
+**Shillings.** Built as planned in Shillings below, with these details:
+
+- A drop is split into at most five coins.
+- Coins use world time, so they stop when time does.
+- Training dummies pay nothing.
+- `RunState` also holds `ShopPriceScale` and `ShopExtraItems` for Haggler and Check the Storage.
+
+**Ally boosts.** `AllyBoosts` on the run holds health, damage and speed bonuses for everything summoned, plus
+companion-only ones. They apply at summon time, to minions and the Bestial companion (through their sheets)
+and to familiars (through their definitions).
+
+**Mastery hooks.** Each mastery holds the settings its boons change, and every one is cleared in
+`ResetForRun`. Each also raises the events those boons listen for:
+
+| Mastery | Settings | Events |
+|---|---|---|
+| Souls | `CapBonus` | `Spent`, `WastedAtCap` |
+| Blood Debt | `InterestMultiplier`, `RepayBonus` | `Repaid(amount, cleared)` |
+| Psi Blades | `ChargeMultiplier`, `MeleeBonusExtra` | `Spent`, `EmpoweredMeleeLanded` |
+| Arcane Warp | `RateMultiplier`, `ManaPerHitBonus`, `LingerSeconds` | `BonusEnded` |
+| Conflux | `KeepsElements` | `Reacted(target, element, detonated)` |
+| Divine Knowledge | `RangeMultiplier` | |
+| Beast | | `CompanionDied`, `IsCompanionSource` |
+
+Two of these need a design decision:
+
+- **Low Interest.** The Blood Debt's interest is a bonus (repayment heals extra), so "charges less interest"
+  would make the boon a downside. `InterestMultiplier` is there either way; the doc should say what Low
+  Interest means.
+- **Void Pocket.** The linger holds the strongest bonus since the pool was last full, not the small bonus
+  left just before it refilled.
+
+**Statuses.** Charmed, Hex, Volatile, Gilded and Dread are built (see New statuses below). Fear and Blind
+already had their behaviour. Statuses gained hooks for a top-up (`OnTopUp`), damage taken (`OnOwnerDamaged`),
+refusal (`CanApplyTo`) and a running total (`ActiveStatus.Stored`).
 
 ---
 
@@ -426,13 +498,13 @@ Done, along with removing the alt fire lock.
 1. **Framework.** Done: boon fields, gates, behaviours, the damage passes with target-aware crits, floor
    events, family-first offers with pick-N and rerolls, and weapon classes. Checked by Verify Boon Framework.
    Retiring the old roster and the alt fire lock is also done.
-2. **Shillings and weapons.** `Wallet`, drops and pickups, HUD; draw time and its migration; new attributes and
-   typed channels.
+2. **Supporting systems.** Done: shillings, draw time, the new attributes and channels, ally boosts, the
+   mastery hooks and the new statuses. Checked by Verify Boon Systems.
 3. **Data boons.** Stat, template, class and multiplier boons: about 110 boons with almost no per-boon code.
 4. **Behaviours.** Damage rules first (one pattern, many boons), then incoming and lethal, then listeners, then
    gun behaviours, then enchantments.
-5. **Mastery hooks and school Rares.** One school at a time.
-6. **Systems and statuses.** Familiars, Charmed and the new statuses, Third Hand, Afterimage, Beetle Swarm.
+5. **School Rares.** One school at a time, on the mastery hooks already built.
+6. **Systems.** Familiars, Third Hand, Afterimage, Beetle Swarm.
 
 Authoring follows the spells: built-ins in code, then `Create Boon Assets` generates the assets, and icons are
 assigned on the assets afterwards.
@@ -449,7 +521,7 @@ assigned on the assets afterwards.
 - Lethal order: Soul Shield fires before Phylactery.
 - Offers never contain a boon whose gate fails, a capped boon at its cap, or a second familiar.
 
-Plus `Verify Shillings` above, and a count check that the roster matches the design doc's rarity targets
+Plus a count check that the roster matches the design doc's rarity targets
 (101, 60, 53, 15).
 
 ---

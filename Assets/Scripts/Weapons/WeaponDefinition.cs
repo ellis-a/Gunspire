@@ -37,6 +37,13 @@ namespace Gunspire
         public int BurstCount = 1;
         public float BurstInterval = 0.06f;
 
+        [Header("Draw")]
+        /// <summary>
+        /// Seconds from swapping to this gun until it can fire, alt fire or reload. Negative means unset,
+        /// which reads as the class default in <see cref="WeaponLibrary.DrawTimeFor"/>.
+        /// </summary>
+        public float DrawTime = -1f;
+
         [Header("Wind-up")]
         /// <summary>
         /// Seconds of held trigger before the first shot. Zero fires immediately, which is
@@ -97,6 +104,9 @@ namespace Gunspire
         public AltFireProfile AltFire = new AltFireProfile();
 
         public float SecondsBetweenShots => 60f / Mathf.Max(1f, RoundsPerMinute);
+
+        /// <summary>The draw time to use: the gun's own, or its class default while unset.</summary>
+        public float DrawSeconds => DrawTime >= 0f ? DrawTime : WeaponLibrary.DrawTimeFor(Class);
 
         public WeaponDefinition Clone()
         {

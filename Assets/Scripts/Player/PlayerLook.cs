@@ -20,6 +20,12 @@ namespace Gunspire
         /// camera stays unaware of guns.
         /// </summary>
         public float ZoomFov { get; set; }
+
+        /// <summary>How much faster than usual the view settles into a zoom. Scope zoom raises it.</summary>
+        public float ZoomRateScale { get; set; } = 1f;
+
+        /// <summary>The unzoomed field of view.</summary>
+        public float BaseFov => baseFov;
         [SerializeField] private float fovLerp = 6f;
 
         private Transform _cameraPivot;
@@ -112,7 +118,7 @@ namespace Gunspire
                 // A zoomed view ignores the speed stretch entirely. Sprinting while scoped
                 // should not quietly widen the shot you are lining up.
                 target = ZoomFov;
-                rate = zoomLerp;
+                rate = zoomLerp * Mathf.Max(0.1f, ZoomRateScale);
             }
             else
             {

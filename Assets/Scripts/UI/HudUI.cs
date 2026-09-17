@@ -152,6 +152,11 @@ namespace Gunspire
             UIStyles.Text(new Rect(x + 8f, y + 25f, width, 14f),
                 Mathf.CeilToInt(mana.Current) + " mana", UIStyles.Small, Color.white);
 
+            RunState run = _director.Run;
+            if (run != null && !_director.InTraining)
+                UIStyles.Text(new Rect(x, y + 25f, width, 14f), run.Wallet.Balance + " shillings",
+                    UIStyles.Right, new Color(1f, 0.82f, 0.3f));
+
             DrawMovementSlot(player, x, y + 44f);
             DrawMeleeSlot(player, x, y + 74f);
         }
@@ -296,10 +301,16 @@ namespace Gunspire
             UIStyles.Icon(new Rect(x + width - 200f, y + 24f, 44f, 44f),
                 weapon.Definition.Icon, weapon.Definition.Tint, weapon.Definition.DisplayName);
 
-            string ammo = weapon.AmmoInMagazine + " / " + weapon.Definition.MagazineSize;
+            string ammo = weapon.AmmoInMagazine + " / " + weapon.MagazineSize;
             UIStyles.Text(new Rect(x, y + 24f, width, 30f), ammo, UIStyles.Right, UIStyles.AmmoColor);
 
-            if (weapon.IsReloading)
+            if (weapon.IsDrawing)
+            {
+                var bar = new Rect(x + width - 150f, y + 60f, 150f, 8f);
+                UIStyles.Bar(bar, weapon.DrawProgress, UIStyles.Ink, new Color(0.12f, 0.12f, 0.14f, 0.8f));
+                UIStyles.Text(new Rect(x, y + 70f, width, 16f), "drawing", UIStyles.Right, UIStyles.Muted);
+            }
+            else if (weapon.IsReloading)
             {
                 var bar = new Rect(x + width - 150f, y + 60f, 150f, 8f);
                 UIStyles.Bar(bar, weapon.ReloadProgress, UIStyles.AmmoColor, new Color(0.2f, 0.16f, 0.05f, 0.8f));
@@ -345,7 +356,7 @@ namespace Gunspire
             }
 
             string label = "[" + Holster.SwapKey + "/wheel]  " + stowed.DisplayName
-                           + "   " + holster.AmmoIn(other) + " / " + stowed.MagazineSize;
+                           + "   " + holster.AmmoIn(other) + " / " + holster.MagazineIn(other);
 
             UIStyles.Text(new Rect(x, y, width, 18f), label, UIStyles.Right, UIStyles.Muted);
         }

@@ -68,6 +68,9 @@ namespace Gunspire
             EnemyController copy = Spawn(original.Definition, position, original.Floor, elite);
             if (copy == null) return null;
 
+            // A copy pays nothing when it dies, or splitting an enemy would be a way to farm it.
+            copy.PaysNoReward = true;
+
             // Spawn lifts a flier to its hover height; a copy starts exactly where it is asked to.
             copy.transform.position = position;
             copy.DisplayName = original.DisplayName;

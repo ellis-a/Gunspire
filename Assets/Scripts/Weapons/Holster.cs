@@ -47,6 +47,13 @@ namespace Gunspire
             return _ammo[index];
         }
 
+        /// <summary>A full magazine of a gun in this holster's owner's hands.</summary>
+        public int FullMagazine(WeaponDefinition definition)
+            => definition == null ? 0 : Weapon != null ? Weapon.MagazineFor(definition) : definition.MagazineSize;
+
+        /// <summary>A full magazine of the gun in a slot.</summary>
+        public int MagazineIn(int index) => FullMagazine(GetSlot(index));
+
         public int FilledSlots
         {
             get
@@ -89,7 +96,7 @@ namespace Gunspire
             if (index < 0 || index >= SlotCount) return;
 
             _slots[index] = definition;
-            _ammo[index] = ammo < 0 && definition != null ? definition.MagazineSize : Mathf.Max(0, ammo);
+            _ammo[index] = ammo < 0 && definition != null ? FullMagazine(definition) : Mathf.Max(0, ammo);
 
             if (index == ActiveIndex) Draw(index);
             Changed?.Invoke();
@@ -110,11 +117,12 @@ namespace Gunspire
                 if (_slots[i] != null) continue;
 
                 _slots[i] = incoming;
-                _ammo[i] = incomingAmmo < 0 ? incoming.MagazineSize : Mathf.Max(0, incomingAmmo);
+                _ammo[i] = incomingAmmo < 0 ? FullMagazine(incoming) : Mathf.Max(0, incomingAmmo);
 
                 // Drawn on pickup, so a new gun can be tried out on the spot rather than
                 // discovered later in a fight.
                 SetActive(i);
+                if (Weapon != null) Weapon.BeginDraw();
                 Changed?.Invoke();
                 return null;
             }
@@ -123,8 +131,9 @@ namespace Gunspire
             if (outgoing != null) outgoingAmmo = AmmoIn(ActiveIndex);
 
             _slots[ActiveIndex] = incoming;
-            _ammo[ActiveIndex] = incomingAmmo < 0 ? incoming.MagazineSize : Mathf.Max(0, incomingAmmo);
+            _ammo[ActiveIndex] = incomingAmmo < 0 ? FullMagazine(incoming) : Mathf.Max(0, incomingAmmo);
             Draw(ActiveIndex);
+            if (Weapon != null) Weapon.BeginDraw();
 
             Changed?.Invoke();
             return outgoing;
@@ -136,6 +145,7 @@ namespace Gunspire
         {
             if (!CanSwap) return;
             SetActive(OtherIndex);
+            if (Weapon != null) Weapon.BeginDraw();
         }
 
         public void SetActive(int index)
@@ -174,7 +184,7 @@ namespace Gunspire
             if (index < 0 || index >= SlotCount || _slots[index] == null) return;
 
             if (index == ActiveIndex && Weapon != null && Weapon.Definition != null) Weapon.SetAmmo(rounds);
-            else _ammo[index] = Mathf.Clamp(rounds, 0, _slots[index].MagazineSize);
+            else _ammo[index] = Mathf.Clamp(rounds, 0, FullMagazine(_slots[index]));
 
             Changed?.Invoke();
         }
@@ -185,7 +195,7 @@ namespace Gunspire
         public void RefillAll()
         {
             for (int i = 0; i < SlotCount; i++)
-                if (_slots[i] != null) _ammo[i] = _slots[i].MagazineSize;
+                if (_slots[i] != null) _ammo[i] = FullMagazine(_slots[i]);
 
             if (Weapon != null) Weapon.RefillMagazine();
             Changed?.Invoke();

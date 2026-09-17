@@ -42,6 +42,18 @@ namespace Gunspire
 
         public IReadOnlyList<BoonBehaviour> Behaviours => _liveBehaviours;
 
+        /// <summary>The run's shillings. A new run starts with an empty one.</summary>
+        public readonly Wallet Wallet = new Wallet();
+
+        /// <summary>What boons add to everything summoned to fight for the player.</summary>
+        public readonly AllyBoosts Allies = new AllyBoosts();
+
+        /// <summary>Shop prices are multiplied by this. Haggler lowers it; read by the shop.</summary>
+        public float ShopPriceScale = 1f;
+
+        /// <summary>Items added to every shop. Check the Storage; read by the shop.</summary>
+        public int ShopExtraItems;
+
         // ---- offers, changed by boons ----
 
         /// <summary>Cards added to every boon offer.</summary>
@@ -127,8 +139,10 @@ namespace Gunspire
             if (player.SpellContext != null) player.SpellContext.ExtraStatuses = SpellStatuses;
 
             CombatRules.PlayerHealth = player.Health;
+            AllyBoosts.Active = Allies;
 
             Health.AnyDied += OnAnyDied;
+            KillRewards.Bind(this);
             LevelEvents.FloorEntered += OnFloorEntered;
             LevelEvents.FloorLeaving += OnFloorLeaving;
             LevelEvents.FloorCleared += OnFloorCleared;
@@ -142,6 +156,7 @@ namespace Gunspire
             _bound = false;
 
             Health.AnyDied -= OnAnyDied;
+            KillRewards.Unbind(this);
             LevelEvents.FloorEntered -= OnFloorEntered;
             LevelEvents.FloorLeaving -= OnFloorLeaving;
             LevelEvents.FloorCleared -= OnFloorCleared;
@@ -152,6 +167,7 @@ namespace Gunspire
             _behaviours.Clear();
 
             if (Player != null && CombatRules.PlayerHealth == Player.Health) CombatRules.PlayerHealth = null;
+            if (AllyBoosts.Active == Allies) AllyBoosts.Active = null;
         }
 
         /// <summary>Starts a boon's behaviour on its first pick, and passes on the level after that.</summary>
@@ -199,6 +215,8 @@ namespace Gunspire
 
         private void OnFloorCompleted(RoomRuntime room)
         {
+            // Before the behaviours and before the room goes, so nothing on the floor is lost.
+            ShillingPickup.BankAll(this);
             for (int i = 0; i < _liveBehaviours.Count; i++) _liveBehaviours[i].OnFloorCompleted(room);
         }
 
@@ -294,13 +312,23 @@ namespace Gunspire
             if (entry != null) entry.Consumed = true;
         }
 
+        /// <summary>
+        /// Adds shillings to the wallet. Kill income is scaled by the player's shilling gain; nothing else is, so a
+        /// bonus cannot compound with Gilded or interest. Returns the whole shillings added.
+        /// </summary>
+        public int EarnShillings(float amount, ShillingSource source)
+        {
+            float gain = Wallet.IsKill(source) && Sheet != null ? Sheet.Get(Attr.ShillingGain) : 1f;
+            return Wallet.Earn(amount * gain, source);
+        }
+
         /// <summary>The Luck stat, used for every rarity roll in the run.</summary>
         public float Luck => Sheet != null ? Sheet.GetStat(StatType.Luck) : 0f;
 
         public string Summary()
         {
-            return string.Format("Floor {0}  -  {1} rooms cleared  -  {2} kills  -  {3:0}s",
-                Floor, RoomsCleared, Kills, ElapsedSeconds);
+            return string.Format("Floor {0}  -  {1} rooms cleared  -  {2} kills  -  {3} shillings  -  {4:0}s",
+                Floor, RoomsCleared, Kills, Wallet.TotalEarned, ElapsedSeconds);
         }
     }
 }

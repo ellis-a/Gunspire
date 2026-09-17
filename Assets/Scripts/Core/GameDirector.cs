@@ -217,6 +217,7 @@ namespace Gunspire
             // into the next room: shots in flight, dropped orbs, telegraphs and fading debris.
             DestroyAllOfType<Projectile>();
             DestroyAllOfType<OrbPickup>();
+            DestroyAllOfType<ShillingPickup>();
             DestroyAllOfType<EnemyController>();
 
             // Familiars are not parented to the room, so they would otherwise survive a

@@ -17,6 +17,14 @@ namespace Gunspire
     public class DivineKnowledgeMastery : Mastery
     {
         public const float Range = 45f;
+
+        /// <summary>Multiplies how far the readouts reach. Set by boons, cleared each run. Farsight.</summary>
+        public float RangeMultiplier = 1f;
+
+        /// <summary>How far the readouts reach now.</summary>
+        public float CurrentRange => Range * Mathf.Max(0f, RangeMultiplier);
+
+        public override void ResetForRun() => RangeMultiplier = 1f;
         private const float EnemyRefreshSeconds = 0.5f;
 
         public override SpellSchool School => SpellSchool.Divination;
@@ -67,7 +75,7 @@ namespace Gunspire
 
                 Health health = enemy.Health;
                 if (health == null || !health.IsAlive) continue;
-                if ((enemy.transform.position - around).sqrMagnitude > Range * Range) continue;
+                if ((enemy.transform.position - around).sqrMagnitude > CurrentRange * CurrentRange) continue;
                 if (eye.HasValue && !InSight(eye.Value, enemy)) continue;
 
                 into.Add(new Readout

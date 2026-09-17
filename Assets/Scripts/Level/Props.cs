@@ -76,7 +76,7 @@ namespace Gunspire
 
             var collider = go.GetComponent<SphereCollider>();
             collider.isTrigger = true;
-            collider.radius = 1.4f;
+            collider.radius = BaseRadius;
 
             var orb = go.AddComponent<OrbPickup>();
             orb.IsMana = mana;
@@ -86,27 +86,50 @@ namespace Gunspire
             return orb;
         }
 
+        /// <summary>How far the trigger reaches with no pickup radius bonus.</summary>
+        public const float BaseRadius = 1.4f;
+
         private void Update()
         {
             _phase += Time.deltaTime;
             transform.position = _home + Vector3.up * (Mathf.Sin(_phase * 2.2f) * 0.16f);
             transform.Rotate(Vector3.up, 90f * Time.deltaTime, Space.World);
+
+            // A pickup radius above normal reaches past the trigger.
+            PlayerRig rig = PlayerRig.Instance;
+            if (rig == null || rig.Sheet == null) return;
+
+            float reach = BaseRadius * rig.Sheet.Get(Attr.PickupRadius);
+            if (reach > BaseRadius && (rig.transform.position + Vector3.up - transform.position).sqrMagnitude <= reach * reach)
+                TryCollect(rig);
         }
 
         private void OnTriggerEnter(Collider other)
         {
             PlayerRig rig = other.GetComponentInParent<PlayerRig>();
-            if (rig == null) return;
+            if (rig != null) TryCollect(rig);
+        }
 
-            if (IsMana) rig.Mana.Add(Amount);
-            else if (rig.Health.Heal(Amount) <= 0f && rig.Health.Fraction >= 1f) return;
+        /// <summary>
+        /// Restores what the orb holds, scaled by the player's orb potency, and removes it. A health orb is left
+        /// for later while health is full. Public so tooling can collect without physics.
+        /// </summary>
+        public bool TryCollect(PlayerRig rig)
+        {
+            if (rig == null || this == null) return false;
+
+            float amount = Amount * (rig.Sheet != null ? rig.Sheet.Get(Attr.OrbPotency) : 1f);
+            if (IsMana) rig.Mana.Add(amount);
+            else if (rig.Health.Heal(amount) <= 0f && rig.Health.Fraction >= 1f) return false;
 
             var color = IsMana ? new Color(0.45f, 0.6f, 1f) : new Color(1f, 0.35f, 0.4f);
             GameObject pop = Build.Sphere(null, "OrbPop", transform.position, 0.8f,
                 MaterialLibrary.Transparent(new Color(color.r, color.g, color.b, 0.5f)), collider: false);
             FadeAndDie.Attach(pop, 0.2f, new Color(color.r, color.g, color.b, 0.5f), Vector3.one * 3f);
 
-            Destroy(gameObject);
+            if (Application.isPlaying) Destroy(gameObject);
+            else DestroyImmediate(gameObject);
+            return true;
         }
     }
 

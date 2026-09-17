@@ -29,6 +29,7 @@ MonoBehaviour:
     ReloadTime: 3
     BurstCount: 1
     BurstInterval: 0.06
+    DrawTime: 1
     SpinUpSeconds: 0.7
     SpinDownMultiplier: 1.6
     SpreadDegrees: 5.5

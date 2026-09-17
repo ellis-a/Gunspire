@@ -118,7 +118,8 @@ namespace Gunspire
 
         private void Update()
         {
-            if (_bashTimer > 0f) _bashTimer -= Time.deltaTime;
+            if (_bashTimer > 0f)
+                _bashTimer -= Time.deltaTime * (MeleeSpell != null && Sheet != null ? Sheet.SchoolCooldownMultiplier(MeleeSpell.School) : 1f);
 
             // Shock deafens the player as well as the enemies, so the one place that ticks every
             // frame on the player sets it. Left at one whenever nothing is shocking them.
@@ -239,7 +240,17 @@ namespace Gunspire
             if (Look == null) return;
 
             AltFireProfile alt = Weapon.Alt;
-            Look.ZoomFov = Weapon.IsFocusing && alt != null ? alt.FocusFov : 0f;
+            if (!Weapon.IsFocusing || alt == null)
+            {
+                Look.ZoomFov = 0f;
+                Look.ZoomRateScale = 1f;
+                return;
+            }
+
+            // Scope zoom pushes past the gun's own focus and settles faster.
+            float zoom = Weapon.Stat(Attr.ScopeZoom);
+            Look.ZoomFov = Mathf.Clamp(Look.BaseFov - (Look.BaseFov - alt.FocusFov) * zoom, 10f, Look.BaseFov);
+            Look.ZoomRateScale = zoom;
         }
 
         private static void Notify(string message)

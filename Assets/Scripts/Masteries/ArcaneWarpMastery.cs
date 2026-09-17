@@ -28,14 +28,36 @@ namespace Gunspire
         public static float ManaPerRound(WeaponDefinition def)
             => def == null ? 0f : ManaPerSecondOfFire * def.SecondsBetweenShots / Mathf.Max(1, def.RoundsPerTrigger);
 
-        public float Bonus
+        // ---- set by boons, cleared each run ----
+
+        /// <summary>Multiplies the bonus per missing mana point. Wide Void.</summary>
+        public float RateMultiplier = 1f;
+
+        /// <summary>Extra mana each landed round restores. Aether Tap.</summary>
+        public float ManaPerHitBonus;
+
+        /// <summary>How long the last bonus lingers after the pool refills. Void Pocket.</summary>
+        public float LingerSeconds;
+
+        /// <summary>The bonus fell to nothing: the pool refilled and any linger ran out.</summary>
+        public event System.Action BonusEnded;
+
+        /// <summary>The bonus from the pool as it is right now, before any linger.</summary>
+        public float LiveBonus
         {
             get
             {
                 Mana mana = Rig != null ? Rig.Mana : null;
-                return mana == null ? 0f : Mathf.Max(0f, mana.Max - mana.Current) * RateFor(Rank);
+                return mana == null ? 0f : Mathf.Max(0f, mana.Max - mana.Current) * RateFor(Rank) * Mathf.Max(0f, RateMultiplier);
             }
         }
+
+        /// <summary>The bonus in effect: the live one, or the last one while it lingers after a refill.</summary>
+        public float Bonus => LiveBonus > 0f ? LiveBonus : (_lingerLeft > 0f ? _lastBonus : 0f);
+
+        private float _lastBonus;
+        private float _lingerLeft;
+        private bool _hadBonus;
 
         private StatModifier _attackSpeed;
         private StatModifier _reloadSpeed;
@@ -73,9 +95,38 @@ namespace Gunspire
         {
             if (this == null || Rig == null) return;
 
+            // A linger holds the strongest bonus since the pool was last full, not the sliver left as it refills.
+            float live = LiveBonus;
+            if (live > 0f)
+            {
+                _lastBonus = Mathf.Max(_lastBonus, live);
+                _lingerLeft = Mathf.Max(0f, LingerSeconds);
+            }
+            else if (_lingerLeft <= 0f)
+            {
+                _lastBonus = 0f;
+            }
+
             float bonus = Bonus;
             SetPercent(Rig.Sheet, ref _attackSpeed, Attr.AttackSpeed, bonus, this, "Arcane Warp");
             SetPercent(Rig.Sheet, ref _reloadSpeed, Attr.ReloadSpeed, bonus, this, "Arcane Warp");
+
+            if (_hadBonus && bonus <= 0f) BonusEnded?.Invoke();
+            _hadBonus = bonus > 0f;
+        }
+
+        /// <summary>Runs a linger down. Update calls it; public so tooling can step time.</summary>
+        public void TickLinger(float dt)
+        {
+            if (_lingerLeft <= 0f || LiveBonus > 0f) return;
+
+            _lingerLeft = Mathf.Max(0f, _lingerLeft - dt);
+            if (_lingerLeft <= 0f) Refresh();
+        }
+
+        private void Update()
+        {
+            if (Application.isPlaying) TickLinger(Time.deltaTime);
         }
 
         private void OnHit(WeaponHit hit)
@@ -84,7 +135,7 @@ namespace Gunspire
             if (hit.IsPhantom || hit.IsEcho || hit.Weapon != _weapon) return;
             if (!MarkPaid(hit.Round)) return;
 
-            _mana.Add(ManaPerRound(hit.Weapon.Definition));
+            _mana.Add(ManaPerRound(hit.Weapon.Definition) + Mathf.Max(0f, ManaPerHitBonus));
         }
 
         /// <summary>False when this round has already restored its share.</summary>
@@ -103,6 +154,11 @@ namespace Gunspire
         {
             _paidRounds.Clear();
             _paidOrder.Clear();
+            RateMultiplier = 1f;
+            ManaPerHitBonus = 0f;
+            LingerSeconds = 0f;
+            _lingerLeft = 0f;
+            _lastBonus = 0f;
             Refresh();
         }
     }

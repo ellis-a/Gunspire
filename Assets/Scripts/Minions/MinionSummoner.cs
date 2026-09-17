@@ -64,6 +64,13 @@ namespace Gunspire
 
             Layers.SetRecursively(root, Layers.Minion);
 
+            // Boons strengthen what is summoned from here on, before Initialise so the health it starts with is full.
+            if (AllyBoosts.Active != null)
+            {
+                AllyBoosts.Active.ApplyTo(sheet, BeastMastery.IsCompanion(def.Id));
+                health.ConfigureMaxHealth(sheet.Get(Attr.MaxHealth));
+            }
+
             // After the attacks exist, since Initialise binds them to this minion.
             minion.Initialise(def);
             return minion;

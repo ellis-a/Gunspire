@@ -42,6 +42,28 @@ namespace Gunspire
         private readonly TypedModifierSet<SpellType> _spellByType = new TypedModifierSet<SpellType>();
         private readonly TypedModifierSet<DamageType> _resistances = new TypedModifierSet<DamageType>();
 
+        // Per school of spell: damage, cost (mana and health alike) and cooldown rate. Template school boons.
+        private readonly TypedModifierSet<SpellSchool> _schoolDamage = new TypedModifierSet<SpellSchool>();
+        private readonly TypedModifierSet<SpellSchool> _schoolCost = new TypedModifierSet<SpellSchool>();
+        private readonly TypedModifierSet<SpellSchool> _schoolCooldown = new TypedModifierSet<SpellSchool>();
+
+        // Attribute modifiers that only apply to one class of gun, read through GetFor. Class boons.
+        private readonly List<ClassModifier> _classModifiers = new List<ClassModifier>();
+        private readonly Dictionary<int, float> _classCache = new Dictionary<int, float>();
+
+        // The flat and percent totals behind each cached attribute, so a class value can add its own on top.
+        private readonly Dictionary<Attr, float> _flatSums = new Dictionary<Attr, float>();
+        private readonly Dictionary<Attr, float> _percentSums = new Dictionary<Attr, float>();
+
+        // Core stat points that can be taken back, by whoever granted them. Hoarder.
+        private readonly Dictionary<object, int[]> _sourcedStats = new Dictionary<object, int[]>();
+
+        private sealed class ClassModifier
+        {
+            public WeaponClass Class;
+            public StatModifier Modifier;
+        }
+
         /// <summary>Raised whenever any stat or modifier changes. Health listens so it can rescale.</summary>
         public event Action Changed;
 
@@ -61,7 +83,36 @@ namespace Gunspire
                 default: b = luck; break;
             }
             _coreBonus.TryGetValue(stat, out int bonus);
+            foreach (int[] sourced in _sourcedStats.Values) bonus += sourced[(int)stat];
             return Mathf.Max(0, b + bonus);
+        }
+
+        /// <summary>
+        /// Sets the stat points one source grants, replacing what it granted before. Zero takes them away.
+        /// For bonuses that rise and fall, which <see cref="AddStat"/> cannot take back.
+        /// </summary>
+        public void SetStatBonus(object source, StatType stat, int amount)
+        {
+            if (source == null) return;
+
+            if (!_sourcedStats.TryGetValue(source, out int[] points))
+            {
+                if (amount == 0) return;
+                points = new int[EnumCache.Stats.Length];
+                _sourcedStats[source] = points;
+            }
+
+            if (points[(int)stat] == amount) return;
+            points[(int)stat] = amount;
+            MarkDirty();
+        }
+
+        public int StatBonusFrom(object source, StatType stat)
+            => source != null && _sourcedStats.TryGetValue(source, out int[] points) ? points[(int)stat] : 0;
+
+        public void RemoveStatBonuses(object source)
+        {
+            if (source != null && _sourcedStats.Remove(source)) MarkDirty();
         }
 
         public void SetBaseStat(StatType stat, int value)
@@ -109,7 +160,85 @@ namespace Gunspire
         public void RemoveModifiersFrom(object source)
         {
             int removed = _modifiers.RemoveAll(m => Equals(m.Source, source));
+            removed += _classModifiers.RemoveAll(c => Equals(c.Modifier.Source, source));
             if (removed > 0) MarkDirty();
+        }
+
+        /// <summary>A modifier that only applies to guns of one class. Read through <see cref="GetFor"/>.</summary>
+        public StatModifier AddClassModifier(WeaponClass weaponClass, StatModifier mod)
+        {
+            if (mod == null) return null;
+            _classModifiers.Add(new ClassModifier { Class = weaponClass, Modifier = mod });
+            MarkDirty();
+            return mod;
+        }
+
+        public void RemoveClassModifier(StatModifier mod)
+        {
+            if (mod != null && _classModifiers.RemoveAll(c => c.Modifier == mod) > 0) MarkDirty();
+        }
+
+        /// <summary>
+        /// An attribute as a gun of this class sees it: the ordinary value with the class's own flat and
+        /// percent modifiers added into the same sums, so a class bonus stacks additively with a global one.
+        /// </summary>
+        public float GetFor(WeaponClass weaponClass, Attr attr)
+        {
+            if (_dirty) Recalculate();
+
+            int key = (int)weaponClass * 1000 + (int)attr;
+            if (_classCache.TryGetValue(key, out float cached)) return cached;
+
+            float flat = 0f;
+            float pct = 0f;
+            bool any = false;
+            for (int i = 0; i < _classModifiers.Count; i++)
+            {
+                ClassModifier c = _classModifiers[i];
+                if (c.Class != weaponClass || c.Modifier.Attr != attr) continue;
+                any = true;
+                if (c.Modifier.IsPercent) pct += c.Modifier.Value;
+                else flat += c.Modifier.Value;
+            }
+
+            float value;
+            if (!any) value = Get(attr);
+            else
+            {
+                _flatSums.TryGetValue(attr, out float globalFlat);
+                _percentSums.TryGetValue(attr, out float globalPct);
+                value = Clamp(attr, (BaseValue(attr) + globalFlat + flat) * (1f + globalPct + pct));
+            }
+
+            _classCache[key] = value;
+            return value;
+        }
+
+        // ---------------------------------------------------------------- per school
+
+        /// <summary>Outgoing multiplier for one school's spells. 1.0 when nothing has buffed it.</summary>
+        public float SchoolDamageMultiplier(SpellSchool school) => Mathf.Max(0.05f, 1f + _schoolDamage.Sum(school));
+
+        /// <summary>Multiplier on one school's costs, mana and health alike. Negative modifiers make them cheaper.</summary>
+        public float SchoolCostMultiplier(SpellSchool school) => Mathf.Max(0f, 1f + _schoolCost.Sum(school));
+
+        /// <summary>Extra cooldown rate for one school's spells, multiplied onto the general rate.</summary>
+        public float SchoolCooldownMultiplier(SpellSchool school) => Mathf.Max(0.25f, 1f + _schoolCooldown.Sum(school));
+
+        public TypedModifier<SpellSchool> AddSchoolDamage(SpellSchool school, float value, object source = null)
+            => AddTyped(_schoolDamage, school, value, source);
+
+        public TypedModifier<SpellSchool> AddSchoolCost(SpellSchool school, float value, object source = null)
+            => AddTyped(_schoolCost, school, value, source);
+
+        public TypedModifier<SpellSchool> AddSchoolCooldown(SpellSchool school, float value, object source = null)
+            => AddTyped(_schoolCooldown, school, value, source);
+
+        private TypedModifier<SpellSchool> AddTyped(TypedModifierSet<SpellSchool> set, SpellSchool school, float value, object source)
+        {
+            var mod = set.Add(school, value, source);
+            MarkDirty();
+            return mod;
         }
 
         /// <summary>
@@ -120,9 +249,14 @@ namespace Gunspire
         {
             _modifiers.Clear();
             _coreBonus.Clear();
+            _sourcedStats.Clear();
+            _classModifiers.Clear();
             _damageByType.ClearModifiers();
             _spellByType.ClearModifiers();
             _resistances.ClearModifiers();
+            _schoolDamage.ClearModifiers();
+            _schoolCost.ClearModifiers();
+            _schoolCooldown.ClearModifiers();
             MarkDirty();
         }
 
@@ -176,6 +310,9 @@ namespace Gunspire
             _damageByType.RemoveFrom(source);
             _spellByType.RemoveFrom(source);
             _resistances.RemoveFrom(source);
+            _schoolDamage.RemoveFrom(source);
+            _schoolCost.RemoveFrom(source);
+            _schoolCooldown.RemoveFrom(source);
             MarkDirty();
         }
 
@@ -206,6 +343,9 @@ namespace Gunspire
         {
             _dirty = false;
             _cache.Clear();
+            _classCache.Clear();
+            _flatSums.Clear();
+            _percentSums.Clear();
 
             Attr[] all = EnumCache.Attrs;
             for (int a = 0; a < all.Length; a++)
@@ -219,6 +359,9 @@ namespace Gunspire
                     if (m.Attr != attr) continue;
                     if (m.IsPercent) pct += m.Value; else flat += m.Value;
                 }
+
+                _flatSums[attr] = flat;
+                _percentSums[attr] = pct;
 
                 float value = (BaseValue(attr) + flat) * (1f + pct);
                 _cache[attr] = Clamp(attr, value);
@@ -276,6 +419,21 @@ namespace Gunspire
                 case Attr.SmashPower:       return 0f;
                 case Attr.Lifesteal:        return 0f;
                 case Attr.GravityScale:     return 1f;
+
+                case Attr.MagazineSize:     return 1f;
+                case Attr.Pierce:           return 0f;
+                case Attr.Knockback:        return 1f;
+                case Attr.ProjectileSpeed:  return 1f;
+                case Attr.SplashRadius:     return 1f;
+                case Attr.SpinUpRate:       return 1f;
+                case Attr.ScopeZoom:        return 1f;
+                case Attr.DrawSpeed:        return 1f;
+                case Attr.JumpCount:        return 0f;
+                case Attr.OrbPotency:       return 1f;
+                case Attr.OrbDropChance:    return 0f;
+                case Attr.PickupRadius:     return 1f;
+                case Attr.DebuffPotency:    return 1f;
+                case Attr.ShillingGain:     return 1f;
             }
             return 0f;
         }
@@ -303,6 +461,20 @@ namespace Gunspire
                 case Attr.Spread:          return Mathf.Clamp(v, 0.25f, 2f);
                 case Attr.Recoil:          return Mathf.Clamp(v, 0.25f, 2f);
                 case Attr.GravityScale:    return Mathf.Max(0f, v);
+                case Attr.MagazineSize:    return Mathf.Max(0.1f, v);
+                case Attr.Pierce:          return Mathf.Max(0f, v);
+                case Attr.Knockback:       return Mathf.Max(0f, v);
+                case Attr.ProjectileSpeed: return Mathf.Max(0.1f, v);
+                case Attr.SplashRadius:    return Mathf.Max(0.1f, v);
+                case Attr.SpinUpRate:      return Mathf.Max(0.1f, v);
+                case Attr.ScopeZoom:       return Mathf.Max(0.1f, v);
+                case Attr.DrawSpeed:       return Mathf.Max(0.1f, v);
+                case Attr.JumpCount:       return Mathf.Clamp(v, 0f, 5f);
+                case Attr.OrbPotency:      return Mathf.Max(0f, v);
+                case Attr.OrbDropChance:   return Mathf.Clamp01(v);
+                case Attr.PickupRadius:    return Mathf.Max(0.1f, v);
+                case Attr.DebuffPotency:   return Mathf.Max(0f, v);
+                case Attr.ShillingGain:    return Mathf.Max(0f, v);
                 default:                   return v;
             }
         }

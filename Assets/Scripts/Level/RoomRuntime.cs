@@ -57,6 +57,15 @@ namespace Gunspire
             return null;
         }
 
+        /// <summary>
+        /// Stops counting an enemy that is still alive but no longer holds the room shut, as a charmed one. The room
+        /// clears at once if it was the last.
+        /// </summary>
+        public void Release(EnemyController enemy)
+        {
+            if (enemy != null && _enemies.Contains(enemy)) Unregister(enemy);
+        }
+
         private void Unregister(EnemyController enemy)
         {
             _enemies.Remove(enemy);

@@ -48,6 +48,13 @@ namespace Gunspire
             Register(new ForetoldStatus());
             Register(new PhasedStatus());
             Register(new UnleashedStatus());
+
+            // The boon designs' statuses.
+            Register(new CharmedStatus());
+            Register(new HexStatus());
+            Register(new VolatileStatus());
+            Register(new GildedStatus());
+            Register(new DreadStatus());
         }
 
         private static void Register(StatusDefinition def) => Map[def.Id] = def;
@@ -154,6 +161,25 @@ namespace Gunspire
 
         public static StatusApplication Unleashed(float seconds = 8f)
             => new StatusApplication(StatusId.Unleashed, seconds, 1, 1f);
+
+        public static StatusApplication Charmed()
+            => new StatusApplication(StatusId.Charmed, 9999f, 1, 1f);
+
+        /// <summary>Magnitude is the share of damage taken that is stored, added per application.</summary>
+        public static StatusApplication Hex(float seconds = 4f, float share = 0.2f)
+            => new StatusApplication(StatusId.Hex, seconds, 1, share);
+
+        /// <summary>Magnitude is buildup toward <see cref="VolatileStatus.Threshold"/>.</summary>
+        public static StatusApplication Volatile(float buildup, float seconds = 6f)
+            => new StatusApplication(StatusId.Volatile, seconds, 1, buildup);
+
+        /// <summary>Magnitude is shillings added to what the enemy drops.</summary>
+        public static StatusApplication Gilded(float shillings)
+            => new StatusApplication(StatusId.Gilded, 9999f, 1, shillings);
+
+        /// <summary>Magnitude is buildup toward <see cref="DreadStatus.Threshold"/>.</summary>
+        public static StatusApplication Dread(float buildup, float seconds = 8f)
+            => new StatusApplication(StatusId.Dread, seconds, 1, buildup);
     }
 
     // -------------------------------------------------------------------------------- control
@@ -293,6 +319,7 @@ namespace Gunspire
 
         public override StatusId Id => StatusId.Frost;
         public override string DisplayName => "Frostbitten";
+        public override DebuffResistance Resisted => DebuffResistance.Stacks;
         public override string Description =>
             "Slowed 1% per stack. At 100 stacks, kinetic damage finishes them.";
         public override Color Tint => new Color(0.55f, 0.85f, 1f);
@@ -323,6 +350,7 @@ namespace Gunspire
 
         public override StatusId Id => StatusId.Burn;
         public override string DisplayName => "Burning";
+        public override DebuffResistance Resisted => DebuffResistance.Magnitude;
         public override string Description => "Burns for the amount applied, halving every half second.";
         public override Color Tint => new Color(1f, 0.5f, 0.15f);
         public override int MaxStacks => 1;
@@ -351,6 +379,9 @@ namespace Gunspire
     {
         public override StatusId Id => StatusId.Bleed;
         public override string DisplayName => "Bleeding";
+
+        /// <summary>Only its damage is resisted: it never wears off, so there is no duration to shorten.</summary>
+        public override DebuffResistance Resisted => DebuffResistance.Magnitude;
         public override string Description => "Bleeds until healed. Does not wear off.";
         public override Color Tint => new Color(0.75f, 0.15f, 0.2f);
         public override int MaxStacks => 5;
@@ -376,6 +407,9 @@ namespace Gunspire
     {
         public override StatusId Id => StatusId.Poison;
         public override string DisplayName => "Poisoned";
+
+        /// <summary>Resilience leaves the sway alone, and poison deals no damage for it to reduce.</summary>
+        public override DebuffResistance Resisted => DebuffResistance.None;
         public override string Description => "Aim sways. Falls off twice as fast while standing still.";
         public override Color Tint => new Color(0.55f, 0.9f, 0.35f);
         public override int MaxStacks => 6;
@@ -418,6 +452,7 @@ namespace Gunspire
 
         public override StatusId Id => StatusId.Shock;
         public override string DisplayName => "Shocked";
+        public override DebuffResistance Resisted => DebuffResistance.Stacks;
         public override string Description => "Takes 1% more damage per stack, and hears less.";
         public override Color Tint => new Color(0.7f, 0.75f, 1f);
 
