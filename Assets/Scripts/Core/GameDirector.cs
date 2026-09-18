@@ -55,6 +55,7 @@ namespace Gunspire
         private void Awake()
         {
             Instance = this;
+            GameSettings.Apply();
             Layers.ConfigureCollisionMatrix();
         }
 

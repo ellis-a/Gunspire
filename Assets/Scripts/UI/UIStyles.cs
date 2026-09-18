@@ -210,18 +210,23 @@ namespace Gunspire
             Mathf.RoundToInt(offset.left * scale), Mathf.RoundToInt(offset.right * scale),
             Mathf.RoundToInt(offset.top * scale), Mathf.RoundToInt(offset.bottom * scale));
 
-        /// <summary>A "UI size  -  100%  +" control, for the pause screens. Returns nothing; it sets <see cref="UserScale"/>.</summary>
-        public static void ScaleControl(Rect rect)
+        /// <summary>
+        /// A settings row: a label, then "-  value  +". Returns -1 or +1 on the frame a button is clicked, otherwise 0.
+        /// Each end greys out at its limit.
+        /// </summary>
+        public static int Stepper(Rect rect, string label, string value, bool canLower, bool canRaise)
         {
+            const float valueWidth = 64f;
             float buttonWidth = rect.height;
-            Text(new Rect(rect.x, rect.y, rect.width - buttonWidth * 2f - 60f, rect.height), "UI size", Right, Muted);
+            float x = rect.xMax - buttonWidth * 2f - valueWidth;
 
-            float x = rect.xMax - buttonWidth * 2f - 56f;
-            if (Button(new Rect(x, rect.y, buttonWidth, rect.height), "-", Muted, UserScale > MinUserScale + 0.001f))
-                UserScale -= UserScaleStep;
-            Text(new Rect(x + buttonWidth, rect.y, 56f, rect.height), Mathf.RoundToInt(UserScale * 100f) + "%", Center, Ink);
-            if (Button(new Rect(x + buttonWidth + 56f, rect.y, buttonWidth, rect.height), "+", Muted, UserScale < MaxUserScale - 0.001f))
-                UserScale += UserScaleStep;
+            Text(new Rect(rect.x, rect.y, x - rect.x - 8f, rect.height), label, Label, Muted);
+
+            int step = 0;
+            if (Button(new Rect(x, rect.y, buttonWidth, rect.height), "-", Muted, canLower)) step = -1;
+            Text(new Rect(x + buttonWidth, rect.y, valueWidth, rect.height), value, Center, Ink);
+            if (Button(new Rect(x + buttonWidth + valueWidth, rect.y, buttonWidth, rect.height), "+", Muted, canRaise)) step = 1;
+            return step;
         }
 
         /// <summary>Panel with a coloured left edge, used for every card in the game.</summary>

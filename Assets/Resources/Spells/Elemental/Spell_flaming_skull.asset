@@ -102,6 +102,7 @@ MonoBehaviour:
         SwayAmplitude: 1.2
         SwayFrequency: 1.5
         PassesThroughWalls: 0
+        FlattenAim: 1
         Trail:
           Radius: 1
           Spacing: 1.5

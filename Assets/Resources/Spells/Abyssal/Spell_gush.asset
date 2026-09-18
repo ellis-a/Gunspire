@@ -84,8 +84,8 @@ MonoBehaviour:
       data:
         Amount: 18
         CanCrit: 0
-        Knockback: 12
-        KnockbackUp: 6
+        Knockback: 18
+        KnockbackUp: 9
         FalloffFromPoint: 0
         FalloffRadius: 6
         MinFraction: 0.4

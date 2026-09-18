@@ -24,7 +24,7 @@ MonoBehaviour:
     Damage: 12
     PelletsPerShot: 1
     Knockback: 0
-    RoundsPerMinute: 280
+    RoundsPerMinute: 180
     MagazineSize: 21
     ReloadTime: 1.8
     BurstCount: 3
@@ -51,16 +51,16 @@ MonoBehaviour:
     Tint: {r: 1, g: 1, b: 1, a: 1}
     OnHitStatuses: []
     AltFire:
-      Kind: 0
-      Name: Both Barrels
-      Description: Dumps every shell in the tube.
+      Kind: 3
+      Name: Focus
+      Description: Zoom and shoot more accurately
       Cooldown: 4
       AmmoCost: 1
       ManaCost: 0
-      Delivery: 1
-      Damage: 40
+      Delivery: 0
+      Damage: 12
       Pellets: 1
-      SpreadDegrees: 0
+      SpreadDegrees: 1
       Knockback: 0
       MaxPierce: 0
       SplashRadius: 0
@@ -74,8 +74,8 @@ MonoBehaviour:
       SalvoRateMultiplier: 3.2
       SalvoDamageMultiplier: 0.9
       SalvoMaxRounds: 6
-      FocusFov: 50
-      FocusSpreadMultiplier: 0.15
-      FocusDamageMultiplier: 1.25
+      FocusFov: 60
+      FocusSpreadMultiplier: 0.5
+      FocusDamageMultiplier: 1
       FocusMoveMultiplier: 0.55
       FocusRateMultiplier: 0.8

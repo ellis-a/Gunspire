@@ -11,12 +11,17 @@ namespace Gunspire
     {
         private GameDirector _director;
 
+        /// <summary>Abandon run has been clicked once on this pause screen, and the next click ends the run.</summary>
+        private bool _confirmAbandon;
+
         private void Awake() => _director = GetComponent<GameDirector>();
 
         private void OnGUI()
         {
             if (_director == null) return;
             UIStyles.BeginScaled();
+
+            if (_director.State != GameStateKind.Paused) _confirmAbandon = false;
 
             switch (_director.State)
             {
@@ -56,9 +61,59 @@ namespace Gunspire
             }
         }
 
-        /// <summary>The UI size setting, bottom right on both pause screens.</summary>
-        private static void DrawScaleControl()
-            => UIStyles.ScaleControl(new Rect(UIStyles.Width - 256f, UIStyles.Height - 46f, 236f, 28f));
+        /// <summary>The settings panel's size. It sits beside the character sheet on the pause screen, bottom right in training.</summary>
+        public const float SettingsWidth = 300f;
+        public const float SettingsHeight = 236f;
+
+        /// <summary>The settings panel: UI size, mouse sensitivity, field of view, volume and fullscreen.</summary>
+        private static void DrawSettings(Rect rect)
+        {
+            UIStyles.Fill(rect, UIStyles.Panel);
+            UIStyles.Outline(rect, new Color(1f, 1f, 1f, 0.12f));
+            UIStyles.Text(new Rect(rect.x + 14f, rect.y + 8f, rect.width - 28f, 26f), "Settings", UIStyles.Heading, UIStyles.Ink);
+
+            const float rowHeight = 28f;
+            const float rowGap = 38f;
+            var row = new Rect(rect.x + 14f, rect.y + 44f, rect.width - 28f, rowHeight);
+
+            float scale = UIStyles.UserScale;
+            int step = UIStyles.Stepper(row, "UI size", Mathf.RoundToInt(scale * 100f) + "%",
+                scale > UIStyles.MinUserScale + 0.001f, scale < UIStyles.MaxUserScale - 0.001f);
+            if (step != 0) UIStyles.UserScale = scale + step * UIStyles.UserScaleStep;
+
+            row.y += rowGap;
+            float sensitivity = GameSettings.Sensitivity;
+            step = UIStyles.Stepper(row, "Mouse sensitivity", sensitivity.ToString("0.0"),
+                sensitivity > GameSettings.MinSensitivity + 0.001f, sensitivity < GameSettings.MaxSensitivity - 0.001f);
+            if (step != 0) GameSettings.Sensitivity = sensitivity + step * GameSettings.SensitivityStep;
+
+            row.y += rowGap;
+            float fov = GameSettings.FieldOfView;
+            step = UIStyles.Stepper(row, "Field of view", Mathf.RoundToInt(fov).ToString(),
+                fov > GameSettings.MinFieldOfView + 0.001f, fov < GameSettings.MaxFieldOfView - 0.001f);
+            if (step != 0) GameSettings.FieldOfView = fov + step * GameSettings.FieldOfViewStep;
+
+            row.y += rowGap;
+            float volume = GameSettings.Volume;
+            step = UIStyles.Stepper(row, "Volume", Mathf.RoundToInt(volume * 100f) + "%", volume > 0.001f, volume < 0.999f);
+            if (step != 0) GameSettings.Volume = volume + step * GameSettings.VolumeStep;
+
+            row.y += rowGap;
+            bool fullscreen = GameSettings.Fullscreen;
+            UIStyles.Text(new Rect(row.x, row.y, row.width - 130f, rowHeight), "Display", UIStyles.Label, UIStyles.Muted);
+            if (UIStyles.Button(new Rect(row.xMax - 124f, row.y, 124f, rowHeight), fullscreen ? "Fullscreen" : "Windowed",
+                    UIStyles.Muted))
+                GameSettings.Fullscreen = !fullscreen;
+        }
+
+        /// <summary>The controls, built from the keys the game actually reads so the line cannot fall behind them.</summary>
+        private static readonly string ControlsLine =
+            "WASD move   SPACE jump   SHIFT movement   LMB fire   RMB alt fire   "
+            + KeyName(Holster.SwapKey) + " swap gun   "
+            + KeyName(PlayerCombat.MeleeKey) + " melee   " + KeyName(PlayerCombat.ReloadKey) + " reload   "
+            + string.Join("/", SpellBook.SlotLabels) + " spells   " + KeyName(PlayerCombat.InteractKey) + " interact   TAB character";
+
+        private static string KeyName(KeyCode key) => key.ToString().ToUpperInvariant();
 
         private static void Dim(float alpha = 0.72f)
             => UIStyles.Fill(new Rect(0f, 0f, UIStyles.Width, UIStyles.Height), new Color(0.02f, 0.02f, 0.04f, alpha));
@@ -76,6 +131,9 @@ namespace Gunspire
 
             UIStyles.Text(new Rect(0f, 60f, UIStyles.Width, 48f), "Gunspire",
                 UIStyles.Title, UIStyles.Ink);
+
+            if (UIStyles.Button(new Rect(UIStyles.Width - 156f, 20f, 136f, 34f), "Quit game", UIStyles.Muted))
+                GameSettings.Quit();
             UIStyles.Text(new Rect(0f, 110f, UIStyles.Width, 22f),
                 _director.TrainingSelected
                     ? "Training room: choose a class to practise with. Any spell or gun can be picked once inside."
@@ -117,7 +175,7 @@ namespace Gunspire
             }
 
             UIStyles.Text(new Rect(0f, UIStyles.Height - 56f, UIStyles.Width, 20f),
-                "WASD move   SPACE jump   SHIFT dash   LMB fire   RMB alt fire   V bash   R reload   Q/E spells   F interact",
+                ControlsLine,
                 UIStyles.Center, UIStyles.Muted);
         }
 
@@ -449,18 +507,40 @@ namespace Gunspire
             Dim(0.8f);
             UIStyles.Text(new Rect(0f, 50f, UIStyles.Width, 44f), "Paused", UIStyles.Title, UIStyles.Ink);
 
-            DrawCharacterSheet(new Rect(UIStyles.Width * 0.5f - 330f, 100f, 660f, 520f));
+            var sheet = new Rect(UIStyles.Width * 0.5f - 330f, 100f, 660f, 520f);
+            DrawCharacterSheet(sheet);
 
-            var resume = new Rect(UIStyles.Width * 0.5f - 210f, UIStyles.Height - 120f, 200f, 40f);
-            var restart = new Rect(UIStyles.Width * 0.5f + 10f, UIStyles.Height - 120f, 200f, 40f);
+            // Beside the sheet, pulled in from the edge on a narrow window.
+            DrawSettings(new Rect(Mathf.Min(sheet.xMax + 24f, UIStyles.Width - SettingsWidth - 16f), sheet.y,
+                SettingsWidth, SettingsHeight));
 
-            if (UIStyles.Button(resume, "Resume  [ESC]", UIStyles.Accent)) _director.Resume();
-            if (UIStyles.Button(restart, "Abandon run", UIStyles.Warning)) _director.Restart();
+            const float buttonWidth = 200f;
+            const float buttonGap = 20f;
+            float buttonsX = UIStyles.Width * 0.5f - (buttonWidth * 3f + buttonGap * 2f) * 0.5f;
+            float buttonsY = UIStyles.Height - 120f;
+
+            if (UIStyles.Button(new Rect(buttonsX, buttonsY, buttonWidth, 40f), "Resume  [ESC]", UIStyles.Accent))
+                _director.Resume();
+            // Two clicks, so a stray one cannot end a run. The first arms it; leaving the pause screen disarms it.
+            if (UIStyles.Button(new Rect(buttonsX + buttonWidth + buttonGap, buttonsY, buttonWidth, 40f),
+                    _confirmAbandon ? "Click again to abandon" : "Abandon run", UIStyles.Warning))
+            {
+                if (_confirmAbandon)
+                {
+                    _confirmAbandon = false;
+                    _director.Restart();
+                }
+                else _confirmAbandon = true;
+            }
+            if (UIStyles.Button(new Rect(buttonsX + (buttonWidth + buttonGap) * 2f, buttonsY, buttonWidth, 40f), "Quit game",
+                    UIStyles.Muted))
+                GameSettings.Quit();
 
             UIStyles.Text(new Rect(0f, UIStyles.Height - 66f, UIStyles.Width, 20f),
-                "WASD move   SPACE jump   SHIFT dash   LMB fire   RMB alt fire   V bash   R reload   Q/E spells   F interact",
+                ControlsLine,
                 UIStyles.Center, UIStyles.Muted);
-            DrawScaleControl();
+
+            DrawSheetHover();
         }
 
         private void DrawRunOver(string headline, Color color)
@@ -468,33 +548,191 @@ namespace Gunspire
             Dim(0.85f);
             RunState run = _director.Run;
 
-            UIStyles.Text(new Rect(0f, UIStyles.Height * 0.32f, UIStyles.Width, 46f), headline, UIStyles.Title, color);
+            const float panelWidth = 760f;
+            float left = UIStyles.Width * 0.5f - panelWidth * 0.5f;
+            float y = 70f;
+
+            UIStyles.Text(new Rect(0f, y, UIStyles.Width, 46f), headline, UIStyles.Title, color);
+            y += 50f;
+
+            LoadoutDefinition loadout = StartingLoadout.Selected;
+            if (loadout != null)
+                UIStyles.Text(new Rect(0f, y, UIStyles.Width, 22f), loadout.DisplayName, UIStyles.Center, UIStyles.Muted);
+            y += 40f;
 
             if (run != null)
             {
-                UIStyles.Text(new Rect(0f, UIStyles.Height * 0.32f + 56f, UIStyles.Width, 24f),
-                    run.Summary(), UIStyles.Center, UIStyles.Ink);
-
-                string boons = run.TakenBoons.Count == 0 ? "no boons taken" : "";
-                for (int i = 0; i < run.TakenBoons.Count; i++)
+                // The numbers, as a row of tiles.
+                string[] labels = { "Floor", "Rooms cleared", "Kills", "Shillings earned", "Time" };
+                string[] values =
                 {
-                    RunState.TakenBoon taken = run.TakenBoons[i];
-                    boons += (i > 0 ? ",  " : "") + taken.Boon.Name
-                           + (taken.Level > 1 ? " " + taken.Level : "");
-                }
+                    run.Floor + " / " + _director.FloorCount, run.RoomsCleared.ToString(), run.Kills.ToString(),
+                    run.Wallet.TotalEarned.ToString(), FormatTime(run.ElapsedSeconds)
+                };
 
-                UIStyles.DrawLabel(new Rect(UIStyles.Width * 0.5f - 320f, UIStyles.Height * 0.32f + 88f, 640f, 80f),
-                    boons, UIStyles.Wrap);
+                const float tileGap = 12f;
+                float tileWidth = (panelWidth - tileGap * (labels.Length - 1)) / labels.Length;
+                for (int i = 0; i < labels.Length; i++)
+                {
+                    var tile = new Rect(left + i * (tileWidth + tileGap), y, tileWidth, 70f);
+                    UIStyles.Fill(tile, UIStyles.Panel);
+                    UIStyles.Outline(tile, new Color(1f, 1f, 1f, 0.12f));
+                    UIStyles.Text(new Rect(tile.x + 14f, tile.y + 10f, tile.width - 20f, 30f), values[i], UIStyles.Heading, UIStyles.Ink);
+                    UIStyles.Text(new Rect(tile.x + 14f, tile.y + 42f, tile.width - 20f, 18f), labels[i], UIStyles.Small, UIStyles.Muted);
+                }
+                y += 90f;
+
+                y = DrawBuild(new Rect(left, y, panelWidth, 0f));
+                y = DrawTakenBoons(run, new Rect(left, y + 14f, panelWidth, 0f));
             }
 
-            var again = new Rect(UIStyles.Width * 0.5f - 110f, UIStyles.Height * 0.62f, 220f, 44f);
+            var again = new Rect(UIStyles.Width * 0.5f - 110f, Mathf.Max(y + 26f, UIStyles.Height * 0.62f), 220f, 44f);
             if (UIStyles.Button(again, "New run  [ENTER]", color)) _director.Restart();
         }
 
+        private static string FormatTime(float seconds)
+        {
+            int total = Mathf.FloorToInt(seconds);
+            return total >= 3600
+                ? (total / 3600) + ":" + (total / 60 % 60).ToString("00") + ":" + (total % 60).ToString("00")
+                : (total / 60) + ":" + (total % 60).ToString("00");
+        }
+
+        /// <summary>The spells and guns the run ended with. Returns the y below it.</summary>
+        private float DrawBuild(Rect area)
+        {
+            PlayerRig player = _director.Player;
+            if (player == null) return area.y;
+
+            float y = area.y;
+            UIStyles.Text(new Rect(area.x, y, area.width, 24f), "Build", UIStyles.Heading, UIStyles.Ink);
+            y += 30f;
+
+            var spells = new List<string>();
+            SpellBook book = player.Book;
+            if (book != null)
+                for (int i = 0; i < SpellBook.SlotCount; i++)
+                {
+                    Spell spell = book.GetSlot(i);
+                    if (spell != null)
+                        spells.Add(SpellBook.SlotLabels[i] + " " + Colour(spell.DisplayName, spell.Tint) + " " + book.GetSlotLevel(i));
+                }
+            if (player.Movement != null && player.Movement.Current != null)
+                spells.Add("SHIFT " + Colour(player.Movement.Current.DisplayName, player.Movement.Current.Tint));
+            if (player.CombatInput != null && player.CombatInput.MeleeSpell != null)
+                spells.Add("MELEE " + Colour(player.CombatInput.MeleeSpell.DisplayName, player.CombatInput.MeleeSpell.Tint));
+
+            var guns = new List<string>();
+            if (player.Holster != null)
+                for (int i = 0; i < player.Holster.SlotCount; i++)
+                {
+                    WeaponDefinition gun = player.Holster.GetSlot(i);
+                    if (gun != null) guns.Add(gun.DisplayName);
+                }
+
+            UIStyles.Text(new Rect(area.x, y, area.width, 20f), "Spells   " + (spells.Count > 0 ? string.Join("     ", spells) : "none"),
+                UIStyles.Label, UIStyles.Muted);
+            y += 24f;
+            UIStyles.Text(new Rect(area.x, y, area.width, 20f), "Guns     " + (guns.Count > 0 ? string.Join(",  ", guns) : "none"),
+                UIStyles.Label, UIStyles.Muted);
+            return y + 24f;
+        }
+
+        /// <summary>Every boon taken, coloured by rarity, with its level where it has more than one. Returns the y below it.</summary>
+        private static float DrawTakenBoons(RunState run, Rect area)
+        {
+            float y = area.y;
+            UIStyles.Text(new Rect(area.x, y, area.width, 24f), "Boons  (" + run.TakenBoons.Count + ")", UIStyles.Heading, UIStyles.Ink);
+            y += 30f;
+
+            var names = new List<string>();
+            foreach (RunState.TakenBoon taken in run.TakenBoons)
+                names.Add(Colour(taken.Boon.Name + (taken.Boon.MaxLevel > 1 ? " " + taken.Level : ""), taken.Boon.RarityColor));
+
+            string text = names.Count > 0 ? string.Join(",   ", names) : "none taken";
+
+            // Tall enough for the list: roughly how many fit on a line at this width, rounded up generously.
+            int lines = Mathf.Max(1, Mathf.CeilToInt(names.Count / 5f));
+            float height = Mathf.Min(lines * 18f + 8f, 200f);
+            UIStyles.DrawLabel(new Rect(area.x, y, area.width, height), text, UIStyles.Wrap);
+            return y + height;
+        }
+
+        private static string Colour(string text, Color color) => "<color=#" + ColorUtility.ToHtmlStringRGB(color) + ">" + text + "</color>";
+
         // ---------------------------------------------------------------- character sheet
+
+        // What the pointer is over on the character sheet, drawn as a full card once everything else is down.
+        private Spell _hoveredSpell;
+        private RunState.TakenBoon _hoveredBoon;
+
+        private void TrackHover(Rect row, Spell spell)
+        {
+            if (row.Contains(Event.current.mousePosition)) _hoveredSpell = spell;
+        }
+
+        /// <summary>
+        /// The card for whatever the sheet's pointer is over, beside the pointer and kept on screen. Called last on the
+        /// pause screen, so it covers the settings panel rather than sitting under it.
+        /// </summary>
+        private void DrawSheetHover()
+        {
+            const float width = 360f;
+            Vector2 mouse = Event.current.mousePosition;
+
+            if (_hoveredSpell != null)
+            {
+                Vector2 at = PlaceBeside(mouse, width, SpellDetailsHeight);
+                DrawSpellDetails(_hoveredSpell, at.x, at.y, width);
+            }
+            else if (_hoveredBoon != null)
+            {
+                float height = BoonDetailsHeight(_hoveredBoon.Boon, width);
+                Vector2 at = PlaceBeside(mouse, width, height);
+                DrawBoonDetails(_hoveredBoon, new Rect(at.x, at.y, width, height));
+            }
+        }
+
+        /// <summary>Right of the pointer where it fits, otherwise left of it, and never off the top or bottom.</summary>
+        private static Vector2 PlaceBeside(Vector2 pointer, float width, float height)
+        {
+            float x = pointer.x + 20f;
+            if (x + width > UIStyles.Width - 8f) x = pointer.x - width - 20f;
+            float y = Mathf.Clamp(pointer.y - 20f, 8f, Mathf.Max(8f, UIStyles.Height - height - 8f));
+            return new Vector2(Mathf.Max(8f, x), y);
+        }
+
+        private const float BoonDetailsTop = 84f;
+
+        private static float BoonDetailsHeight(Boon boon, float width)
+            => BoonDetailsTop + UIStyles.Wrap.CalcHeight(new GUIContent(boon.Description), width - 24f) + 14f;
+
+        /// <summary>A taken boon's full card: name, rarity, where it belongs, its level, and the whole description.</summary>
+        private static void DrawBoonDetails(RunState.TakenBoon taken, Rect rect)
+        {
+            Boon boon = taken.Boon;
+            UIStyles.Fill(rect, UIStyles.Panel);
+            UIStyles.Outline(rect, boon.RarityColor);
+
+            UIStyles.Icon(new Rect(rect.x + 12f, rect.y + 10f, 40f, 40f), boon.Icon, boon.RarityColor, boon.Name);
+            UIStyles.Text(new Rect(rect.x + 60f, rect.y + 10f, rect.width - 72f, 22f), boon.Name, UIStyles.Heading, boon.RarityColor);
+            UIStyles.Text(new Rect(rect.x + 60f, rect.y + 32f, rect.width - 72f, 18f),
+                Rarities.Name(boon.Rarity) + "   " + boon.Family + (string.IsNullOrEmpty(boon.Group) ? "" : " / " + boon.Group),
+                UIStyles.Small, UIStyles.Muted);
+
+            string level = boon.MaxLevel > 1 ? "Level " + taken.Level + " of " + boon.MaxLevel : "Single level";
+            if (taken.Consumed) level += "   -   used up";
+            UIStyles.Text(new Rect(rect.x + 12f, rect.y + 58f, rect.width - 24f, 18f), level, UIStyles.Small, UIStyles.Accent);
+
+            UIStyles.DrawLabel(new Rect(rect.x + 12f, rect.y + BoonDetailsTop, rect.width - 24f, rect.yMax - rect.y - BoonDetailsTop - 8f),
+                boon.Description, UIStyles.Wrap);
+        }
 
         private void DrawCharacterSheet(Rect rect)
         {
+            _hoveredSpell = null;
+            _hoveredBoon = null;
+
             PlayerRig player = _director.Player;
             if (player == null) return;
 
@@ -546,10 +784,23 @@ namespace Gunspire
             Spell movement = player.Movement != null ? player.Movement.Current : null;
             if (movement != null)
             {
+                TrackHover(new Rect(rect.x + 20f, y, rect.width - 40f, 20f), movement);
                 UIStyles.Text(new Rect(rect.x + 20f, y, 110f, 20f), "SHIFT  " + movement.DisplayName,
                     UIStyles.Small, movement.Tint);
                 UIStyles.Text(new Rect(rect.x + 130f, y, rect.width - 150f, 20f),
                     movement.CostLine(), UIStyles.Small, UIStyles.Muted);
+                y += 20f;
+            }
+
+            // The melee slot.
+            Spell melee = player.CombatInput != null ? player.CombatInput.MeleeSpell : null;
+            if (melee != null)
+            {
+                TrackHover(new Rect(rect.x + 20f, y, rect.width - 40f, 20f), melee);
+                UIStyles.Text(new Rect(rect.x + 20f, y, 110f, 20f), KeyName(PlayerCombat.MeleeKey) + "  " + melee.DisplayName,
+                    UIStyles.Small, melee.Tint);
+                UIStyles.Text(new Rect(rect.x + 130f, y, rect.width - 150f, 20f),
+                    melee.CostLine(), UIStyles.Small, UIStyles.Muted);
                 y += 20f;
             }
 
@@ -562,6 +813,7 @@ namespace Gunspire
                     Spell spell = book.GetSlot(i);
                     if (spell == null) continue;
 
+                    TrackHover(new Rect(rect.x + 20f, y, rect.width - 40f, 20f), spell);
                     UIStyles.Text(new Rect(rect.x + 20f, y, 110f, 20f),
                         SpellBook.SlotLabels[i] + "  " + spell.DisplayName, UIStyles.Small, spell.Tint);
                     UIStyles.Text(new Rect(rect.x + 130f, y, rect.width - 150f, 20f),
@@ -595,6 +847,7 @@ namespace Gunspire
                     for (int i = 0; i < run.TakenBoons.Count; i++)
                     {
                         RunState.TakenBoon taken = run.TakenBoons[i];
+                        if (new Rect(rect.x + 20f, y, rect.width - 40f, 20f).Contains(Event.current.mousePosition)) _hoveredBoon = taken;
                         string name = taken.Boon.Name + (taken.Boon.MaxLevel > 1 ? "  " + taken.Level : "");
 
                         // Small here, because this is a scanning list rather than a card - the
@@ -635,7 +888,8 @@ namespace Gunspire
             PlayerRig player = _director.Player;
             if (player == null) return;
 
-            DrawScaleControl();
+            DrawSettings(new Rect(UIStyles.Width - SettingsWidth - 16f, UIStyles.Height - SettingsHeight - 16f,
+                SettingsWidth, SettingsHeight));
 
             float left = Mathf.Max(16f, UIStyles.Width * 0.5f - 560f);
             float top = 36f;
@@ -697,7 +951,7 @@ namespace Gunspire
                     cardY = top + 36f + _trainingList.Count * 30f + 12f;
                 }
 
-                DrawTrainingSpellText(hovered, cardX, cardY, cardWidth);
+                DrawSpellDetails(hovered, cardX, cardY, cardWidth);
             }
 
             float y = top;
@@ -747,7 +1001,10 @@ namespace Gunspire
         }
 
         /// <summary>The hovered spell: what it is, what it costs, what it does, and what its school grants.</summary>
-        private void DrawTrainingSpellText(Spell spell, float x, float y, float width)
+        /// <summary>A spell's full card with its school's mastery below it. The training list and the pause screen's hover.</summary>
+        public const float SpellDetailsHeight = 176f + 10f + 132f;
+
+        private void DrawSpellDetails(Spell spell, float x, float y, float width)
         {
             var panel = new Rect(x, y, width, 176f);
             UIStyles.Fill(panel, UIStyles.Panel);

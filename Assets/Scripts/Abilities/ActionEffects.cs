@@ -279,6 +279,12 @@ namespace Gunspire
 
         public bool PassesThroughWalls;
 
+        /// <summary>
+        /// Flies level with the ground, whatever the pitch of the aim: the up-and-down part of the aim is dropped, so the
+        /// projectile keeps the height it was cast at. "Ground" is the caster's own up, so it holds on a wall too. Flaming Skull.
+        /// </summary>
+        public bool FlattenAim;
+
         /// <summary>Burning ground behind each projectile. Flaming Skull.</summary>
         public TrailProfile Trail = new TrailProfile();
 
@@ -297,14 +303,16 @@ namespace Gunspire
 
         public override bool Execute(AbilityContext ctx)
         {
-            Vector3 origin = ctx.Origin + ctx.Forward * 0.8f;
+            Vector3 up = ctx.Caster != null ? ctx.Caster.transform.up : Vector3.up;
+            Vector3 forward = FlattenAim ? Level(ctx.Forward, up, ctx.Caster) : ctx.Forward;
+            Vector3 origin = ctx.Origin + forward * 0.8f;
 
             int count = Mathf.Max(1, Count) + Mathf.RoundToInt(Mathf.Clamp01(ctx.Charge) * ExtraCountAtFullCharge)
                         + Mathf.Max(0, ctx.SoulsSpent) * ExtraCountPerSoul;
 
             for (int i = 0; i < count; i++)
             {
-                Vector3 direction = ctx.Forward;
+                Vector3 direction = forward;
 
                 if (ArcSpreadDegrees > 0f && count > 1)
                 {
@@ -316,6 +324,7 @@ namespace Gunspire
                     Vector2 jitter = Random.insideUnitCircle * SpreadDegrees;
                     direction = Quaternion.Euler(jitter.y, jitter.x, 0f) * direction;
                 }
+                if (FlattenAim) direction = Level(direction, up, ctx.Caster);
 
                 Projectile p = Projectile.Create(origin, direction, ctx.Tint, Radius);
                 p.OwnerTeam = ctx.Team;
@@ -350,9 +359,22 @@ namespace Gunspire
             return true;
         }
 
-        public override string Describe() => Count > 1
+        /// <summary>
+        /// A direction with its part along <paramref name="up"/> removed. Aiming straight up or down leaves nothing,
+        /// so that falls back to the way the caster faces.
+        /// </summary>
+        private static Vector3 Level(Vector3 direction, Vector3 up, GameObject caster)
+        {
+            Vector3 flat = Vector3.ProjectOnPlane(direction, up);
+            if (flat.sqrMagnitude > 0.0001f) return flat.normalized;
+
+            flat = caster != null ? Vector3.ProjectOnPlane(caster.transform.forward, up) : Vector3.zero;
+            return flat.sqrMagnitude > 0.0001f ? flat.normalized : direction;
+        }
+
+        public override string Describe() => (Count > 1
             ? string.Format("{0} projectiles for {1:0}", Count, Damage)
-            : string.Format("a projectile for {0:0}", Damage);
+            : string.Format("a projectile for {0:0}", Damage)) + (FlattenAim ? ", flying level" : "");
     }
 
     /// <summary>Draws the warning shape that makes an attack dodgeable.</summary>

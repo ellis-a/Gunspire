@@ -8,9 +8,7 @@ namespace Gunspire
     /// </summary>
     public class PlayerLook : MonoBehaviour
     {
-        [SerializeField] private float sensitivity = 2.2f;
         [SerializeField] private float pitchLimit = 89f;
-        [SerializeField] private float baseFov = 90f;
         [SerializeField] private float maxFovBoost = 14f;
         [SerializeField] private float zoomLerp = 16f;
 
@@ -24,8 +22,8 @@ namespace Gunspire
         /// <summary>How much faster than usual the view settles into a zoom. Scope zoom raises it.</summary>
         public float ZoomRateScale { get; set; } = 1f;
 
-        /// <summary>The unzoomed field of view.</summary>
-        public float BaseFov => baseFov;
+        /// <summary>The unzoomed field of view, from the player's settings.</summary>
+        public float BaseFov => GameSettings.FieldOfView;
         [SerializeField] private float fovLerp = 6f;
 
         private Transform _cameraPivot;
@@ -39,14 +37,14 @@ namespace Gunspire
 
         public bool InputEnabled { get; set; } = true;
         public Camera Camera => _camera;
-        public float Sensitivity { get => sensitivity; set => sensitivity = value; }
+        public float Sensitivity { get => GameSettings.Sensitivity; set => GameSettings.Sensitivity = value; }
 
         public void Initialise(Transform cameraPivot, Camera cam, PlayerMotor motor)
         {
             _cameraPivot = cameraPivot;
             _camera = cam;
             _motor = motor;
-            if (_camera != null) _camera.fieldOfView = baseFov;
+            if (_camera != null) _camera.fieldOfView = BaseFov;
         }
 
         private void Awake() => _status = GetComponent<StatusController>();
@@ -61,7 +59,7 @@ namespace Gunspire
 
         private void ReadMouse()
         {
-            float scale = sensitivity * ZoomSensitivityScale();
+            float scale = Sensitivity * ZoomSensitivityScale();
             float mx = Input.GetAxisRaw("Mouse X") * scale;
             float my = Input.GetAxisRaw("Mouse Y") * scale;
 
@@ -124,7 +122,7 @@ namespace Gunspire
             {
                 float baseSpeed = 8f;
                 float excess = Mathf.Max(0f, _motor.HorizontalSpeed - baseSpeed);
-                target = baseFov + Mathf.Min(maxFovBoost, excess * 0.8f);
+                target = BaseFov + Mathf.Min(maxFovBoost, excess * 0.8f);
             }
 
             _camera.fieldOfView = Mathf.Lerp(_camera.fieldOfView, target, rate * Time.deltaTime);
@@ -137,7 +135,7 @@ namespace Gunspire
         private float ZoomSensitivityScale()
         {
             if (ZoomFov <= 0f || _camera == null) return 1f;
-            return Mathf.Clamp(_camera.fieldOfView / Mathf.Max(1f, baseFov), 0.35f, 1f);
+            return Mathf.Clamp(_camera.fieldOfView / Mathf.Max(1f, BaseFov), 0.35f, 1f);
         }
 
         /// <summary>Called by weapons on fire.</summary>

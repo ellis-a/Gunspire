@@ -21,6 +21,7 @@ namespace Gunspire
                     {
                         Damage = 18f, Speed = 16f, Radius = 0.35f, Lifetime = 3f, Pierce = 99,
                         SwayAmplitude = 1.2f, SwayFrequency = 1.5f,
+                        FlattenAim = true,
                         Trail = new TrailProfile { Radius = 1f, SegmentLifetime = 3f, DamagePerTick = 4f }
                     }
                 }

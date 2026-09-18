@@ -144,7 +144,7 @@ namespace Gunspire
             camera.tag = "MainCamera";
             camera.nearClipPlane = 0.03f;
             camera.farClipPlane = 400f;
-            camera.fieldOfView = 90f;
+            camera.fieldOfView = GameSettings.FieldOfView;
             camera.clearFlags = CameraClearFlags.SolidColor;
             camera.backgroundColor = new Color(0.035f, 0.035f, 0.06f);
             cameraObject.AddComponent<AudioListener>();
